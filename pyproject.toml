@@ -1,11 +1,15 @@
 [project]
 name = "whichwayisup-refresh"
-version = "0.3.0"
+version = "0.4.0rc4"
 description = "An independently maintained homage to Which Way Is Up?"
 requires-python = ">=3.11"
 dependencies = ["pygame>=2.6,<3"]
 license = "GPL-2.0-only"
 readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/mohtab/whichwayisup-refresh"
+Issues = "https://github.com/mohtab/whichwayisup-refresh/issues"
 
 [tool.ruff]
 line-length = 120

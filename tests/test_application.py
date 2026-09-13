@@ -26,10 +26,10 @@ class ApplicationTests(unittest.TestCase):
         self.app.draw()
     def test_navigation_settings_play_pause_and_studio(self):
         self.click('Customize');self.assertEqual(self.app.screen,'settings')
-        self.click('1×');self.assertEqual(self.app.s['tempo'],1.25)
+        self.click('Gameplay');self.click('1×');self.assertEqual(self.app.s['tempo'],1.25)
         self.click('Done');self.assertEqual(self.app.screen,'home')
         self.click('Choose a stage');self.assertEqual(self.app.screen,'stages')
-        self.click('Stage 1  /  w0-l0');self.assertEqual(self.app.screen,'play')
+        self.click('Stage 1');self.assertEqual(self.app.screen,'play')
         self.app.event(pygame.event.Event(pygame.KEYDOWN,key=pygame.K_ESCAPE,mod=0))
         self.app.draw();self.assertEqual(self.app.screen,'pause')
         self.click('Resume');self.assertEqual(self.app.screen,'play')

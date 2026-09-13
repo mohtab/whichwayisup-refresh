@@ -44,7 +44,9 @@ class Painter:
         if style=='cyberpunk' and kind in ('key','bars','blob','other_pants','cake'):
             return sprites.prop(kind,w,h,state,phase,scale,style)
         if kind=='key':return sprites.key(w,h,phase,scale)
-        if kind in ('wall','spikes','lever','projectile'):return sprites.prop(kind,w,h,state,phase,scale,style)
+        if kind in ('wall','spikes','lever','projectile'):
+            image=sprites.prop(kind,w,h,state,phase,scale,style)
+            return lighting.quiet_wall(image,self.theme['panel'],scale) if kind=='wall' and style!='original' else image
         if scale!=1:return pygame.transform.scale(self.sprite(kind,w,h,state,phase,character),(w*scale,h*scale))
         key=(kind,w,h,state,phase,character)
         if key in self.cache:return self.cache[key]
@@ -136,6 +138,10 @@ class Painter:
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
             if depth and not use_original and kind not in ('projectile','key'):
                 im=lighting.shade(im,lighting.proximity(x/scale,y/scale,emitters) if kind in ('player','spider') else 0)
+            if not original and not use_original and kind in ('player','spider'):
+                high_contrast=settings.get('high_contrast',False)
+                edge=theme.readable(theme['panel']) if high_contrast else mix(theme['background'],(0,0,0),.55)
+                im=lighting.silhouette(im,edge,scale,high_contrast)
             orientation=o.get_orientation()
             if kind=='spider' and not use_original:
                 im=sprites.orient_spider(im,orientation,o.flipcounter,o.flipping,o.flip_direction,alpha)

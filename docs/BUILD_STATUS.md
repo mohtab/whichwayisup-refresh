@@ -1,3 +1,97 @@
+# Build status — 0.4.0rc4 public preview preparation, 2026-09-13
+
+The player-facing README now leads with downloads, first-game controls, and links
+to separate installation and player guides. The changelog and release notes use
+plain-language descriptions. GitHub has issue forms and a pull-request template.
+Codex (OpenAI) is explicitly credited for AI coding assistance.
+
+67 automated tests pass locally. Packaging now rejects symlinked input directories,
+handles special characters in local launcher paths, and includes the player guides
+in the Arch package. CI verifies both sprite-contrast modes and installs the Arch
+package in a disposable system. Check the GitHub Actions run for the exact commit
+before publishing its release assets. Earlier native rendering and campaign evidence
+remain below; human and hardware coverage is documented in RELEASE_ACCEPTANCE.md.
+
+The repository is prepared privately. Publish a preview for wider feedback; do not
+present pending hardware or external playtests as completed stable-release checks.
+
+---
+
+# Build status — 0.4.0rc3 sprite edges, 2026-09-13
+
+Modern player and enemy sprites now use a thin, dark, theme-tinted edge by default.
+Settings → Display → High-contrast sprites restores the bright outline when wanted;
+it defaults off for new and existing profiles and persists when changed. Original
+art remains unchanged. The Display tab fits the extra setting without overlap.
+
+65 automated tests pass, including saved toggle behavior. Native screenshots of
+both appearances and the Display tab are in `docs/release-review/rc3-*.png`.
+All 40 native Wayland pixel comparisons pass: five themes × four views with
+high contrast off and on. Reports: `rc3-render-pixels.json` and
+`rc3-high-contrast-pixels.json`.
+
+---
+
+# Build status — 0.4.0rc2 sprite rendering fix, 2026-09-13
+
+Fixed a regression in the new final compositor: native Wayland display-format
+canvases can retain an alpha mask with blending disabled. Copying them re-enabled
+alpha blending, hiding finished sprite pixels. Presentation now treats fully
+composed canvases as opaque RGB without changing source sprite transparency.
+
+Reproduced with the actual Omarchy profile and native Wayland display, then visually
+verified walls, player, enemies and items after the fix. The regression test
+recreates that pixel format and fails before the fix in both full and board layouts.
+65 automated tests pass. `tools/verify_render_pixels.py --desktop` compares actual
+framebuffer pixels against RGB-only references across all five themes and four views;
+all 20 comparisons pass on native Wayland and on the headless backend.
+
+The rc1 native window/soak checks below established window operation and timing,
+but did not detect this visual corruption. They must not be treated as visual
+acceptance. Human/hardware release gates in RELEASE_ACCEPTANCE.md remain open.
+
+---
+
+# Build status — 0.4.0rc1 release candidate, 2026-09-13
+
+Local offline release candidate. No public publishing or hosted services were enabled.
+
+- Hardened legacy imports, all-device fullscreen confirmation and board notifications.
+- Compact HUD; friendly stage labels, Continue, category-specific PBs in the library,
+  campaign progression/results, PB deltas and one primary death retry action.
+- Grouped settings, binding reset, controller-aware hints and D-pad support.
+- Modern actor outlines and quieter wall interiors; smooth UI/HUD independent of
+  crisp world presentation and optional Original integer fitting.
+- Immutable PB replays and retryable failed completion saves. Previous progression
+  stays intact if a later save fails.
+- Metadata-derived version, explicit reproducible source manifest, Arch recipe and
+  GitHub build/test/install workflow. CI workflow is prepared, not remotely executed.
+
+64 automated tests pass. Source and extracted Arch package each pass 25 headless
+startup/render checks. A real isolated 0.3.0 profile upgrade preserves settings,
+bindings, a completed original-stage PB/replay, a custom stage and an unfinished draft.
+This is profile-upgrade coverage, not a clean operating-system package install.
+
+Native Wayland on a 2560×1600 desktop passed three fullscreen round trips (keyboard,
+synthetic controller and mouse confirmation), timeout rollback, synthetic focus-loss
+input clearing and settings/compact-HUD recovery. No physical controller is attached.
+
+Final stable-source headless soak: 300.0s / 18,577 frames, median frame work 6.76ms, p95 10.53ms; no errors. Post-warmup RSS median increased 3.91 MiB. Finite sampling does not prove absence of leaks.
+
+Final stable-source native soak: 120.0s / 7,323 frames, median work 9.94ms and p95 14.60ms; no errors. These are scripted measurements, not guaranteed sustained FPS.
+
+All 15 original stages have retained completion input recordings that pass
+independent re-simulation against unchanged stage hashes. The strict completion
+gate passes. See [campaign-acceptance/README.md](campaign-acceptance/README.md). Human novice/runner
+playtests, final art/music acceptance, physical controller/multiple-monitor/suspend
+checks, clean OS installation and extended human play remain open. See
+[RELEASE_ACCEPTANCE.md](RELEASE_ACCEPTANCE.md) for exact procedures and limitations.
+
+Screenshots and final measurements: `docs/release-review/`. The ending screenshot is
+explicitly a layout fixture, not evidence of campaign completion.
+
+---
+
 # Build status — 0.3.0 Cyberpunk art review, 2026-09-13
 
 Private review build for mohtab/whichwayisup-refresh. Not a public release.

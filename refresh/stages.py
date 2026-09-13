@@ -56,29 +56,83 @@ def validate(d):
             raise StageError('Unsupported event action: '+action[:60])
     return d
 
+def _read_text(path):
+    """Decode explicitly so dropped non-UTF-8 files become user-facing errors."""
+    raw=path.read_bytes()
+    if len(raw)>MAX_BYTES:raise StageError('Stage exceeds 128 KiB')
+    try:return raw.decode('utf-8')
+    except UnicodeDecodeError as error:
+        line=raw[:error.start].count(b'\n')+1
+        raise StageError(f'Line {line}: Stage must be UTF-8 text') from error
+
 def parse_legacy(path, title=None):
     path=Path(path)
     if path.stat().st_size>MAX_BYTES:raise StageError('Stage exceeds 128 KiB')
-    lines=path.read_text().splitlines()
+    lines=_read_text(path).splitlines()
     d=dict(schema=1,id=path.stem,title=title or path.stem,author='Olli Hectigo Etuaho',license='CC-BY-3.0',tileset='brown',tiles=[],entities=[],events=[])
-    i=0;current=None
+    i=0;current=None;trigger_line=None;spawn_line=None
     while i<len(lines):
         line=lines[i].strip();i+=1
         if not line:continue
-        parts=line.split()
-        if line=='tiles':
-            d['tiles']=lines[i:i+20];i+=20;continue
-        if parts[0]=='set':d['tileset']=parts[1];continue
-        if parts[0]=='trigger':
-            current=dict(trigger=parts[1],times=int(parts[2]),actions=[])
-            d['events'].append(current);continue
-        if line=='end trigger':current=None;continue
-        if current is not None:current['actions'].append(line);continue
-        if parts[0] not in TYPES:raise StageError('Unknown entity: '+parts[0])
-        e=dict(type=parts[0],x=float(parts[1]),y=float(parts[2]))
-        if e['type']=='spider':e['attached']=parts[3]
-        if e['type']=='lever':e['uses']=int(parts[3])
-        d['entities'].append(e)
+        parts=line.split();number=i
+        def fail(message):raise StageError(f'Line {number}: {message}')
+        def fields(*counts):
+            if len(parts) not in counts:
+                fail(f"{parts[0]} expects {' or '.join(str(n-1) for n in counts)} fields after its name")
+        try:
+            if current is not None:
+                if line=='end trigger':current=None;continue
+                if parts[0]=='trigger':fail('Close the previous trigger with end trigger before starting another')
+                # Validate each action here to preserve its source line in errors.
+                probe=dict(d,tiles=[' '*20]*20,entities=[dict(type='player',x=0.,y=0.)],events=[dict(current,actions=[line])])
+                validate(probe)
+                if len(current['actions'])>=100:fail('Too many trigger actions (maximum 100)')
+                current['actions'].append(line);continue
+            if line=='end trigger':fail('end trigger has no matching trigger')
+            if line=='tiles':
+                if d['tiles']:fail('Only one tiles section is allowed')
+                if len(lines)-i<20:fail('tiles requires exactly 20 board rows')
+                for offset,row in enumerate(lines[i:i+20]):
+                    if len(row)!=20 or set(row)-set('WSB .'):
+                        raise StageError(f'Line {i+offset+1}: Board row must contain 20 characters (W, S, B or space)')
+                d['tiles']=lines[i:i+20];i+=20;continue
+            if parts[0]=='set':
+                fields(2)
+                if parts[1] not in ('brown','green','grey'):fail('Unknown legacy tileset')
+                d['tileset']=parts[1];continue
+            if parts[0]=='trigger':
+                fields(3)
+                if parts[1] not in TRIGGERS:fail('Unknown trigger: '+parts[1])
+                times=int(parts[2])
+                if not -1<=times<=100:fail('Trigger repeat count must be -1 to 100')
+                current=dict(trigger=parts[1],times=times,actions=[])
+                if len(d['events'])>=64:fail('Too many triggers (maximum 64)')
+                trigger_line=number;d['events'].append(current);continue
+            if parts[0] not in TYPES:fail('Unknown entity: '+parts[0])
+            if parts[0]=='lever':fields(4,5)
+            elif parts[0]=='spider':fields(4)
+            else:fields(3)
+            e=dict(type=parts[0],x=float(parts[1]),y=float(parts[2]))
+            if any(not math.isfinite(e[key]) or not 0<=e[key]<20 for key in ('x','y')):
+                fail('Entity coordinates must be finite numbers from 0 up to 20 (exclusive)')
+            if e['type']=='player':
+                if spawn_line is not None:fail(f'Duplicate player spawn (first declared on line {spawn_line})')
+                spawn_line=number
+            if e['type']=='spider':
+                if parts[3] not in ('LEFT','RIGHT','UP','DOWN'):fail('Spider attachment must be LEFT, RIGHT, UP or DOWN')
+                e['attached']=parts[3]
+            if e['type']=='lever':
+                e['uses']=int(parts[3])
+                if not -1<=e['uses']<=100 or e['uses']==0:fail('Lever uses must be -1 or 1–100')
+                if len(parts)==5 and parts[4]!='TRIGGER_FLIP':fail('Lever action must be TRIGGER_FLIP')
+            if len(d['entities'])>=128:fail('Too many entities (maximum 128)')
+            d['entities'].append(e)
+        except StageError as error:
+            if str(error).startswith('Line '):raise
+            fail(str(error))
+        except (ValueError,OverflowError) as error:
+            fail(f'Invalid numeric field in {parts[0]}: {error}')
+    if current is not None:raise StageError(f'Line {trigger_line}: Trigger is missing end trigger')
     return validate(d)
 
 def legacy(d):
@@ -96,8 +150,8 @@ def legacy(d):
 def read(path):
     path=Path(path)
     if path.stat().st_size>MAX_BYTES:raise StageError('Stage exceeds 128 KiB')
-    if path.suffix=='.txt':return parse_legacy(path)
-    try:return validate(json.loads(path.read_text()))
+    if path.suffix.lower()=='.txt':return parse_legacy(path)
+    try:return validate(json.loads(_read_text(path)))
     except (KeyError,TypeError,json.JSONDecodeError) as e:raise StageError(str(e)) from e
 
 def fingerprint(d):return hashlib.sha256(json.dumps(d,sort_keys=True).encode()).hexdigest()
@@ -133,6 +187,14 @@ class Stage:
     original:bool=True
     @property
     def engine_path(self):return str(self.path.with_suffix('')) if self.original else materialize(self.document)
+
+def display_name(stage):
+    """Friendly campaign label without changing documents, record keys or hashes."""
+    if stage.original:
+        match=re.fullmatch(r'w([0-9]+)-l([0-9]+)',stage.id)
+        if match and int(match[1])<len(WORLD_NAMES):
+            return f'{WORLD_NAMES[int(match[1])]} · Stage {int(match[2])+1}'
+    return stage.title
 
 class Catalog:
     def __init__(self):self.refresh()

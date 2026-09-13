@@ -1,0 +1,21 @@
+{
+  "from_version": "0.3.0",
+  "to_version": "0.4.0rc1",
+  "verified": true,
+  "checks": [
+    "settings and custom bindings retained",
+    "existing PB recognized as completed",
+    "user stage loaded",
+    "unfinished draft restored without adding a spawn",
+    "equal campaign replay completed after upgrade",
+    "PB records retained",
+    "prior replay, stage and draft bytes unchanged"
+  ],
+  "protected_files_sha256": {
+    "data/replays/13172b16d819eb82b1690d2cb8dfb0248fedd3498a4553a40c5c1e1bc56102ab_refresh24-v2_1x_no-dialogue.json": "a702e9f8250595ab0329e90636a512b156b4131b3650016f2ac50f6ae1baa7f4",
+    "data/stages/upgrade-user-stage.json": "5b146e7e71cc3ccf214da687c51dca21e0e30aa3fa76859fe5313a9f1bf5e3d7",
+    "data/drafts/upgrade-user-stage.json": "d05108d372ec45725fcc277ef5c234d723cb8c97101d6085afdd028f700c04bb"
+  },
+  "headless": true,
+  "clean_os_install": false
+}

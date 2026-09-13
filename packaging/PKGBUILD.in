@@ -1,9 +1,9 @@
 pkgname=whichwayisup-refresh
-pkgver=0.3.0
+pkgver=@VERSION@
 pkgrel=1
 pkgdesc='An independent Which Way Is Up? homage with modern themes and stage tools'
 arch=('any')
-url='https://salsa.debian.org/games-team/whichwayisup'
+url='@HOMEPAGE@'
 license=('GPL-2.0-only' 'CC-BY-3.0' 'Bitstream-Vera' 'MIT')
 depends=('python>=3.11' 'python-pygame>=2.6')
 source=("$pkgname-$pkgver.tar.gz")
@@ -12,12 +12,13 @@ sha256sums=('@SHA256@')
 check() {
   cd "$srcdir/$pkgname-$pkgver"
   SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy python -B -m unittest discover -s tests -q
+  python -B packaging/smoke_release.py --root .
 }
 
 package() {
   cd "$srcdir/$pkgname-$pkgver"
   install -d "$pkgdir/usr/share/$pkgname" "$pkgdir/usr/bin"
-  cp -r refresh lib data themes assets run_game.py README.md CREDITS.md LICENSE licenses "$pkgdir/usr/share/$pkgname/"
+  cp -r refresh lib data themes assets docs run_game.py pyproject.toml README.md CHANGELOG.md CONTRIBUTING.md CREDITS.md LICENSE licenses "$pkgdir/usr/share/$pkgname/"
   printf '#!/bin/sh\nexec python /usr/share/whichwayisup-refresh/run_game.py "$@"\n' > "$pkgdir/usr/bin/$pkgname"
   chmod 755 "$pkgdir/usr/bin/$pkgname"
   install -Dm644 packaging/whichwayisup-refresh.desktop "$pkgdir/usr/share/applications/whichwayisup-refresh.desktop"

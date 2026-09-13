@@ -14,6 +14,8 @@ shutil.copy2(root/'packaging/icon.svg',icons/'whichwayisup-refresh.svg')
 apps=Path.home()/'.local/share/applications';apps.mkdir(parents=True,exist_ok=True)
 # Desktop Entry Exec quoting differs from shell quoting. Paths here are absolute.
 escaped=str(launcher).replace('\\','\\\\').replace('"','\\"').replace('`','\\`').replace('$','\\$')
+# Escape the Desktop Entry value after Exec quoting; literal % is a field-code escape.
+escaped=escaped.replace('\\','\\\\').replace('%','%%')
 text=(root/'packaging/whichwayisup-refresh.desktop').read_text().replace('Exec=whichwayisup-refresh','Exec="'+escaped+'"')
 (apps/'whichwayisup-refresh.desktop').write_text(text)
 print(launcher)

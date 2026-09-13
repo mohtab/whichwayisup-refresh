@@ -36,7 +36,7 @@ class GamerProfiles(unittest.TestCase):
         a=self.app
         self.key(pygame.K_F1);self.assertEqual(a.screen,'help')
         self.key(pygame.K_ESCAPE);self.assertEqual(a.screen,'home')
-        self.choose('Play  /  w0-l0')
+        self.choose('Play / Stage 1')
         for _ in range(50):a.update(1/24)
         text=a.session.scene['dialogue'];self.assertTrue(text)
         self.key(pygame.K_z)

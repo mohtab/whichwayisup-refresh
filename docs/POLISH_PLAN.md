@@ -1,8 +1,8 @@
 # Which Way Is Up? — polish and release plan
 
 Owner: Mohtab Arabiat. Review started 13 September 2026.
-Source checkout: `/home/mohtab/whichwayisup` (preserve existing Git history and uncommitted refresh).
-Isolated implementation/review copy: `/home/mohtab/Work/whichwayisup-polish`.
+Development used a separate implementation/review checkout while preserving the
+original checkout's Git history and in-progress refresh.
 
 ## Direction
 
@@ -89,7 +89,7 @@ Automated profiles are simulated workflows, not actual external playtesters.
 Native window checks and screenshots are separate from headless tests.
 Before public release: human playthrough of all 15 stages; controller hardware;
 long-session/multi-monitor/suspend tests; blind novice and experienced runner
-sessions; approved final sprites/music; community service security/moderation tests;
+sessions; approved final sprites/music;
 source/license packaging and clean install/upgrade; Mohtab's visual acceptance.
 
 
@@ -110,3 +110,8 @@ Technical references checked during implementation:
 - Hyprland Lua dispatch patterns: https://wiki.hypr.land/Configuring/Basics/Binds/
   and installed `/usr/share/omarchy/bin/omarchy-hyprland-window-pop` /
   `omarchy-capture-webcam-resize`. Hyprland version tested: 0.56.2.
+
+## 0.4.0rc1 implementation
+
+The follow-up polish and release work is recorded in [RELEASE_ACCEPTANCE.md](RELEASE_ACCEPTANCE.md).
+This offline release does not depend on the proposed hosted community service.

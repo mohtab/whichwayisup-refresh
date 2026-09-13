@@ -1,0 +1,67 @@
+name: Release checks
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.11', '3.13']
+    env:
+      SDL_VIDEODRIVER: dummy
+      SDL_AUDIODRIVER: dummy
+      PYTHONDONTWRITEBYTECODE: '1'
+      SOURCE_DATE_EPOCH: '0'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install 'pygame>=2.6,<3'
+      - run: python -B -m unittest discover -s tests -v
+      - name: Verify rendered pixels in both contrast modes
+        run: |
+          python -B tools/verify_render_pixels.py --output dist/render-pixels.json
+          python -B tools/verify_render_pixels.py --high-contrast --output dist/high-contrast-pixels.json
+      - run: python -B tools/campaign_acceptance.py --require-complete --replay-dir docs/campaign-acceptance/replays --output dist/campaign-acceptance
+      - run: python -B packaging/build_release.py
+      - run: python -B packaging/smoke_release.py --archive dist/whichwayisup-refresh-*.tar.gz --report dist/source-smoke.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: source-python-${{ matrix.python }}
+          path: dist/
+  arch:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - run: pacman -Syu --noconfirm git python python-pygame
+      - uses: actions/checkout@v4
+      - name: Build and verify Arch package
+        run: |
+          useradd -m builder
+          chown -R builder:builder "$GITHUB_WORKSPACE"
+          runuser -u builder -- python -B packaging/build_release.py
+          runuser -u builder -- sh -c 'cd dist && makepkg --noconfirm'
+          mkdir dist/installed
+          bsdtar -xf dist/whichwayisup-refresh-*.pkg.tar.zst -C dist/installed
+          python -B packaging/smoke_release.py --root dist/installed/usr/share/whichwayisup-refresh --report dist/arch-smoke.json
+      - name: Verify clean installation and launcher
+        env:
+          SDL_VIDEODRIVER: dummy
+          SDL_AUDIODRIVER: dummy
+          WWISUP_USER_DIR: /tmp/wwisup-installed-saves
+          XDG_CONFIG_HOME: /tmp/wwisup-installed-config
+        run: |
+          pacman -U --noconfirm dist/whichwayisup-refresh-*.pkg.tar.zst
+          cd /tmp
+          whichwayisup-refresh --safe-window --smoke 0.1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arch-package
+          path: |
+            dist/*.pkg.tar.zst
+            dist/arch-smoke.json

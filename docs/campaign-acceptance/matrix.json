@@ -1,0 +1,330 @@
+{
+  "schema": 1,
+  "rules": "refresh24-v2",
+  "stage_count": 15,
+  "verified_completions": 15,
+  "completion_gate_passed": true,
+  "human_acceptance_passed": false,
+  "exploration": {
+    "attempts_per_unverified_stage": 0,
+    "frames_per_attempt": 3600
+  },
+  "stages": [
+    {
+      "id": "w0-l0",
+      "name": "Quest For The Keys \u00b7 Stage 1",
+      "world": "Quest For The Keys",
+      "stage_hash": "13172b16d819eb82b1690d2cb8dfb0248fedd3498a4553a40c5c1e1bc56102ab",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w0-l0.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 887,
+        "seconds": 36.958333333333336,
+        "category": "1x:no-dialogue",
+        "stage_hash": "13172b16d819eb82b1690d2cb8dfb0248fedd3498a4553a40c5c1e1bc56102ab"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w0-l0.json",
+      "route_note": "Collect key; 4 available levers."
+    },
+    {
+      "id": "w0-l1",
+      "name": "Quest For The Keys \u00b7 Stage 2",
+      "world": "Quest For The Keys",
+      "stage_hash": "fdbcd035ee9d1ad2f9eca150594a831bade80909929b9133063b6c1b0f8a1e7f",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w0-l1.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 1022,
+        "seconds": 34.06666666666667,
+        "category": "1.25x:no-dialogue",
+        "stage_hash": "fdbcd035ee9d1ad2f9eca150594a831bade80909929b9133063b6c1b0f8a1e7f"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w0-l1.json",
+      "route_note": "Collect key; 3 available levers."
+    },
+    {
+      "id": "w0-l2",
+      "name": "Quest For The Keys \u00b7 Stage 3",
+      "world": "Quest For The Keys",
+      "stage_hash": "2f6f66e205ef2afa330f619b0af4334aced8aaecd806df21fd33de69eb520b9f",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w0-l2.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 1039,
+        "seconds": 43.291666666666664,
+        "category": "1x:no-dialogue",
+        "stage_hash": "2f6f66e205ef2afa330f619b0af4334aced8aaecd806df21fd33de69eb520b9f"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w0-l2.json",
+      "route_note": "Collect key; 3 available levers."
+    },
+    {
+      "id": "w0-l3",
+      "name": "Quest For The Keys \u00b7 Stage 4",
+      "world": "Quest For The Keys",
+      "stage_hash": "68599651e599f97db285290e3d9d0b031dba5f8512de2a58fcd13805b47a48aa",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w0-l3.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 1203,
+        "seconds": 50.125,
+        "category": "1x:no-dialogue",
+        "stage_hash": "68599651e599f97db285290e3d9d0b031dba5f8512de2a58fcd13805b47a48aa"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w0-l3.json",
+      "route_note": "Collect key; 6 available levers."
+    },
+    {
+      "id": "w0-l4",
+      "name": "Quest For The Keys \u00b7 Stage 5",
+      "world": "Quest For The Keys",
+      "stage_hash": "d3b866b65b191c9ac944bc20487b9743e1e1fee92940fca372647cf96a1e4f48",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w0-l4.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 1419,
+        "seconds": 59.125,
+        "category": "1x:no-dialogue",
+        "stage_hash": "d3b866b65b191c9ac944bc20487b9743e1e1fee92940fca372647cf96a1e4f48"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w0-l4.json",
+      "route_note": "Collect key; 3 available levers."
+    },
+    {
+      "id": "w0-l5",
+      "name": "Quest For The Keys \u00b7 Stage 6",
+      "world": "Quest For The Keys",
+      "stage_hash": "13413ac719872b19ed3a88a22c87d414cc529fe24a8d6f1ffd942fad564a18fa",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w0-l5.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 1943,
+        "seconds": 64.76666666666667,
+        "category": "1.25x:no-dialogue",
+        "stage_hash": "13413ac719872b19ed3a88a22c87d414cc529fe24a8d6f1ffd942fad564a18fa"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w0-l5.json",
+      "route_note": "Collect key; 3 available levers."
+    },
+    {
+      "id": "w0-l6",
+      "name": "Quest For The Keys \u00b7 Stage 7",
+      "world": "Quest For The Keys",
+      "stage_hash": "591618db2515f583f14a809fc6a53c0008d2fad3b228c495db7138b2c89bd855",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w0-l6.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 2237,
+        "seconds": 74.56666666666666,
+        "category": "1.25x:no-dialogue",
+        "stage_hash": "591618db2515f583f14a809fc6a53c0008d2fad3b228c495db7138b2c89bd855"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w0-l6.json",
+      "route_note": "Collect other pants; 3 available levers."
+    },
+    {
+      "id": "w1-l0",
+      "name": "The Other Side \u00b7 Stage 1",
+      "world": "The Other Side",
+      "stage_hash": "c4076a064a23637715a8e8c7778911766a61b1152d03c08ed5fd25903c657e9d",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w1-l0.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 856,
+        "seconds": 35.666666666666664,
+        "category": "1x:no-dialogue",
+        "stage_hash": "c4076a064a23637715a8e8c7778911766a61b1152d03c08ed5fd25903c657e9d"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w1-l0.json",
+      "route_note": "Collect power crystal; 3 available levers. The first visible lever is high on the right; the crystal starts beyond the left viewport. Watch the floor spikes and blobs."
+    },
+    {
+      "id": "w1-l1",
+      "name": "The Other Side \u00b7 Stage 2",
+      "world": "The Other Side",
+      "stage_hash": "a38fb0c3b601f80909ee172b88d929813a61fc1a69492dc34cdb6be028e621eb",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w1-l1.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 69,
+        "seconds": 2.875,
+        "category": "1x:no-dialogue",
+        "stage_hash": "a38fb0c3b601f80909ee172b88d929813a61fc1a69492dc34cdb6be028e621eb"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w1-l1.json",
+      "route_note": "Collect power crystal; 4 available levers."
+    },
+    {
+      "id": "w1-l2",
+      "name": "The Other Side \u00b7 Stage 3",
+      "world": "The Other Side",
+      "stage_hash": "a0602df35d0d0bc8a0a838ff4f8251566939fdf5fcdab236ceadd1d900aa9b1e",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w1-l2.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 3334,
+        "seconds": 138.91666666666666,
+        "category": "1x:no-dialogue",
+        "stage_hash": "a0602df35d0d0bc8a0a838ff4f8251566939fdf5fcdab236ceadd1d900aa9b1e"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w1-l2.json",
+      "route_note": "Collect power crystal; 7 available levers."
+    },
+    {
+      "id": "w1-l3",
+      "name": "The Other Side \u00b7 Stage 4",
+      "world": "The Other Side",
+      "stage_hash": "503683d06970bf59ae8382fc1bebdc0b34e1a5421e4c4639ba9ea4bc224d76bd",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w1-l3.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 299,
+        "seconds": 12.458333333333334,
+        "category": "1x:no-dialogue",
+        "stage_hash": "503683d06970bf59ae8382fc1bebdc0b34e1a5421e4c4639ba9ea4bc224d76bd"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w1-l3.json",
+      "route_note": "Collect power crystal; 4 available levers."
+    },
+    {
+      "id": "w1-l4",
+      "name": "The Other Side \u00b7 Stage 5",
+      "world": "The Other Side",
+      "stage_hash": "2bf2c9a47772a46a3df27ac86cecaab1a61db2749193c5bcc82f94a94f2d2694",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w1-l4.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 1452,
+        "seconds": 60.5,
+        "category": "1x:no-dialogue",
+        "stage_hash": "2bf2c9a47772a46a3df27ac86cecaab1a61db2749193c5bcc82f94a94f2d2694"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w1-l4.json",
+      "route_note": "Collect power crystal; 10 available levers."
+    },
+    {
+      "id": "w1-l5",
+      "name": "The Other Side \u00b7 Stage 6",
+      "world": "The Other Side",
+      "stage_hash": "bd56daf056cf4e88068430950aa8c1d0d55e91683bf4c285ebdff6767f2a5759",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w1-l5.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 960,
+        "seconds": 40.0,
+        "category": "1x:no-dialogue",
+        "stage_hash": "bd56daf056cf4e88068430950aa8c1d0d55e91683bf4c285ebdff6767f2a5759"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w1-l5.json",
+      "route_note": "Collect power crystal; 5 available levers. Two repeatable levers sit beside the central partition; three single-use levers and several spiders guard the remaining layout."
+    },
+    {
+      "id": "w1-l6",
+      "name": "The Other Side \u00b7 Stage 7",
+      "world": "The Other Side",
+      "stage_hash": "d8d560e390dc5602a2cbb9a3903b96e98d19022634c0d2de1b2d91f7273c9331",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w1-l6.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 831,
+        "seconds": 34.625,
+        "category": "1x:no-dialogue",
+        "stage_hash": "d8d560e390dc5602a2cbb9a3903b96e98d19022634c0d2de1b2d91f7273c9331"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w1-l6.json",
+      "route_note": "Collect power crystal; 4 available levers. Four repeatable levers connect the chambers; the crystal begins beyond the left viewport."
+    },
+    {
+      "id": "w2-l0",
+      "name": "A Piece of Cake \u00b7 Stage 1",
+      "world": "A Piece of Cake",
+      "stage_hash": "da4051e80a1aa1686eaa0f8e88b5f669d13ef4e7b7604d7a17e16c838f013c19",
+      "original_load": true,
+      "verified_completion": true,
+      "completion_replay": "replays/w2-l0.json",
+      "attempts": 0,
+      "human_playtest": "pending",
+      "verification": {
+        "verified_locally": true,
+        "ticks": 1310,
+        "seconds": 54.583333333333336,
+        "category": "1x:no-dialogue",
+        "stage_hash": "da4051e80a1aa1686eaa0f8e88b5f669d13ef4e7b7604d7a17e16c838f013c19"
+      },
+      "provenance": "Existing input recording; independently resimulated",
+      "source_name": "w2-l0.json",
+      "route_note": "Collect cake; 3 available levers. The cake begins beyond the left viewport beside a spider; three repeatable levers change the visible portion of the board."
+    }
+  ],
+  "rejected_replays": []
+}

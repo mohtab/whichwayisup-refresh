@@ -1,0 +1,28 @@
+{
+  "version": "0.4.0rc1",
+  "backend": "wayland",
+  "desktop_sizes": [
+    [
+      2560,
+      1600
+    ]
+  ],
+  "controllers_detected": 0,
+  "checks": [
+    "fullscreen round trip 1",
+    "fullscreen round trip 2",
+    "fullscreen round trip 3",
+    "timeout rollback",
+    "synthetic focus-loss pause/input clearing",
+    "settings recovery and compact HUD"
+  ],
+  "limitations": [
+    "Controller actions are synthetic; no physical hardware acceptance.",
+    "No physical suspend or monitor movement performed. Audio is dummy."
+  ],
+  "window_size": [
+    1280,
+    774
+  ],
+  "passed": true
+}

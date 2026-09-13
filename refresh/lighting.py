@@ -2,6 +2,34 @@
 from functools import lru_cache
 import pygame
 
+@lru_cache(maxsize=192)
+def quiet_wall(image,color,border=2):
+    """Lower decorative contrast while retaining the tile's solid outer edge."""
+    result=image.copy()
+    interior=result.get_rect().inflate(-2*border,-2*border)
+    if interior.width>0 and interior.height>0:
+        veil=pygame.Surface(interior.size,pygame.SRCALPHA)
+        veil.fill((*color,82))
+        result.blit(veil,interior)
+    return result
+
+@lru_cache(maxsize=384)
+def silhouette(image,color,width=1,high_contrast=False):
+    """A subtle keyline, or an optional bright rim, separates actors from scenery.
+
+    Work inside the existing canvas so animation anchors and support alignment
+    remain unchanged. Cached source surfaces are never modified.
+    """
+    mask=pygame.mask.from_surface(image,80)
+    result=pygame.Surface(image.get_size(),pygame.SRCALPHA)
+    strokes=((2*width,(5,9,14,220)),(width,(*color,160))) if high_contrast else ((width,(*color,150)),)
+    for radius,rgba in strokes:
+        stroke=mask.to_surface(setcolor=rgba,unsetcolor=(0,0,0,0))
+        for dx,dy in ((-radius,0),(radius,0),(0,-radius),(0,radius)):
+            result.blit(stroke,(dx,dy))
+    result.blit(image,(0,0))
+    return result
+
 @lru_cache(maxsize=384)
 def shade(image,glow=0):
     result=image.copy()

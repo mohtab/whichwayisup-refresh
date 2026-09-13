@@ -1,0 +1,14 @@
+name: Suggest an improvement
+description: Share an idea that would make the game better.
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to improve?
+      description: Tell us what you are trying to do and how the game could help.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Examples or extra context (optional)

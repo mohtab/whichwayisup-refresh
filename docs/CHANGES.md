@@ -1,3 +1,28 @@
+# 0.4.0rc3 — subtle sprite edges
+
+- Replace the default bright player/enemy outline with a thin, dark edge tinted to the theme.
+- Add Settings → Display → High-contrast sprites, off by default, for optional bright outlines on modern artwork.
+- Preserve original artwork, animation positioning and the Wayland rendering fix.
+
+# 0.4.0rc2 — restore native sprite rendering
+
+- Keep completed playfield and HUD canvases opaque when native pixel formats carry
+  unused alpha bytes; source sprite transparency remains intact.
+- Reproduce Wayland copy/alpha behavior in regression tests; compare final pixels
+  against opaque references in every theme and play layout.
+
+# 0.4.0rc1 — release candidate polish
+
+- Robust legacy imports; fullscreen input capture across devices; visible board notifications.
+- Compact HUD, visible progression, friendly stage labels, Continue and campaign results.
+- One death retry action, PB deltas, retryable completion saves and immutable PB replays.
+- Grouped settings, reset bindings, generic controller prompts and D-pad navigation.
+- Clearer actor silhouettes, quieter walls, smooth UI with independent crisp/integer board scaling.
+- Single version source, deterministic manifest-based release archive, corrected Arch metadata,
+  source/package smoke checks and CI installation workflow.
+- Original campaign replay acceptance and headless/native soak diagnostics, with human and
+  hardware checks explicitly tracked in RELEASE_ACCEPTANCE.md.
+
 # Refresh changes — 2026-09-12
 
 The pre-refresh working tree and legacy saves were archived before editing under

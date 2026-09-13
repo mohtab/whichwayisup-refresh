@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Installation help
+    url: https://github.com/mohtab/whichwayisup-refresh/blob/main/docs/INSTALL.md
+    about: Start here for downloads, setup, and common startup problems.
+  - name: Player guide
+    url: https://github.com/mohtab/whichwayisup-refresh/blob/main/docs/PLAYER_GUIDE.md
+    about: Controls, settings, saves, and the stage studio.

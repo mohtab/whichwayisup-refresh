@@ -2,7 +2,7 @@
 
 *Which Way Is Up?* was created by **Olli “Hectigo” Etuaho**, copyright 2007.
 This independent refresh is directed and maintained by **Mohtab Arabiat**, with AI
-coding assistance. It is an homage and adaptation of the original game.
+coding assistance from **Codex (OpenAI)**. It is an homage and adaptation of the original game.
 
 ## A Linux memory
 
@@ -32,7 +32,7 @@ for preserving and maintaining the game. Their notices remain in
   Its full notices and terms are included in `licenses/original-copyright`.
   The font file is unmodified.
 - The new interface, palette-driven drawings and integration were developed for this
-  refresh with AI coding assistance. They do not imply authorship of the original game.
+  refresh with AI coding assistance from Codex (OpenAI). They do not imply authorship of the original game.
 - The DHH character is a newly generated, stylized fan-art cameo inspired by his public X profile portrait. This is an
   unofficial homage with no affiliation or endorsement claimed. No third-party
   portrait photograph is bundled. The Omarchy emblem is attributed separately below.
@@ -52,7 +52,7 @@ synthesized by `refresh/audio.py` and uses no sampled third-party recording.
 The explorer, armored spider and compass key sprite sheets were generated with
 OpenAI’s built-in image generation tool on September 13, 2026. Selected source
 PNGs and exact prompts are included in `assets/sprites/`. Animation integration
-and presentation code were developed with AI coding assistance. New sprite assets
+and presentation code were developed with AI coding assistance from Codex (OpenAI). New sprite assets
 use GPL-2.0-only to the extent copyright applies.
 
 The September 13 clockwork props and DHH atlas also use built-in image generation.

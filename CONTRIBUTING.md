@@ -5,8 +5,8 @@ license notices, and attribution for every contribution you build upon.
 
 ## Submit a stage
 
-Online submissions are not connected yet. Prepare a stage JSON with the studio and
-keep the following together for a future repository pull request:
+Export a stage JSON from the studio and propose it in a GitHub pull request.
+Include:
 
 1. Stage title, author name and explicit content license.
 2. The exported JSON, tested in the current refresh version.
@@ -22,6 +22,12 @@ Run `python run_game.py --import-stage path/to/stage.json` to validate and impor
 Unknown entity types, malformed tile maps and executable actions will be rejected.
 Maintainer review is still needed for solvability, quality and attribution. Nothing is
 automatically uploaded from your machine.
+
+## Report a problem or share an idea
+
+Use the repository’s issue forms for bugs and suggestions. Include your version,
+Linux distribution, and steps to reproduce a bug. For setup help, start with the
+[install guide](docs/INSTALL.md).
 
 ## Code and visual design
 

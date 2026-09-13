@@ -1,0 +1,29 @@
+{
+  "version": "0.4.0rc3",
+  "backend": "wayland",
+  "high_contrast": false,
+  "checks_passed": 20,
+  "checks": [
+    "original/home",
+    "original/full",
+    "original/board",
+    "original/compact",
+    "refresh/home",
+    "refresh/full",
+    "refresh/board",
+    "refresh/compact",
+    "omarchy/home",
+    "omarchy/full",
+    "omarchy/board",
+    "omarchy/compact",
+    "system/home",
+    "system/full",
+    "system/board",
+    "system/compact",
+    "cyberpunk/home",
+    "cyberpunk/full",
+    "cyberpunk/board",
+    "cyberpunk/compact"
+  ],
+  "reference": "RGB-only snapshots of completed canvases; exact final framebuffer comparison."
+}

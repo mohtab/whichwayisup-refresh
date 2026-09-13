@@ -1,0 +1,31 @@
+name: Report a problem
+description: Tell us what went wrong so we can help.
+title: "[Bug] "
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Game version
+      description: For example, 0.4.0rc4. You can also run `whichwayisup-refresh --version`.
+    validations:
+      required: true
+  - type: input
+    id: system
+    attributes:
+      label: Your system
+      description: Linux distribution and desktop; add your controller model if relevant.
+      placeholder: Arch Linux, Hyprland, keyboard
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include what you expected and the steps that caused the problem. Add a screenshot if it helps.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Extra details (optional)
+      description: Stage, theme, window mode, or relevant log lines. Remove personal information before posting.
