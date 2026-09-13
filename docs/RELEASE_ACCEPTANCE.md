@@ -75,7 +75,7 @@ exists. Record tester, date, hardware, build version and result for each check.
 | Physical controller | Stick/D-pad, jump/hold/interact, menus, cancel, fullscreen, unplug/reconnect; note controller model and SDL mapping | Pending; no joystick device found locally |
 | Suspend/resume | Suspend during play and pause; resume without time jump or held input; audio/window recover | Pending supervised workstation test |
 | Multiple monitors | Move between differing scale/refresh displays; fullscreen confirm/revert restores usable window | Pending physical display test |
-| Clean OS installation | Install built Arch package in disposable environment, launch from menu and terminal without checkout | CI prepared; local host package installation not performed |
+| Clean OS installation | Install built Arch package in disposable environment, launch from menu and terminal without checkout | Passed in GitHub Actions: package installed and launched in a clean Arch container |
 | Extended human session | At least 30 minutes actual play, no crashes or growing input/audio latency; capture memory and logs | Pending human session |
 
 ## Release decision
@@ -85,7 +85,8 @@ local records, themes and the stage studio. Online leaderboards, community hosti
 and new physics are separate milestones. Their proposed architecture is not a
 prerequisite for shipping the offline game.
 
-Publish only after the remaining acceptance results have been reviewed. Keep the
+A public preview can gather the remaining player and hardware feedback. A stable
+release should follow review of those results. Keep the
 source archive, checksum, Arch package, test report and verified campaign inputs
 for the exact approved revision together.
 

@@ -8,8 +8,9 @@ Codex (OpenAI) is explicitly credited for AI coding assistance.
 67 automated tests pass locally. Packaging now rejects symlinked input directories,
 handles special characters in local launcher paths, and includes the player guides
 in the Arch package. CI verifies both sprite-contrast modes and installs the Arch
-package in a disposable system. Check the GitHub Actions run for the exact commit
-before publishing its release assets. Earlier native rendering and campaign evidence
+package in a disposable system. GitHub Actions passed on Python 3.11 and 3.13,
+including all 15 campaign replays, 40 pixel checks per source job, and clean Arch
+installation and launch. Release assets are taken from the passing workflow run. Earlier native rendering and campaign evidence
 remain below; human and hardware coverage is documented in RELEASE_ACCEPTANCE.md.
 
 The repository is prepared privately. Publish a preview for wider feedback; do not

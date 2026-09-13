@@ -51,3 +51,10 @@ suspend/resume, or multiple monitors, including your system and game version.
 Original game by **Olli “Hectigo” Etuaho**. Refresh by **Mohtab Arabiat**, with
 **AI coding assistance from Codex (OpenAI)**. See the included `CREDITS.md` for
 artwork, music, licenses, and the unofficial Omarchy/DHH tribute attribution.
+
+## Checks for this preview
+
+Automated checks passed on Python 3.11 and 3.13, including 67 tests, all 15 campaign
+completion replays, and both sprite-contrast modes. The Arch package was installed
+and launched in a clean container. The attached game files come from GitHub Actions.
+These checks complement the player and hardware feedback still requested above.
