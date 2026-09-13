@@ -637,7 +637,8 @@ class App:
             self.costs.append((time.perf_counter()-cost)*1000);self.frame_count+=1
             if self.args.smoke and time.monotonic()-start>=self.args.smoke:self.running=False
         if self.args.screenshot:
-            pygame.image.save(self.ui.surface,self.args.screenshot)
+            capture=self.display.screen if self.display.content_size==self.painter.world.get_size() else self.ui.surface
+            pygame.image.save(capture,self.args.screenshot)
         if self.editor and self.editor.dirty:
             try:self.editor.save(draft=True)
             except OSError:logging.exception('Could not save draft on exit')
