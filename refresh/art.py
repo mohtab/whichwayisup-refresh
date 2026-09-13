@@ -67,41 +67,61 @@ class Painter:
                     pygame.draw.polygon(s,hazard,[(x+2,h-2),(x+5,max(2,h-19)),(x+8,h-2)])
                     pygame.draw.line(s,pale,(x+5,max(2,h-19)),(x+6,h-9))
         elif kind=='player':
-            # All styles share legacy physics dimensions. Only the drawing changes.
-            bob=1 if state=='walking' and phase%2 else 0
+            # Draw at a consistent design size, then fit the unchanged collision box.
             if state=='gone':return s
-            if state in ('dying','exit'):
-                alpha=max(40,255-phase*35)
-            else:alpha=255
-            dhh=character=='dhh'
-            skin=(223,176,140);hair=(84,58,42)
+            body=pygame.Surface((32,44),pygame.SRCALPHA)
+            stride=math.sin(phase*math.tau/16)
+            walking=state=='walking'
+            rise=state=='rising';fall=state in ('falling','gliding')
+            bob=round(abs(stride)*1.5) if walking else 0
+            lean=2 if walking else -2 if state=='shouting' else 0
+            cx=16+lean;head_y=4+bob
+            dhh=character=='dhh';skin=(239,191,150);hair=(72,47,37)
             coat=second if dhh else accent
-            step=(-2 if phase%2 else 2) if state=='walking' else 0
-            head_y=max(1,h//7)+bob
-            head=pygame.Rect(cx-8,head_y,16,15)
-            pygame.draw.line(s,ink,(cx-5,h-12),(cx-6+step,h-2),5)
-            pygame.draw.line(s,ink,(cx+5,h-12),(cx+6-step,h-2),5)
-            pygame.draw.rect(s,coat,(cx-9,head_y+13,18,max(8,h-head_y-23)),border_radius=4)
-            pygame.draw.line(s,mix(coat,pale,.3),(cx-2,head_y+15),(cx-2,h-13),2)
-            pygame.draw.line(s,skin,(cx-10,head_y+16),(cx-12,head_y+24-step),3)
-            pygame.draw.line(s,skin,(cx+10,head_y+16),(cx+12,head_y+24+step),3)
-            pygame.draw.ellipse(s,skin,head)
-            pygame.draw.arc(s,hair,head.inflate(1,1),0,math.pi,5)
+            # Scarf, opposite arm/leg swing, contrasting soles: a readable run cycle.
+            if not dhh:
+                tail=round(stride*2) if walking else 0
+                pygame.draw.polygon(body,second,[(cx-7,18+bob),(cx-15,20+tail),(cx-13,25+tail),(cx-5,21+bob)])
+            step=round(stride*6) if walking else 0
+            feet=[(cx-5+step,41- (max(0,round(stride*3)) if walking else 0)),
+                  (cx+5-step,41- (max(0,round(-stride*3)) if walking else 0))]
+            if rise:feet=[(cx-8,36),(cx+7,40)]
+            if fall:feet=[(cx-7,40),(cx+8,39)]
+            for hip,foot in zip((cx-4,cx+4),feet):
+                knee=((hip+foot[0])//2,34)
+                pygame.draw.lines(body,ink,False,[(hip,29),knee,foot],5)
+                pygame.draw.line(body,pale,(foot[0]-2,foot[1]),(foot[0]+3,foot[1]),2)
+            arms=[(cx-11,28+round(stride*4) if walking else 29),(cx+11,28-round(stride*4) if walking else 29)]
+            if rise:arms=[(cx-12,19),(cx+10,12)]
+            if fall:arms=[(cx-13,19),(cx+12,18)]
+            for shoulder,hand in zip((cx-7,cx+7),arms):
+                pygame.draw.line(body,ink,(shoulder,21+bob),hand,5)
+                pygame.draw.line(body,coat,(shoulder,21+bob),hand,3)
+                pygame.draw.circle(body,skin,hand,2)
+            pygame.draw.rect(body,ink,(cx-9,17+bob,18,15),border_radius=4)
+            pygame.draw.rect(body,coat,(cx-7,18+bob,14,12),border_radius=3)
+            pygame.draw.line(body,mix(coat,pale,.5),(cx,20+bob),(cx,29+bob),2)
+            pygame.draw.rect(body,ink,(cx-8,head_y-1,17,16),border_radius=6)
+            pygame.draw.rect(body,skin,(cx-7,head_y,15,14),border_radius=5)
+            pygame.draw.rect(body,hair,(cx-7,head_y,15,5),border_radius=3)
             if dhh:
-                pygame.draw.polygon(s,hair,[(cx-8,head_y+7),(cx-5,head_y+16),(cx+4,head_y+16),(cx+8,head_y+8),(cx+3,head_y+10),(cx-4,head_y+10)])
-                pygame.draw.line(s,skin,(cx-2,head_y+11),(cx+3,head_y+11),2)
+                pygame.draw.polygon(body,hair,[(cx-7,head_y+8),(cx-4,head_y+14),(cx+4,head_y+14),(cx+7,head_y+8),(cx+3,head_y+10),(cx-3,head_y+10)])
             else:
-                pygame.draw.rect(s,accent,(cx-9,head_y,18,5),border_radius=2)
-                pygame.draw.line(s,accent,(cx+4,head_y+4),(cx+11,head_y+4),2)
-            pygame.draw.circle(s,ink,(cx+4,head_y+6),1)
-            if t.style=='cyberpunk':pygame.draw.line(s,accent,(cx-4,head_y+6),(cx+7,head_y+6),2)
-            s.set_alpha(alpha)
+                pygame.draw.rect(body,second,(cx-8,head_y+2,17,3),border_radius=1)
+            pygame.draw.line(body,ink,(cx+3,head_y+7),(cx+4,head_y+7),2)
+            if t.style=='cyberpunk':pygame.draw.line(body,accent,(cx-3,head_y+7),(cx+7,head_y+7),2)
+            if state=='shouting':pygame.draw.ellipse(body,ink,(cx+2,head_y+10,3,3))
+            if state=='gliding':
+                pygame.draw.line(body,second,(cx,2),(cx,head_y+1),1)
+                pygame.draw.arc(body,second,(cx-12,-3,24,13),0,math.pi,2)
+            s=pygame.transform.scale(body,(w,h))
+            if state in ('dying','exit'):s.set_alpha(max(0,255-phase*17))
         elif kind=='spider':
             cy=h//2
             for side in (-1,1):
                 for n in range(3):
                     yy=cy-6+n*6
-                    pygame.draw.lines(s,second,False,[(cx+side*5,yy),(cx+side*(12+n%2*2),yy-4),(cx+side*(w//2-1),yy+3+phase%2)],2)
+                    pygame.draw.lines(s,second,False,[(cx+side*5,yy),(cx+side*(12+n%2*2),yy-4),(cx+side*(w//2-1),yy+3+round(math.sin(phase*math.tau/16+n)*3))],2)
             pygame.draw.ellipse(s,ink,(cx-9,cy-10,18,21))
             pygame.draw.ellipse(s,mix(t['panel'],second,.4),(cx-7,cy-8,14,16))
             pygame.draw.circle(s,hazard,(cx-3,cy-3),2)
@@ -112,7 +132,8 @@ class Painter:
             pygame.draw.line(s,accent,(0,cy),(w-1,cy),max(3,h-2))
             pygame.draw.line(s,(245,255,255),(2,cy),(w-2,cy),max(1,h//3))
         elif kind=='blob':
-            pygame.draw.ellipse(s,second,(1,h//4,w-2,h*3//4))
+            squash=round(math.sin(phase*math.tau/16)*2)
+            pygame.draw.ellipse(s,second,(1,h//4+squash,w-2,max(4,h*3//4-squash)))
             pygame.draw.circle(s,pale,(w//3,h//2),3)
             pygame.draw.circle(s,pale,(w*2//3,h//2),3)
             pygame.draw.circle(s,ink,(w//3+1,h//2),1)
@@ -163,6 +184,10 @@ class Painter:
             else:
                 state=o.current_animation
                 phase=o.animations[state].i
+                if kind in ('player','spider','blob') and state not in ('dying','exit','gone'):
+                    phase=int((max(0,session.tick-1)+alpha)*2)%16
+                if kind=='player' and state=='jumping':
+                    state='rising' if o.dy<0 else 'gliding' if session.driver.inputs.get('UP') else 'falling'
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character)
             orientation=o.get_orientation()
             if orientation==2:im=pygame.transform.flip(im,True,False)

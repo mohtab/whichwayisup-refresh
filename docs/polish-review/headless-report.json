@@ -1,0 +1,50 @@
+{
+  "backend": "dummy",
+  "desktop": [
+    [
+      1024,
+      768
+    ]
+  ],
+  "audio": "dummy (native audio not assessed)",
+  "screens": [
+    "home",
+    "settings",
+    "credits",
+    "help",
+    "records",
+    "stages",
+    "editor",
+    "play",
+    "pause",
+    "lost",
+    "complete"
+  ],
+  "window_sizes": [
+    [
+      800,
+      533
+    ],
+    [
+      800,
+      533
+    ],
+    [
+      800,
+      533
+    ],
+    [
+      800,
+      533
+    ]
+  ],
+  "fullscreen_roundtrips": 3,
+  "rollback": "passed",
+  "paused_settings": "passed",
+  "work_ms": {
+    "median": 5.71,
+    "p95": 6.37,
+    "note": "180 scripted frames, no frame limiter; not a sustained FPS claim"
+  },
+  "running": true
+}

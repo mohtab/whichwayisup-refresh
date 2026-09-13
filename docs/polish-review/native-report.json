@@ -1,0 +1,50 @@
+{
+  "backend": "wayland",
+  "desktop": [
+    [
+      2560,
+      1600
+    ]
+  ],
+  "audio": "dummy (native audio not assessed)",
+  "screens": [
+    "home",
+    "settings",
+    "credits",
+    "help",
+    "records",
+    "stages",
+    "editor",
+    "play",
+    "pause",
+    "lost",
+    "complete"
+  ],
+  "window_sizes": [
+    [
+      800,
+      532
+    ],
+    [
+      1000,
+      668
+    ],
+    [
+      1200,
+      800
+    ],
+    [
+      1440,
+      960
+    ]
+  ],
+  "fullscreen_roundtrips": 3,
+  "rollback": "passed",
+  "paused_settings": "passed",
+  "work_ms": {
+    "median": 8.45,
+    "p95": 11.01,
+    "note": "180 scripted frames, no frame limiter; not a sustained FPS claim"
+  },
+  "running": true
+}

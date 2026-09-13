@@ -1,0 +1,33 @@
+<frozen importlib._bootstrap>:491: RuntimeWarning: Your system is avx2 capable but pygame was not built with support for it. The performance of some of your blits could be adversely affected. Consider enabling compile time detection with environment variables like PYGAME_DETECT_AVX2=1 if you are compiling without cross compilation.
+test_fullscreen_rollback_and_pressed_input_once (test_application.ApplicationTests.test_fullscreen_rollback_and_pressed_input_once) ... ok
+test_navigation_settings_play_pause_and_studio (test_application.ApplicationTests.test_navigation_settings_play_pause_and_studio) ... ok
+test_resize_targets_own_pid_and_address_only (test_polish.DesktopScopeTests.test_resize_targets_own_pid_and_address_only) ... ok
+test_accessibility_audio_and_binding_conflicts (test_polish.GamerProfiles.test_accessibility_audio_and_binding_conflicts) ... ok
+test_animation_has_distinct_run_rise_and_fall_poses (test_polish.GamerProfiles.test_animation_has_distinct_run_rise_and_fall_poses) ... ok
+test_creator_keyboard_save_undo_export_and_playtest (test_polish.GamerProfiles.test_creator_keyboard_save_undo_export_and_playtest) ... ok
+test_first_time_keyboard_player (test_polish.GamerProfiles.test_first_time_keyboard_player) ... ok
+test_long_multiline_copy_and_dialogue_pagination (test_polish.GamerProfiles.test_long_multiline_copy_and_dialogue_pagination) ... ok
+test_preview_cannot_change_active_run (test_polish.GamerProfiles.test_preview_cannot_change_active_run) ... ok
+test_replays_reject_forged_time_and_inputs (test_polish.GamerProfiles.test_replays_reject_forged_time_and_inputs) ... ok
+test_save_failure_remains_playable_and_no_stale_activation (test_polish.GamerProfiles.test_save_failure_remains_playable_and_no_stale_activation) ... ok
+test_speedrunner_pb_retry_rules_and_replay (test_polish.GamerProfiles.test_speedrunner_pb_retry_rules_and_replay) ... ok
+test_bad_record_fields_are_backed_up_and_do_not_crash_menus (test_polish.RecoveryTests.test_bad_record_fields_are_backed_up_and_do_not_crash_menus) ... ok
+test_all_original_stage_roundtrips (test_refresh.ContentTests.test_all_original_stage_roundtrips) ... ok
+test_editor_undo_rotation_save_import (test_refresh.ContentTests.test_editor_undo_rotation_save_import) ... ok
+test_save_corruption_and_separation (test_refresh.ContentTests.test_save_corruption_and_separation) ... ok
+test_untrusted_content (test_refresh.ContentTests.test_untrusted_content) ... ok
+test_asset_cache_stays_warm (test_refresh.RuntimeTests.test_asset_cache_stays_warm) ... ok
+test_complete_user_stage_through_real_trigger (test_refresh.RuntimeTests.test_complete_user_stage_through_real_trigger) ... ok
+test_original_stages_and_rotations (test_refresh.RuntimeTests.test_original_stages_and_rotations) ... ok
+test_rate_independence_and_tempo (test_refresh.RuntimeTests.test_rate_independence_and_tempo) ... ok
+test_scene_outcome_independent_of_refresh (test_refresh.RuntimeTests.test_scene_outcome_independent_of_refresh) ... ok
+test_spatial_matches_full_scan (test_refresh.RuntimeTests.test_spatial_matches_full_scan) ... ok
+test_theme_rendering_never_changes_physics (test_refresh.RuntimeTests.test_theme_rendering_never_changes_physics) ... ok
+test_theme_manifest_export (test_refresh.ThemeTests.test_theme_manifest_export) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 5.254s
+
+OK
+pygame 2.6.1 (SDL 2.32.72, Python 3.14.7)
+Hello from the pygame community. https://www.pygame.org/contribute.html

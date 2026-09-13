@@ -13,7 +13,9 @@ from .storage import Store, user_path, atomic_json
 from .themes import Themes, color
 from .runtime import Session, Stepper
 from .art import Painter
-from .ui import UI, font
+from .ui import UI, font, wrapped_lines
+from .audio import Audio
+from . import runs
 from .display import Display
 from .editor import Editor
 from . import stages
@@ -37,6 +39,8 @@ class App:
         except pygame.error:
             self.audio=False
             logging.exception('Audio unavailable; continuing silently')
+        self.audio_player=Audio(self.audio)
+        self.audio_player.apply(self.s)
         self.display=Display(self.s)
         logging.info('Display %s; pygame %s; SDL %s; desktop %s',pygame.display.get_driver(),pygame.version.ver,pygame.get_sdl_version(),pygame.display.get_desktop_sizes())
         self.themes=Themes();self.themes.poll_system();self.theme=self.themes.get(self.s)
@@ -47,6 +51,9 @@ class App:
         self.stepper=Stepper();self.preview_clock=Stepper()
         self.session=None;self.active_stage=None;self.run_tempo=1.;self.playtest=False
         self.editor=None;self.page=0;self.modal=None;self.message='';self.message_until=0
+        self.help_return='home';self.records_page=0;self.attempts=0;self.pauses=0
+        self.run_dialogue=True;self.previous_best=None;self.new_best=False
+        self.dialogue_token=None;self.dialogue_page=0
         self.last_poll=0.;self.last_autosave=0.;self.axis_ready=True
         self.costs=deque(maxlen=600);self.frame_count=0
         self.reload_joysticks()
@@ -70,7 +77,7 @@ class App:
             except pygame.error:logging.exception('Controller unavailable')
     def notify(self,message):self.message=str(message);self.message_until=time.monotonic()+7
     def route(self,screen):
-        self.screen=screen;self.ui.focus=0;self.held.clear();self.pending.clear();self.stepper.reset()
+        self.screen=screen;self.ui.focus=0;self.ui.buttons=[];self.held.clear();self.pending.clear();self.stepper.reset()
     def set_theme(self,ident):
         self.s['theme']=ident;self.s['accent']=''
         self.theme=self.themes.get(self.s);self.painter.configure(self.theme,self.s);self.store.save()
@@ -78,6 +85,8 @@ class App:
         current=self.s.get(key)
         self.s[key]=values[(values.index(current)+1)%len(values)] if current in values else values[0]
         self.theme=self.themes.get(self.s)
+        self.audio_player.apply(self.s)
+        if self.session:self.session.settings.update(sound=self.s['sound'] and self.audio,sfx_volume=self.s['sfx_volume'])
         self.store.save()
     def prompt(self,title,value,callback):
         self.modal={'title':title,'value':str(value),'callback':callback,'select_all':True}
@@ -99,20 +108,31 @@ class App:
     def remap(self,action):
         self.modal={'title':'Press a key for '+action,'binding':action}
     def start_stage(self,stage,playtest=False):
+        self.attempts=self.attempts+1 if self.active_stage and self.active_stage.id==stage.id else 1
         self.active_stage=stage;self.run_tempo=self.s['tempo'];self.playtest=playtest
+        self.run_dialogue=self.s['dialogue'];self.pauses=0;self.new_best=False
+        self.previous_best=self.store.records.get(runs.record_key(stage.document,self.run_tempo,self.run_dialogue),{}).get('best_seconds')
+        self.dialogue_token=None;self.dialogue_page=0
         settings=dict(self.s,sound=self.s['sound'] and self.audio)
         self.session=Session(stage.engine_path,settings)
         self.s['stage']=stage.id
+        self.stage_index=next((i for i,v in enumerate(self.catalog.stages) if v.id==stage.id),self.stage_index)
         if not playtest:self.store.save()
         self.route('play')
     def pause(self):
-        if self.screen=='play':self.route('pause')
+        if self.screen=='play':self.pauses+=1;self.route('pause')
     def resume(self):
         if self.session:
-            Variables.vdict.update(sound=self.s['sound'] and self.audio,dialogue=self.s['dialogue'])
+            self.session.settings.update(sound=self.s['sound'] and self.audio,sfx_volume=self.s['sfx_volume'])
             self.route('play')
     def restart(self):
-        if self.active_stage:self.start_stage(self.active_stage,self.playtest)
+        if self.active_stage:
+            # Retry the same category even when next-run settings were changed.
+            tempo,dialogue=self.run_tempo,self.run_dialogue
+            self.start_stage(self.active_stage,self.playtest)
+            self.run_tempo=tempo;self.run_dialogue=dialogue
+            self.session.settings['dialogue']=dialogue
+            self.previous_best=self.store.records.get(runs.record_key(self.active_stage.document,tempo,dialogue),{}).get('best_seconds')
     def new_editor(self,document=None):
         if self.editor and self.editor.dirty:self.editor.save(draft=True)
         self.editor=Editor(document);self.route('editor')
@@ -137,18 +157,62 @@ class App:
         result=self.session.result
         if result==3:
             seconds=self.session.score.time/24/self.run_tempo
-            key=stages.fingerprint(self.active_stage.document)+f':legacy24-v1:{self.run_tempo}'
-            previous=self.store.records.get(key,{})
+            key=runs.record_key(self.active_stage.document,self.run_tempo,self.run_dialogue)
+            self.new_best=self.previous_best is None or seconds<self.previous_best
             if not self.playtest:
-                self.store.records[key]={'stage':self.active_stage.title,'best_seconds':min(seconds,previous.get('best_seconds',seconds)),
-                                         'legacy_ticks':self.session.score.time,'tempo':self.run_tempo,'rules':'legacy24-v1'}
-                self.store.save_records()
-                replay=dict(schema=1,stage_hash=stages.fingerprint(self.active_stage.document),rules='legacy24-v1',tempo=self.run_tempo,
-                            seed=self.session.seed,inputs=self.session.history,complete=not getattr(self.session,'history_truncated',False))
-                atomic_json(user_path('data')/'last-completion-replay.json',replay)
+                replay=runs.replay(self.active_stage.document,self.session,self.run_tempo,self.run_dialogue,self.pauses,True)
+                try:
+                    if self.new_best:
+                        self.store.records[key]={'stage':self.active_stage.title,'best_seconds':seconds,
+                            'legacy_ticks':self.session.score.time,'tempo':self.run_tempo,'rules':runs.RULES,
+                            'category':runs.category(self.run_tempo,self.run_dialogue),'pauses':self.pauses}
+                        atomic_json(user_path('data')/'replays'/(key.replace(':','_')+'.json'),replay)
+                    self.store.save_records()
+                    atomic_json(user_path('data')/'last-completion-replay.json',replay)
+                except OSError as e:self.notify('Finished, but saving failed: '+str(e))
             self.route('complete')
         elif result==1:self.route('lost')
         else:self.route('pause')
+    def save_now(self):
+        if self.screen=='editor':self.editor_save();return
+        try:
+            if not self.display.fullscreen:self.s['window']=list(self.display.screen.get_size())
+            self.store.save()
+            if self.session and self.screen in ('play','pause','lost','complete'):
+                payload=runs.replay(self.active_stage.document,self.session,self.run_tempo,self.run_dialogue,self.pauses,self.session.result==3)
+                atomic_json(user_path('data')/'practice-replay.json',payload)
+                self.notify('Settings and practice replay saved. Replays are input recordings, not resume checkpoints.')
+            else:self.notify('Settings saved. Completed runs save automatically.')
+        except OSError as e:self.notify('Could not save: '+str(e))
+    def cycle_theme(self,direction=1):
+        choices=list(self.themes.packs)
+        index=choices.index(self.theme.id)
+        self.set_theme(choices[(index+direction)%len(choices)])
+        self.notify('Theme: '+self.theme.name)
+    def show_help(self):
+        if self.screen=='help':self.route(self.help_return);return
+        self.pause();self.help_return=self.screen;self.route('help')
+    def open_settings(self):
+        if self.screen=='settings':self.route(self.return_screen);return
+        self.pause();self.settings_screen(self.screen)
+    def preset(self,profile):
+        self.s.update(profile=profile,dialogue=profile=='story',tempo=1.)
+        self.store.save();self.notify(('Speedrun: dialogue skipped, 1× tempo.' if profile=='speedrun' else 'Story: dialogue on, 1× tempo.')+' Applies to your next stage.')
+    def dialogue_lines(self):
+        text=self.session.scene['dialogue'] or ''
+        if text!=self.dialogue_token:self.dialogue_token=text;self.dialogue_page=0
+        if self.active_stage.original:
+            replacements={
+                'You there with the controls, just lay your hand on the arrow keys.':f"Move with {self.s['key_left'].upper()} / {self.s['key_right'].upper()}, or A / D.",
+                "I jump with the up arrow or Z. Hold it longer, and I'll jump higher.":f"Jump with {self.s['key_jump'].upper()}, Space or Up. Hold jump to slow your fall.",
+                'Collect stuff and pull levers with the down arrow. Got it now?':f"Use {self.s['key_interact'].upper()}, S or E to collect items and pull levers."}
+            text=replacements.get(text,text)
+        return wrapped_lines(text,392,18)
+    def advance_dialogue(self):
+        if not self.session or not self.session.scene['dialogue']:return False
+        lines=self.dialogue_lines()
+        if (self.dialogue_page+1)*6<len(lines):self.dialogue_page+=1;return True
+        return False
     def next_stage(self):
         if self.playtest:self.return_editor();return
         index=next((i for i,s in enumerate(self.catalog.stages) if s.id==self.active_stage.id),0)
@@ -190,6 +254,7 @@ class App:
             if event.type==pygame.JOYDEVICEREMOVED:self.pause()
             self.reload_joysticks();return
         if event.type==pygame.DROPFILE:
+            self.pause()
             try:self.import_file(event.file);self.route('stages')
             except (ValueError,OSError) as e:self.notify(e)
             return
@@ -198,10 +263,12 @@ class App:
                 if event.key==pygame.K_ESCAPE:self.modal=None;pygame.key.stop_text_input();return
                 if 'binding' in self.modal:
                     name=pygame.key.name(event.key)
-                    reserved=(pygame.K_F11,pygame.K_TAB,pygame.K_RETURN,pygame.K_p)
+                    reserved=(pygame.K_F1,pygame.K_F2,pygame.K_F5,pygame.K_F6,pygame.K_F10,pygame.K_F11,pygame.K_TAB,pygame.K_RETURN,pygame.K_p,pygame.K_r,pygame.K_m)
                     if event.key in reserved:self.notify('Choose a key other than a menu or fullscreen shortcut.');return
                     action=self.modal['binding']
                     conflicts={self.s['key_'+a] for a in ('left','right','jump','interact') if a!=action}
+                    aliases={'left':('a',),'right':('d',),'jump':('up','space'),'interact':('s','e')}
+                    conflicts.update(k for a,keys in aliases.items() if a!=action for k in keys)
                     if name in conflicts:
                         self.notify('That key is already assigned to another action.');return
                     self.s['key_'+action]=name;self.store.save();self.modal=None;return
@@ -215,20 +282,41 @@ class App:
                 self.modal['value']=(self.modal['value']+event.text)[:500]
             return
         if event.type==pygame.KEYDOWN:
+            if getattr(event,'repeat',False):return
+            if self.display.deadline:
+                if event.key==pygame.K_RETURN:self.display.confirm();return
+                if event.key in (pygame.K_ESCAPE,pygame.K_F11):self.display.toggle();return
+                return
+            if event.key==pygame.K_F1:self.show_help();return
+            if event.key==pygame.K_F2:
+                self.pause()
+                try:
+                    size=self.display.cycle_size();self.store.save();self.notify(f'Window preset: {size[0]} × {size[1]} (F2 cycles sizes).')
+                except pygame.error as e:self.notify('Resize failed: '+str(e))
+                return
+            if event.key==pygame.K_F6:self.cycle_theme(-1 if event.mod & pygame.KMOD_SHIFT else 1);return
+            if event.key==pygame.K_F10:self.open_settings();return
+            if event.mod & pygame.KMOD_CTRL and event.key==pygame.K_s:
+                if self.screen=='editor' and event.mod & pygame.KMOD_SHIFT:self.editor_export()
+                else:self.save_now()
+                return
+            if event.key==pygame.K_m:self.setting('music',[False,True]);self.notify('Music '+('on' if self.s['music'] else 'off'));return
+            if event.key==pygame.K_r and self.screen in ('play','pause','lost','complete'):self.restart();return
+            if event.key==pygame.K_p and self.screen=='pause':self.resume();return
             if event.key==pygame.K_F11:
                 try:self.display.toggle()
                 except pygame.error as e:self.notify('Display change failed: '+str(e))
                 self.pause();return
-            if self.display.deadline:
-                if event.key==pygame.K_RETURN:self.display.confirm();return
-                if event.key==pygame.K_ESCAPE:self.display.toggle();return
             if self.screen=='play':
                 if event.key in (pygame.K_ESCAPE,pygame.K_p):self.pause();return
                 if event.key==pygame.K_r:self.restart();return
                 self.held.add(event.key)
                 action=self.action_for(event.key)
-                if action:self.pending.add(action)
+                if action:
+                    if action in ('jump','interact') and self.advance_dialogue():self.held.discard(event.key);return
+                    self.pending.add(action)
                 return
+            if self.screen=='editor' and self.editor.key(event,self):return
             if self.screen=='editor' and event.mod & pygame.KMOD_CTRL:
                 if event.key==pygame.K_z:self.editor.go_undo()
                 if event.key==pygame.K_y:self.editor.go_redo()
@@ -238,6 +326,7 @@ class App:
                 if self.screen=='pause':self.resume()
                 elif self.screen=='editor':self.leave_editor()
                 elif self.screen=='settings':self.route(self.return_screen)
+                elif self.screen=='help':self.route(self.help_return)
                 else:self.route('home')
             elif event.key in (pygame.K_TAB,pygame.K_DOWN):self.ui.move(-1 if event.mod & pygame.KMOD_SHIFT else 1)
             elif event.key==pygame.K_UP:self.ui.move(-1)
@@ -253,8 +342,10 @@ class App:
             if event.button==1:self.ui.click(pos)
         elif event.type==pygame.JOYBUTTONDOWN:
             if self.screen=='play':
-                if event.button==0:self.pending.add('jump')
-                elif event.button==1:self.pending.add('interact')
+                if event.button==0:
+                    if not self.advance_dialogue():self.pending.add('jump')
+                elif event.button==1:
+                    if not self.advance_dialogue():self.pending.add('interact')
                 elif event.button in (6,7):self.pause()
             elif event.button==0:self.ui.activate()
             elif event.button==1:
@@ -271,7 +362,9 @@ class App:
             self.themes.poll_system()
         if self.screen!='play':self.theme=self.themes.get(self.s)
         if self.editor and self.editor.dirty and now-self.last_autosave>20:
-            self.editor.save(draft=True);self.last_autosave=now
+            self.last_autosave=now
+            try:self.editor.save(draft=True)
+            except OSError as e:self.notify('Draft autosave failed: '+str(e))
         if self.screen=='play':
             count=self.stepper.advance(dt,self.run_tempo)
             if self.stepper.overrun:self.pause();self.notify('Paused after a long frame. Press Resume when ready.');return
@@ -288,7 +381,7 @@ class App:
                 self.preview.step(inp)
                 if self.preview.result is not None or self.preview.tick>1400:self.preview=self.make_preview()
     def blit_world(self,session,rect,preview=False):
-        alpha=1 if not self.s['effects'] else (self.preview_clock.alpha if preview else self.stepper.alpha)
+        alpha=self.preview_clock.alpha if preview else self.stepper.alpha
         image=self.painter.draw(session,self.theme,self.s,alpha if self.screen=='play' or preview else 1,preview)
         transform=pygame.transform.smoothscale if self.s['smooth'] and self.theme.style!='original' else pygame.transform.scale
         self.ui.surface.blit(transform(image,(rect[2],rect[3])),rect[:2])
@@ -296,25 +389,29 @@ class App:
     def settings_screen(self,back):self.return_screen=back;self.route('settings')
     def draw_home(self):
         u=self.ui;t=self.theme
-        u.header('OMARCHY REFRESH / 0.1')
-        u.text('A CHANGE OF PERSPECTIVE',40,114,14,t['accent'])
-        u.text('Which way',36,151,64)
-        u.text('is up?',36,220,64)
-        u.wrap('An old favorite. A new perspective.',40,320,490,25)
-        u.wrap('Jump, pull a lever, turn your world around. Explore the original stages in a design that feels like you.',40,372,470,19,t['muted'])
+        u.header('THE PERSPECTIVE PROJECT / 0.2')
+        u.text('TURN THE WORLD. FIND YOUR LINE.',40,115,14,t['accent'])
+        u.text('Which way',36,151,65)
+        u.text('is up?',36,225,65)
+        u.wrap('A little gravity. A lot of possibility.',40,321,510,23)
+        u.wrap('Find the key. Flip the room. Then do it faster. A Linux favorite, revisited by Mohtab Arabiat.',40,369,480,18,t['muted'])
+        u.text('YOUR NEXT RUN',40,448,12,t['accent'])
         stage=self.catalog.stages[self.stage_index]
-        u.button('Play  /  '+stage.id,(40,493,270,54),lambda:self.start_stage(stage),primary=True)
-        u.button('Choose a stage',(326,493,240,54),lambda:self.route('stages'))
-        u.button('Customize',(40,563,167,44),lambda:self.settings_screen('home'))
-        u.button('Stage studio',(219,563,167,44),lambda:self.new_editor())
-        u.button('Credits',(398,563,168,44),lambda:self.route('credits'))
-        self.blit_world(self.preview,(632,112,520,520),True)
-        u.text(t.name.upper(),650,645,13,t['accent'])
-        u.text('CHOOSE YOUR WORLD',40,646,13,t['muted'])
+        u.button('Play  /  '+stage.id,(40,481,268,53),lambda:self.start_stage(stage),primary=True)
+        u.button('Choose a stage',(322,481,242,53),lambda:self.route('stages'))
+        u.button('Story',(40,548,126,38),lambda:self.preset('story'),selected=self.s['dialogue'] and self.s['tempo']==1.)
+        u.button('Speedrun',(178,548,146,38),lambda:self.preset('speedrun'),selected=not self.s['dialogue'] and self.s['tempo']==1.)
+        u.button('Personal bests',(336,548,228,38),lambda:self.route('records'))
+        for i,(label,action) in enumerate((('Customize',lambda:self.settings_screen('home')),('Stage studio',lambda:self.new_editor()),('Credits',lambda:self.route('credits')))):
+            u.button(label,(40+i*178,601,168,40),action)
+        self.blit_world(self.preview,(634,115,518,518),True)
+        u.text('15 ORIGINAL STAGES   /   BUILD YOUR OWN',652,645,12,t['muted'])
         for i,ident in enumerate(THEME_ORDER):
             pack=self.themes.packs[ident]
-            u.button(pack.name,(40+i*226,679,214,52),lambda v=ident:self.set_theme(v),selected=self.s['theme']==ident)
+            u.button(pack.name,(40+i*226,687,214,45),lambda v=ident:self.set_theme(v),selected=self.s['theme']==ident)
         u.button('Quit',(1066,27,86,31),lambda:setattr(self,'running',False))
+
+
     def draw_stages(self):
         u=self.ui;t=self.theme;u.header('CAMPAIGNS / YOUR STAGES')
         u.text('Every world starts with a stage.',40,101,34)
@@ -349,73 +446,148 @@ class App:
         self.notify('Restored draft: '+d['title'])
     def reload_catalog(self):self.catalog.refresh();self.page=min(self.page,(len(self.catalog.stages)-1)//12);self.notify('; '.join(self.catalog.errors) or 'Stage library refreshed.')
     def draw_settings(self):
-        u=self.ui;t=self.theme;u.header('MAKE IT YOURS')
-        u.text('Your game. Your atmosphere.',40,102,31)
+        u=self.ui;t=self.theme;u.header('SETTINGS / SAVED AUTOMATICALLY')
+        u.text('Find your rhythm.',40,104,36)
         theme_ids=list(THEME_ORDER)+[k for k in self.themes.packs if k not in THEME_ORDER]
-        rows=[('World design',t.name,lambda:self.setting('theme',theme_ids)),
+        u.text('LOOK & FEEL',44,169,13,t['accent'])
+        left=[('World design',t.name,lambda:self.setting('theme',theme_ids)),
               ('Character',{'theme':'Theme default','original':'Original Guy','guy':'Refresh Guy','dhh':'DHH cameo'}[self.s['character']],lambda:self.setting('character',['theme','original','guy','dhh'])),
-              ('Tempo  /  next run',f"{self.s['tempo']:g}×",lambda:self.setting('tempo',[.75,1.,1.25,1.5])),
               ('Display refresh',str(self.s['fps'])+' FPS',lambda:self.setting('fps',[30,60,120,144,240])),
-              ('Motion & effects','On' if self.s['effects'] else 'Reduced',lambda:self.setting('effects',[True,False])),
-              ('Original sounds','On' if self.s['sound'] and self.audio else 'Off / unavailable',lambda:self.setting('sound',[True,False])),
-              ('Original dialogue','On' if self.s['dialogue'] else 'Skip',lambda:self.setting('dialogue',[True,False])),
+              ('Extra effects','On' if self.s['effects'] else 'Reduced',lambda:self.setting('effects',[True,False])),
               ('World scaling','Smooth' if self.s['smooth'] else 'Crisp',lambda:self.setting('smooth',[False,True])),
-              ('Accent override',self.s['accent'] or 'Theme default',lambda:self.prompt('Accent hex color (#rrggbb), or blank to reset',self.s['accent'],self.set_accent))]
-        for i,(label,value,action) in enumerate(rows):
-            y=169+i*48;u.text(label,44,y+9,17,t['muted']);u.button(value,(302,y,294,38),action)
-        self.blit_world(self.preview,(652,169,500,500),True)
-        u.text(t.subtitle,652,687,14,t['muted'])
+              ('Accent color',self.s['accent'] or 'Theme default',lambda:self.prompt('Accent hex color (#rrggbb); blank resets',self.s['accent'],self.set_accent))]
+        u.text('SOUND & RUN RULES',646,169,13,t['accent'])
+        right=[('Ambient music','On' if self.s['music'] else 'Off',lambda:self.setting('music',[False,True])),
+               ('Music volume',str(self.s['music_volume'])+'%',lambda:self.setting('music_volume',[0,25,50,75,100])),
+               ('Sound effects','On' if self.s['sound'] else 'Off',lambda:self.setting('sound',[True,False])),
+               ('Effects volume',str(self.s['sfx_volume'])+'%',lambda:self.setting('sfx_volume',[0,25,50,75,100])),
+               ('Tempo / next stage',f"{self.s['tempo']:g}×",lambda:self.setting('tempo',[.75,1.,1.25,1.5])),
+               ('Dialogue / next stage','On' if self.s['dialogue'] else 'Skip',lambda:self.setting('dialogue',[True,False]))]
+        for x,rows in ((40,left),(642,right)):
+            for i,(label,value,action) in enumerate(rows):
+                y=204+i*54
+                u.text(label,x+4,y+11,16,t['muted'])
+                u.button(value,(x+224,y,290 if x==40 else 294,40),action)
+        u.text('KEYBOARD / SELECT A BINDING TO CHANGE IT',44,553,13,t['accent'])
         for i,action in enumerate(('left','right','jump','interact')):
-            u.button(action.title()+': '+self.s['key_'+action],(40+i*143,621,133,37),lambda v=action:self.remap(v))
-        u.button('Done',(40,686,160,43),lambda:self.route(self.return_screen),primary=True)
-        u.button('Save theme pack',(216,686,190,43),self.export_theme)
-        u.button('Reset accent',(422,686,174,43),lambda:self.set_accent(''))
+            u.button(action.title()+': '+self.s['key_'+action],(40+i*281,584,269,40),lambda v=action:self.remap(v))
+        u.text('R retries the current rules. Tempo and dialogue changes begin when you choose a stage.',44,643,14,t['muted'])
+        if not self.audio:u.text('No audio device detected. The game will continue silently.',646,553,13,t['hazard'])
+        u.button('Done',(40,687,160,44),lambda:self.route(self.return_screen),primary=True)
+        u.button('Save theme pack',(216,687,190,44),self.export_theme)
+        u.button('Reset accent',(422,687,174,44),lambda:self.set_accent(''))
+        u.button('Controls / F1',(990,687,166,44),self.show_help)
+
+
     def draw_play(self):
         u=self.ui;t=self.theme;session=self.session;scene=session.scene
         u.header('STUDIO PLAYTEST' if self.playtest else self.active_stage.world.upper())
-        self.blit_world(session,(40,120,620,620))
-        u.text(self.active_stage.title,40,91,17,t['muted'])
-        u.text('KEEP YOUR',710,125,27)
-        u.text('PERSPECTIVE.',710,161,37)
-        u.panel((700,229,460,124))
-        u.text('LIFE',721,246,12,t['muted'])
-        pygame.draw.rect(u.surface,t['background'],(721,272,270,12),border_radius=6)
-        pygame.draw.rect(u.surface,t['accent'],(721,272,max(0,270*scene['player'].life/36),12),border_radius=6)
-        u.text(f"{max(0,scene['player'].life)} / 36",1006,266,16)
-        u.text(f"{session.score.time/24/self.run_tempo:06.2f}s    ·    {self.run_tempo:g}× tempo",721,309,18,t['muted'])
-        u.text(t.name.upper(),712,383,14,t['accent'])
-        dialogue=scene['dialogue']
-        if dialogue:
-            u.wrap(dialogue,712,418,420,19,limit=7)
-            u.text('Jump / interact to continue',712,623,14,t['accent'])
+        u.fit(self.active_stage.title,40,94,620,17,t['muted'])
+        self.blit_world(session,(40,123,620,620))
+        u.text('IN-GAME TIME',704,111,13,t['accent'])
+        u.text(runs.clock_text(session.score.time/24/self.run_tempo),699,137,56)
+        u.text(f'ATTEMPT {self.attempts:02d}   /   {session.score.time} TICKS',704,207,13,t['muted'])
+        u.panel((692,242,464,100))
+        u.text('PERSONAL BEST',712,260,12,t['muted'])
+        u.text(runs.clock_text(self.previous_best) if self.previous_best is not None else 'Set your first time',710,285,26)
+        u.text(f"{self.run_tempo:g}×  ·  {'Story' if self.run_dialogue else 'Dialogue skipped'}  ·  Local IGT",704,365,15,t['muted'])
+        u.text('HEALTH',704,401,12,t['muted'])
+        pygame.draw.rect(u.surface,t['panel'],(790,405,294,10),border_radius=5)
+        pygame.draw.rect(u.surface,t['accent'] if scene['player'].life>10 else t['hazard'],(790,405,max(0,min(294,294*scene['player'].life/36)),10),border_radius=5)
+        u.text(str(max(0,scene['player'].life)),1100,398,16)
+        u.panel((692,443,464,211))
+        if scene['dialogue']:
+            lines=self.dialogue_lines();pages=max(1,(len(lines)+5)//6)
+            for i,line in enumerate(lines[self.dialogue_page*6:(self.dialogue_page+1)*6]):u.text(line,712,459+i*26,18)
+            hint='Next page' if self.dialogue_page+1<pages else 'Continue'
+            u.fit(f"{self.s['key_jump'].upper()} / Space / {self.s['key_interact'].upper()}  {hint}"+(f'  {self.dialogue_page+1}/{pages}' if pages>1 else ''),712,629,425,12,t['accent'])
         else:
-            u.wrap('Move: ← → or A / D\nJump: Z, Space or ↑\nHold jump to slow your fall.',712,425,414,19,t['muted'])
-            u.wrap('↓ / E  Pick up a key or pull a lever.\nEsc / P  Pause     R  Restart',712,528,414,17,t['muted'])
-        u.button('Pause',(712,672,206,45),self.pause)
-        u.button('Restart',(934,672,206,45),self.restart)
+            u.text('FIND YOUR LINE',712,463,13,t['accent'])
+            u.wrap(f"Move  {self.s['key_left'].upper()} / {self.s['key_right'].upper()} or A / D\nJump  {self.s['key_jump'].upper()} / Space / Up\nInteract  {self.s['key_interact'].upper()} / S / E",712,496,410,17,t['muted'])
+            u.text('Hold jump to slow your fall.',712,610,15,t['muted'])
+        u.button('Pause / Esc',(700,679,218,45),self.pause)
+        u.button('Retry / R',(934,679,218,45),self.restart)
         if self.screen!='play':
-            shade=pygame.Surface((1200,800),pygame.SRCALPHA);shade.fill((0,0,0,165));u.surface.blit(shade,(0,0))
-            u.buttons=[]
-            u.panel((340,175,520,445))
-            title={'pause':'Take a breath.','lost':'Another perspective?','complete':'A new way forward.'}[self.screen]
-            u.text(title,375,211,29)
-            if self.screen=='complete':u.text('Stage complete. Nicely turned.',375,258,18,t['muted'])
-            elif self.screen=='lost':u.text('Try again, or adjust the tempo.',375,258,18,t['muted'])
-            else:u.text('The world can wait.',375,258,18,t['muted'])
+            shade=pygame.Surface((1200,800),pygame.SRCALPHA);shade.fill((0,0,0,190));u.surface.blit(shade,(0,0));u.buttons=[]
+            u.panel((325,116,550,588))
+            title={'pause':'Paused.','lost':'One more try.','complete':'Stage clear.'}[self.screen]
+            u.text(title,361,150,38)
+            if self.screen=='complete':
+                u.text(runs.clock_text(session.score.time/24/self.run_tempo),361,205,42)
+                detail='Playtest complete' if self.playtest else 'New personal best!' if self.new_best else 'Personal best: '+runs.clock_text(self.previous_best or 0)
+                u.text(detail,361,265,18,t['accent'])
+            else:
+                u.wrap('Your run is paused. Resume when ready.' if self.screen=='pause' else 'Same stage. Same rules. Another chance.',361,210,470,18,t['muted'])
             choices=[]
             if self.screen=='pause':choices.append(('Resume',self.resume))
             elif self.screen=='complete':choices.append(('Back to studio' if self.playtest else 'Next stage',self.next_stage))
             else:choices.append(('Try again',self.restart))
-            choices += [('Customize',lambda:self.settings_screen(self.screen)),('Back to studio' if self.playtest else 'Stage library',self.return_editor if self.playtest else lambda:self.route('stages')),('Main menu',lambda:self.route('home'))]
-            for i,(label,action) in enumerate(choices):u.button(label,(375,307+i*62,450,48),action,primary=i==0)
+            choices += [('Retry / R',self.restart),('Customize',lambda:self.settings_screen(self.screen)),
+                        ('Controls / F1',self.show_help),
+                        ('Back to studio' if self.playtest else 'Stage library',self.return_editor if self.playtest else lambda:self.route('stages')),
+                        ('Main menu',lambda:self.route('home'))]
+            for i,(label,action) in enumerate(choices):u.button(label,(361,319+i*57,478,43),action,primary=i==0)
+
+
     def draw_credits(self):
-        u=self.ui;t=self.theme;u.header('AN HOMAGE, WITH GRATITUDE')
-        u.text('The original perspective.',40,110,42)
-        u.wrap('Which Way Is Up? was created by Olli “Hectigo” Etuaho in 2007. This independent refresh preserves his original game, stages, artwork, dialogue and sounds as a playable design.',40,183,1040,24)
-        u.wrap('Thanks also to the Debian Games Team and the original contributors for preserving and maintaining the game. The new interface, palette-driven art and Omarchy integration are adaptation work, not a claim of authorship of the original game.',40,305,1040,21,t['muted'])
-        u.wrap('Code: GNU GPL version 2. Original game content: CC BY 3.0. Vera font: Bitstream Vera license. New code-drawn artwork: GPL version 2. Full notices and source accompany this build.',40,444,1040,20)
-        u.wrap('The Omarchy / DHH character is an unofficial stylized fan-art cameo. No affiliation or endorsement is implied. New stages retain their creator credits and declared licenses.',40,553,1040,18,t['muted'])
-        u.button('Back to the game',(40,682,280,48),lambda:self.route('home'),primary=True)
+        u=self.ui;t=self.theme;u.header('CREDITS / A LINUX MEMORY')
+        u.text('The first game. A new chapter.',40,109,38)
+        u.text('REIMAGINED BY MOHTAB ARABIAT',44,179,14,t['accent'])
+        u.wrap('Which Way Is Up? was the first game I tried when I started using Linux. This refresh is my way of returning to that first experience: keeping its playful spirit alive, and making room for new players, faster runs and worlds of their own.',44,214,1088,22)
+        u.text('THE ORIGINAL PERSPECTIVE',44,353,14,t['accent'])
+        u.wrap('Created by Olli “Hectigo” Etuaho in 2007. His original game design, stages, artwork, dialogue and sound effects are the foundation of this independent adaptation. Thank you to the Debian Games Team and the original contributors for keeping it available.',44,387,1088,19,t['muted'])
+        u.text('BUILT TO BE SHARED',44,506,14,t['accent'])
+        u.wrap('Code, new procedural art and ambient music: GNU GPL version 2. Original content: Creative Commons Attribution 3.0. Font: Bitstream Vera license. Full notices are in CREDITS.md, LICENSE and licenses/original-copyright.',44,540,1088,18)
+        u.wrap('Refresh direction: Mohtab Arabiat, with AI coding assistance. The Omarchy / DHH cameo is unofficial and implies no endorsement. Community stages retain their own credits and licenses.',44,627,1088,15,t['muted'])
+        u.button('Back to the game',(40,696,260,42),lambda:self.route('home'),primary=True)
+
+
+    def draw_help(self):
+        u=self.ui;t=self.theme;u.header('KEYBOARD FIELD GUIDE')
+        u.text('Keep your hands on the keys.',40,108,36)
+        columns=[('PLAY & NAVIGATE',[
+            (self.s['key_left'].upper()+' / '+self.s['key_right'].upper()+' · A / D','Move'),
+            (self.s['key_jump'].upper()+' · Space · Up','Jump / slow fall / dialogue'),
+            (self.s['key_interact'].upper()+' · S · E','Collect items / use lever'),
+            ('Esc / P','Pause / resume'),('R','Retry the current stage'),
+            ('Tab / Shift+Tab','Next / previous menu item'),('Enter','Activate selected item'),
+            ('Ctrl+S','Save stage, or settings + practice replay')]),
+            ('WINDOW, SOUND & STUDIO',[
+            ('F2 / F11','Window size / fullscreen'),('F6 / Shift+F6','Next / previous theme'),
+            ('F10 / M','Settings / toggle music'),('Arrows / Space','Studio cursor / place selected tool'),
+            ('[ / ] · Delete','Previous / next tool · erase cell'),('Ctrl+Z / Ctrl+Y','Undo / redo'),
+            ('F5 / Ctrl+R','Playtest / rotate board'),('Ctrl+Shift+S','Export stage JSON')])]
+        for col,(title,rows) in enumerate(columns):
+            x=40+col*584;u.panel((x,178,550,478));u.text(title,x+22,200,13,t['accent'])
+            for i,(key,action) in enumerate(rows):
+                y=243+i*50
+                u.fit(key,x+22,y,506,17)
+                u.fit(action,x+22,y+23,506,13,t['muted'])
+        u.text('Runs save on completion. A practice replay records inputs; it is not a resume checkpoint.',44,676,15,t['muted'])
+        u.button('Back',(40,707,170,38),lambda:self.route(self.help_return),primary=True)
+
+
+    def draw_records(self):
+        u=self.ui;t=self.theme;u.header('PERSONAL BESTS / THIS DEVICE')
+        u.text('Every second has a story.',40,107,36)
+        u.wrap('Your fastest completed runs, separated by stage and rules. Times use the original in-game clock; pauses are excluded.',44,160,1080,17,t['muted'])
+        entries=[v for v in self.store.records.values() if isinstance(v,dict) and isinstance(v.get('best_seconds'),(int,float))]
+        entries.sort(key=lambda v:(v.get('stage',''),v.get('category','')))
+        self.records_page=min(self.records_page,max(0,(len(entries)-1)//6))
+        if not entries:
+            u.panel((40,246,1116,210));u.text('Your first finish belongs here.',68,280,27)
+            u.wrap('Choose a stage and reach its goal. We will save your time and replay automatically. Try the Speedrun preset to skip dialogue.',68,333,1010,19,t['muted'])
+        for i,row in enumerate(entries[self.records_page*6:(self.records_page+1)*6]):
+            y=231+i*68;u.panel((40,y,1116,58))
+            u.fit(row.get('stage','Stage'),59,y+17,536,19)
+            u.fit(row.get('category','Legacy record / category unknown'),624,y+20,295,13,t['muted'])
+            u.text(runs.clock_text(row['best_seconds']),940,y+15,24,t['accent'])
+        u.wrap('Global rankings and community uploads are planned. This board contains local records only.',44,666,1090,16,t['muted'])
+        u.button('Back',(40,710,150,36),lambda:self.route('home'),primary=True)
+        if self.records_page>0:u.button('Previous',(820,710,156,36),lambda:setattr(self,'records_page',self.records_page-1))
+        if (self.records_page+1)*6<len(entries):u.button('Next',(992,710,164,36),lambda:setattr(self,'records_page',self.records_page+1))
+
+
     def draw(self):
         self.ui.begin(self.theme);self.painter.configure(self.theme,self.s)
         if self.screen=='home':self.draw_home()
@@ -423,21 +595,24 @@ class App:
         elif self.screen=='settings':self.draw_settings()
         elif self.screen=='editor':self.editor.draw(self)
         elif self.screen=='credits':self.draw_credits()
+        elif self.screen=='help':self.draw_help()
+        elif self.screen=='records':self.draw_records()
         elif self.screen in ('play','pause','lost','complete'):self.draw_play()
         self.ui.footer()
         if self.modal:
             u=self.ui;t=self.theme
             overlay=pygame.Surface((1200,800),pygame.SRCALPHA);overlay.fill((0,0,0,170));u.surface.blit(overlay,(0,0))
-            u.panel((190,280,820,235));u.text(self.modal['title'],218,309,20)
+            u.panel((190,280,820,235));u.fit(self.modal['title'],218,309,760,20)
             if 'value' in self.modal:
-                shown=self.modal['value'][-65:]
+                shown=self.modal['value']
+                while shown and font(18).size(shown+'|')[0]>740:shown=shown[1:]
                 pygame.draw.rect(u.surface,t['background'],(216,360,768,54),border_radius=6)
                 u.text(shown+'|',228,375,18,t['accent'])
-            u.text('Enter to save  /  Esc to cancel',218,461,15,t['muted'])
+            u.text('Press a key to bind  /  Esc to cancel' if 'binding' in self.modal else 'Enter to apply  /  Esc to cancel',218,461,15,t['muted'])
         if self.display.deadline:
             u=self.ui;u.panel((210,17,780,62));u.text('Keep fullscreen? Enter to keep · Esc to revert · '+str(max(0,int(self.display.deadline-time.monotonic())))+'s',232,35,18)
         if self.message_until>time.monotonic():
-            u=self.ui;u.panel((30,723,1140,36));u.text(self.message[:130],43,732,13,self.theme['accent'])
+            u=self.ui;u.panel((30,761,1140,36));u.fit(self.message,43,772,1110,13,self.theme['accent'])
         self.display.present(self.ui.surface)
     def run(self):
         clock=pygame.time.Clock();start=time.monotonic()
@@ -445,13 +620,18 @@ class App:
         while self.running:
             dt=clock.tick(self.s['fps'])/1000
             cost=time.perf_counter()
-            for event in pygame.event.get():self.event(event)
+            for event in pygame.event.get():
+                try:self.event(event)
+                except (ValueError,OSError,pygame.error) as e:
+                    logging.exception('Action failed');self.pause();self.notify('Action could not finish: '+str(e))
             self.update(dt);self.draw()
             self.costs.append((time.perf_counter()-cost)*1000);self.frame_count+=1
             if self.args.smoke and time.monotonic()-start>=self.args.smoke:self.running=False
         if self.args.screenshot:
             pygame.image.save(self.ui.surface,self.args.screenshot)
-        if self.editor and self.editor.dirty:self.editor.save(draft=True)
+        if self.editor and self.editor.dirty:
+            try:self.editor.save(draft=True)
+            except OSError:logging.exception('Could not save draft on exit')
         if not self.display.fullscreen:self.s['window']=list(self.display.screen.get_size())
         self.store.save()
         if self.costs:

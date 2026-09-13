@@ -35,7 +35,7 @@ def play_sound(sound_id, volume = 1.0):
   else:
     snd = sounds[sound_id]
   try:
-    snd.set_volume(volume)
+    snd.set_volume(volume * Variables.vdict.get("sfx_volume", 1.0))
     snd.play()
   except:
     error_message("Could not play sound")

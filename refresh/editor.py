@@ -16,7 +16,24 @@ class Editor:
             self.document['title']='Remix: '+self.document['title']
             # Attribution remains on remixes; author field can add adaptation credit.
         self.tool='W';self.attached='RIGHT';self.undo=[];self.redo=[]
-        self.path=None;self.dirty=False;self.drawing=False
+        self.path=None;self.dirty=False;self.drawing=False;self.cursor=[9,18]
+    def key(self,event,app):
+        if event.mod & pygame.KMOD_CTRL:
+            actions={pygame.K_z:self.go_undo,pygame.K_y:self.go_redo,pygame.K_r:self.rotate}
+            if event.key in actions:actions[event.key]();return True
+            return False
+        moves={pygame.K_LEFT:(-1,0),pygame.K_RIGHT:(1,0),pygame.K_UP:(0,-1),pygame.K_DOWN:(0,1)}
+        if event.key in moves:
+            dx,dy=moves[event.key];self.cursor=[max(0,min(19,self.cursor[0]+dx)),max(0,min(19,self.cursor[1]+dy))]
+            return True
+        if event.key in (pygame.K_SPACE,pygame.K_DELETE,pygame.K_BACKSPACE):
+            self.paint((self.GRID.x+self.cursor[0]*28+14,self.GRID.y+self.cursor[1]*28+14),event.key!=pygame.K_SPACE)
+            return True
+        if event.key in (pygame.K_LEFTBRACKET,pygame.K_RIGHTBRACKET):
+            index=self.TOOLS.index(self.tool);self.tool=self.TOOLS[(index+(-1 if event.key==pygame.K_LEFTBRACKET else 1))%len(self.TOOLS)]
+            return True
+        if event.key==pygame.K_F5:app.editor_test();return True
+        return False
     def checkpoint(self):
         self.undo.append(deepcopy(self.document));self.undo=self.undo[-60:];self.redo=[];self.dirty=True
     def go_undo(self):
@@ -66,7 +83,7 @@ class Editor:
     def draw(self,app):
         ui=app.ui;t=app.theme;d=self.document
         ui.header('STAGE STUDIO / LOCAL CREATION')
-        ui.text(d['title'],36,99,28)
+        ui.fit(d['title'],36,99,560,28)
         ui.text('20 × 20 board  /  outlined area is the initial view',36,132,13,t['muted'])
         pygame.draw.rect(ui.surface,t['panel'],self.GRID)
         for y,row in enumerate(d['tiles']):
@@ -82,6 +99,8 @@ class Editor:
             sprite=app.painter.sprite(e['type'],24,26,character='guy')
             ui.surface.blit(sprite,sprite.get_rect(center=pos))
         pygame.draw.rect(ui.surface,t['accent'],(36+7*28,154+7*28,13*28,13*28),2)
+        cursor=pygame.Rect(self.GRID.x+self.cursor[0]*28,self.GRID.y+self.cursor[1]*28,28,28)
+        pygame.draw.rect(ui.surface,t['foreground'],cursor,2)
         ui.panel((620,96,544,643))
         ui.text('BUILD YOUR PERSPECTIVE',646,118,16,t['accent'])
         labels={'W':'Wall','S':'Spikes','B':'Bars','erase':'Erase','player':'Spawn','key':'Key','lever':'Lever','spider':'Spider','blob':'Blob','power_crystal':'Crystal','cake':'Cake'}
@@ -97,13 +116,13 @@ class Editor:
         ui.button('On: '+d['events'][0]['trigger'] if d['events'] else 'Add goal event',(646,422,230,36),self.cycle_trigger)
         ui.button('Edit goal message',(890,422,244,36),lambda:app.prompt('Dialogue before stage completion',self.message(),self.set_message))
         ui.wrap('Collect the goal item to complete the stage. Add levers to rotate the world. Right-click erases.',646,477,470,16,t['muted'])
-        ui.text('Credit: '+d['author'][:48],646,558,13,t['muted'])
-        ui.text('License: '+d['license'],646,580,13,t['muted'])
+        ui.fit('Credit: '+d['author'],646,558,484,13,t['muted'])
+        ui.fit('License: '+d['license'],646,580,484,13,t['muted'])
         ui.button('Save stage',(646,617,150,40),lambda:app.editor_save())
         ui.button('Playtest',(810,617,150,40),lambda:app.editor_test(),primary=True)
         ui.button('Export JSON',(974,617,160,40),lambda:app.editor_export())
         ui.button('Back',(646,680,150,36),lambda:app.leave_editor())
-        ui.text('Drafts autosave. Ctrl+Z / Ctrl+Y / Ctrl+S',36,730,14,t['muted'])
+        ui.text('Arrows: cursor  Space: paint  [ / ]: tool  F5: test  Ctrl+S: save',36,730,14,t['muted'])
     def set_field(self,key,value):
         stages.text(value,key);self.checkpoint();self.document[key]=value
     def cycle_direction(self):

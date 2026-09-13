@@ -28,3 +28,22 @@ Modified legacy source:
 
 Additional existing modifications visible in git predate this build and are captured
 in the backup patch. This refresh does not claim those changes as newly authored work.
+
+
+## 2026-09-13 — local polish 0.2
+
+- Keyboard shortcuts, keyboard studio cursor, controls guide, revised home/settings/
+  play/results/credits/records screens, original ambient audio with separate volumes.
+- Correct multiline and long-word text layout, title/input clipping, three tutorial
+  hints adapted to current bindings, one-press fully displayed dialogue.
+- Distinct procedural movement poses, smoother 16-phase cycle, essential interpolation
+  retained with reduced effects. Original assets and collision dimensions unchanged.
+- Isolate preview/session fade, randomness and settings; clear stale menu actions;
+  freeze current run categories on retry; handle failed saves/autosaves gracefully.
+- Comparable local PBs and per-PB replay files, local replay verifier, simulated gamer
+  profile tests, native/visual review tooling and community release proposal.
+- Modified code: refresh/app.py, art.py, display.py, editor.py, runtime.py, storage.py,
+  ui.py; lib/game.py (refresh-only dialogue), lib/sound.py (volume multiplier).
+  New code: refresh/audio.py, desktop.py, runs.py; tools/verify_replay.py and review tooling.
+- Mohtab Arabiat credited for refresh direction and Linux origin story; original
+  creator and all upstream license notices retained in Credits, not the home footer.

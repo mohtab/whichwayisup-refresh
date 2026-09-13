@@ -1,3 +1,62 @@
+# Build status — 0.2.0 local polish, 2026-09-13
+
+A tested local review build. Not yet approved for a public release.
+
+## Delivered in this pass
+
+- F1 keyboard guide, F2 window sizes, F6/Shift+F6 themes, F10 in-game settings,
+  F11 fullscreen, M music, Ctrl+S context-aware saving, F5 playtest and keyboard
+  studio cursor/painting/tools/rotation. Shortcuts and custom binding hints visible.
+- Redesigned home, settings, run HUD, results, records and Credits. Timer, ticks,
+  attempts, health and category-specific PBs; Story/Speedrun presets; retry retains
+  current rules. New procedural walking/rising/falling/gliding poses.
+- Independent original SFX and synthesized ambient music with volume controls.
+- Correct multiline/long-word wrapping, bounded titles and modal text, long-dialogue
+  pages, single-press dialogue advance and adaptive tutorial control hints.
+- Isolated preview/session globals, recoverable malformed records, save-error
+  notifications and cleared stale menu callbacks.
+- Mohtab Arabiat's credits and first-Linux-game story. Original creator/content/
+  license notices retained in Credits; main-screen creator footer removed.
+- Bounded local replay validator/re-simulator and per-PB replay files. Proposed
+  public stage hub/leaderboard design and release gates in POLISH_PLAN.md.
+
+## Verification
+
+25 automated tests pass, including simulated novice, runner, creator, reduced-effects/
+silent player, returning-player content and malformed-input workflows. All 15 original
+stages load; original collision sampling, tempo and display-rate independence pass.
+Actual stage completion and replay verification pass for a controlled user stage.
+These are simulated profiles, not external playtester feedback or full playthroughs.
+
+Native Wayland on a 2560×1600 desktop: four window presets verified at 800×532,
+1000×668, 1200×800 and 1440×960 (HiDPI rounding), three fullscreen round trips,
+rollback, and settings pause/resume. F2 uses a process/address-scoped Hyprland
+adapter because tiled windows ignore ordinary SDL size requests. No desktop config
+or global keyboard binding was changed. Other desktops retain SDL-only behavior.
+
+180 scripted native frames: median work 8.45 ms, p95 11.01 ms. Includes rendering/
+presentation, not a sustained FPS benchmark or hardware-independent guarantee.
+Native window tests used dummy audio; music synthesis/mute was exercised in tests,
+not assessed by a human listening session. Gallery and reports: `polish-review/`.
+
+## Remaining release gates
+
+- Mohtab's approval of art/music and human novice/speedrunner playtesting.
+- Full completion of all 15 stages, real controller hardware, sustained sessions,
+  suspend/resume, multiple monitors and broader platform/package install testing.
+- A separately approved community architecture: authentication, moderation, hosting,
+  costs, backups, privacy/terms and a hardened server replay worker. No global
+  scoreboard, online upload or browsing service is currently connected.
+- Hardened RTA/anti-cheat rules if desired; current records are local IGT, and replay
+  determinism does not prove human play. Stage ZIP/asset packs remain future work.
+
+Original files and Git history are retained, with a separate rollback backup made
+before applying this pass. See POLISH_PLAN.md for sequencing and acceptance gates.
+
+---
+
+## Previous build record (historical)
+
 # Build status — 0.1.0, 2026-09-12
 
 This is a playable local build, not completion of every milestone in `REWORK_PLAN.md`.

@@ -35,19 +35,53 @@ Then open **Which Way Is Up? — Refresh**, or run `whichwayisup-refresh`.
 
 ## Controls
 
-| Action | Keyboard | Controller |
-| --- | --- | --- |
-| Move | Left / Right, A / D | Left stick |
-| Jump / advance dialogue | Z, Up, Space | Button 1 |
-| Pick up / pull lever | Down, S, E | Button 2 |
-| Pause | Esc / P | Start (button 7 or 8) |
-| Restart | R | Pause menu |
-| Navigate menus | Tab / arrows / Enter, or mouse | Vertical stick / Button 1 |
+| Action | Keyboard |
+| --- | --- |
+| Move | Left / Right, A / D |
+| Jump / slow fall / advance dialogue | Z, Up, Space |
+| Pick up / pull lever | Down, S, E |
+| Pause / resume | Esc / P |
+| Retry current stage and rules | R |
+| Controls guide | F1 |
+| Cycle window sizes | F2 |
+| Next / previous theme | F6 / Shift+F6 |
+| Settings, including during play | F10 |
+| Fullscreen (Enter confirms, Esc reverts) | F11 |
+| Music on / off | M |
+| Save stage in studio; settings and practice replay during play | Ctrl+S |
+| Studio playtest / export | F5 / Ctrl+Shift+S |
+| Studio cursor / paint / erase | Arrows / Space / Delete |
+| Previous / next studio tool | [ / ] |
+| Studio undo / redo / rotate | Ctrl+Z / Ctrl+Y / Ctrl+R |
+| Menu focus / activate | Tab, Shift+Tab, Up/Down / Enter |
 
-Holding jump slows your fall, as in the original. Remap primary keyboard controls
-in Customize; secondary keys remain available. Losing window focus pauses play.
-Controller mappings are generic SDL joystick mappings; device-specific layouts
-need verification on actual controllers.
+Remap the primary movement keys in Customize. The extra keys above remain available;
+conflicting bindings are rejected. A practice replay is an input recording, **not a
+resumable checkpoint**. Stage completions and settings save automatically. Fullscreen
+and size changes pause play. On Hyprland, F2 floats and resizes only this game window using the local compositor
+API. It changes no desktop configuration. Other desktops use SDL resizing.
+
+Generic controllers: horizontal stick moves, first button jumps/advances dialogue,
+second interacts; buttons 7/8 pause (SDL indexes 6/7). Menu navigation uses the vertical
+stick and first button. Hardware controller acceptance is still required.
+
+## Run your way
+
+Story keeps dialogue; Speedrun skips it and selects 1× tempo. Both presets apply to
+the next stage. Restart keeps the current run's rules, even if you changed settings
+while paused. The HUD shows in-game time, exact ticks, attempt count and personal best.
+Personal bests compare stage content, rules, tempo and dialogue category. Older records
+remain visible with an unknown-category label; they are not merged into new categories.
+
+Version 0.2 uses `refresh24-v2`: original 24 Hz physics with isolated preview state and
+single-press refresh dialogue. Pauses and scripted sequences are excluded by the legacy
+in-game clock; this is not a real-time speedrun clock. Recorded pauses are metadata.
+No global rankings or online uploads are live. See [the polish/release plan](docs/POLISH_PLAN.md).
+
+New procedural sprites have a 16-phase run cycle and distinct rise/fall/glide poses.
+Music is an original synthesized ambient loop, off by default; music and original sound
+effects have independent volume controls. Reduced effects retain smooth positioning
+and essential character animation.
 
 ## Five visual options
 
@@ -71,7 +105,7 @@ be revised; they are not the final collaboratively approved artwork.
 The simulation retains the original 24 Hz rules and frame-based animations.
 Presentation runs independently at 30, 60, 120, 144 or 240 FPS, interpolating positions
 and rotation between simulation updates. Higher refresh is a target, not a guarantee
-on every GPU/window size. Reduced Motion disables interpolation and effects.
+on every GPU/window size. Reduced effects disable particles and trails while keeping positioning and essential animation smooth.
 
 Tempo options are **0.75×, 1×, 1.25× and 1.5×**. They alter the schedule of fixed
 simulation steps, preserving per-step movement and collision distances. They do not
@@ -81,8 +115,15 @@ profile, coyote time or jump buffering. The tested compatibility engine is the c
 foundation. Local records distinguish content hashes, rules version and tempo.
 
 No global leaderboard is enabled. Completion replays are recorded locally with a
-one-hour input limit; longer recordings are marked incomplete. A public replay verifier
-and complete campaign completion traces remain future validation work.
+one-hour input limit; longer recordings are marked incomplete. A local replay verifier is available:
+
+```sh
+python tools/verify_replay.py stage.json replay.json
+```
+
+It validates bounded schema-2 input and re-simulates actual completion and ticks. It
+is not a hardened public worker or proof of human play. Full campaign completion
+traces and the hosted verifier remain release work.
 
 ## Stage studio
 

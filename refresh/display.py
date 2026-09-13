@@ -1,6 +1,7 @@
 """Resizable desktop window with fullscreen rollback and safe startup."""
 import time
 import pygame
+from .desktop import resize_own_window
 
 class Display:
     def __init__(self,settings):
@@ -13,6 +14,18 @@ class Display:
         pygame.display.set_caption('Which Way Is Up? — Omarchy Refresh')
         self.fullscreen=False;self.deadline=0.;self.confirmed=False
         self.viewport=pygame.Rect(0,0,*self.screen.get_size())
+    def cycle_size(self):
+        if self.fullscreen:self.toggle()
+        desktop=pygame.display.get_desktop_sizes()[0]
+        presets=[(800,533),(1000,667),(1200,800),(1440,960)]
+        available=[size for size in presets if size[0]<=desktop[0]*.95 and size[1]<=desktop[1]*.90] or [presets[0]]
+        current=self.settings['window']
+        index=next((i for i,size in enumerate(available) if tuple(current)==size),-1)
+        self.windowed=available[(index+1)%len(available)]
+        self.screen=pygame.display.set_mode(self.windowed,pygame.RESIZABLE)
+        self.settings['window']=list(self.windowed)
+        if pygame.display.get_driver()!='dummy':resize_own_window(self.windowed)
+        return self.windowed
     def toggle(self):
         if self.fullscreen:
             self.screen=pygame.display.set_mode(self.windowed,pygame.RESIZABLE)

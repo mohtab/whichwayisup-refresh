@@ -445,7 +445,8 @@ def steps(screen, level_name="w0-l0", score_mod=0, score=None, joystick=None, dr
           if text == None:
             text = current_scripted_event_element.text
             phase = 0
-          phase = render_text_dialogue(screen, text, phase)
+          # The refresh displays complete, paginated dialogue; one press advances it.
+          phase = -1 if driver is not None else render_text_dialogue(screen, text, phase)
           if (phase == -1) and cleared:
             current_scripted_event_element.finished = True
             phase = 0

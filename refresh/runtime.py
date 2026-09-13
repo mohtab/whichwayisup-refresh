@@ -8,7 +8,7 @@ import pygame
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'lib'))
 import game
-from util import Score
+from util import Score, Util
 from variables import Variables
 
 @dataclass
@@ -37,6 +37,8 @@ class Session:
     def __init__(self, stage, settings, seed=0):
         Variables.vdict.update(devmode=False, verbose=False, sound=settings['sound'],
                                dialogue=settings['dialogue'], fullscreen=False)
+        self.settings=dict(settings)
+        self.fade=0
         self.canvas=pygame.Surface((520,520)).convert()
         self.driver=Driver()
         self.score=Score(0)
@@ -57,12 +59,20 @@ class Session:
         self.previous={id(o):(o.x,o.y) for o in self.entities()}
         self.driver.inputs=dict(inputs)
         outside=random.getstate()
+        outside_fade=getattr(Util,'fade_state',0)
+        outside_settings=Variables.vdict.copy()
+        Util.fade_state=self.fade
+        Variables.vdict.update(devmode=False,verbose=False,fullscreen=False,sound=self.settings['sound'],
+                               dialogue=self.settings['dialogue'],sfx_volume=self.settings.get('sfx_volume',75)/100)
         random.setstate(self.random_state)
         try:
             self.scene=next(self.simulation)
         except StopIteration as stopped:
             self.result=stopped.value
         finally:
+            self.fade=Util.fade_state
+            Util.fade_state=outside_fade
+            Variables.vdict.clear();Variables.vdict.update(outside_settings)
             self.random_state=random.getstate()
             random.setstate(outside)
         if len(self.history) < 86400:
