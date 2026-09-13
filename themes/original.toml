@@ -1,0 +1,16 @@
+schema = 1
+id = "original"
+name = "Original"
+subtitle = "The 2007 game, lovingly preserved."
+style = "original"
+character = "original"
+author = "Olli Hectigo Etuaho"
+license = "CC-BY-3.0"
+[palette]
+background = "#181b22"
+panel = "#222631"
+foreground = "#ebe8dc"
+muted = "#a5a8b5"
+accent = "#d6aa6c"
+secondary = "#9ba675"
+hazard = "#ff766d"

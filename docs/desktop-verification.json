@@ -1,0 +1,62 @@
+{
+  "backend": "wayland",
+  "desktop": [
+    [
+      2560,
+      1600
+    ]
+  ],
+  "transitions": [
+    {
+      "fullscreen": true,
+      "size": [
+        2560,
+        1600
+      ],
+      "running": true
+    },
+    {
+      "fullscreen": false,
+      "size": [
+        1280,
+        774
+      ],
+      "running": true
+    },
+    {
+      "fullscreen": true,
+      "size": [
+        2560,
+        1600
+      ],
+      "running": true
+    },
+    {
+      "fullscreen": false,
+      "size": [
+        1280,
+        774
+      ],
+      "running": true
+    },
+    {
+      "fullscreen": true,
+      "size": [
+        2560,
+        1600
+      ],
+      "running": true
+    },
+    {
+      "fullscreen": false,
+      "size": [
+        1280,
+        774
+      ],
+      "running": true
+    }
+  ],
+  "rollback": "passed",
+  "play_pause_theme_editor": "passed",
+  "running": true
+}

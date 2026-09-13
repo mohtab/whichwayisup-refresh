@@ -1,0 +1,114 @@
+{
+  "method": "Headless SDL dummy video/audio; capped at 240 loop iterations per stage; clock sleep removed; synthetic movement/jumps and debug rotations at iterations 50/150; fixed random seed. No completed-playthrough or actual display-performance claim.",
+  "python": "3.14.7 (main, Aug 10 2026, 07:46:56) [GCC 16.1.1 20260728]",
+  "pygame": "2.6.1",
+  "levels": [
+    {
+      "level": "w0-l0",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1892,
+      "image_loads": 318
+    },
+    {
+      "level": "w0-l1",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.208,
+      "image_loads": 344
+    },
+    {
+      "level": "w0-l2",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.2336,
+      "image_loads": 422
+    },
+    {
+      "level": "w0-l3",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.2469,
+      "image_loads": 412
+    },
+    {
+      "level": "w0-l4",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.2386,
+      "image_loads": 386
+    },
+    {
+      "level": "w0-l5",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.2354,
+      "image_loads": 354
+    },
+    {
+      "level": "w0-l6",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1997,
+      "image_loads": 338
+    },
+    {
+      "level": "w1-l0",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1922,
+      "image_loads": 278
+    },
+    {
+      "level": "w1-l1",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.3,
+      "image_loads": 468
+    },
+    {
+      "level": "w1-l2",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.3834,
+      "image_loads": 488
+    },
+    {
+      "level": "w1-l3",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.3277,
+      "image_loads": 452
+    },
+    {
+      "level": "w1-l4",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.254,
+      "image_loads": 453
+    },
+    {
+      "level": "w1-l5",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.3399,
+      "image_loads": 398
+    },
+    {
+      "level": "w1-l6",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.2683,
+      "image_loads": 389
+    },
+    {
+      "level": "w2-l0",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1673,
+      "image_loads": 302
+    }
+  ],
+  "image_loads": 5802,
+  "game_log": "Error: Object graphic missing: grey_cake_broken_0\nError: Object graphic missing: green_power_crystal_broken_0\nError: Object graphic missing: brown_other_pants_broken_0\nError: Object graphic missing: brown_key_broken_0\nCreated configuration file to /tmp/wwisup-plan-zydmecfu/config.txt"
+}

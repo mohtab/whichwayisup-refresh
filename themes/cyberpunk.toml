@@ -1,0 +1,16 @@
+schema = 1
+id = "cyberpunk"
+name = "Cyberpunk"
+subtitle = "Neon nights. Laser spiders. Same gravity."
+style = "cyberpunk"
+character = "guy"
+author = "Omarchy Refresh contributors"
+license = "GPL-2.0-only"
+[palette]
+background = "#0b0b1c"
+panel = "#19172e"
+foreground = "#f4eafa"
+muted = "#b0a4c9"
+accent = "#46f4ea"
+secondary = "#f45bbb"
+hazard = "#ff667c"

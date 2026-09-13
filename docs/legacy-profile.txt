@@ -1,0 +1,38 @@
+         5659556 function calls in 3.779 seconds
+
+   Ordered by: cumulative time
+   List reduced from 148 to 30 due to restriction <30>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+       15    0.077    0.005    3.779    0.252 game.py:189(run)
+   181374    0.270    0.000    1.358    0.000 visibleobject.py:77(render)
+     3615    0.081    0.000    1.343    0.000 level.py:169(render)
+   197375    1.267    0.000    1.267    0.000 {method 'blit' of 'pygame.surface.Surface' objects}
+    33081    0.017    0.000    1.061    0.000 object.py:74(update)
+     4019    0.011    0.000    1.028    0.000 object.py:109(check_collisions)
+     4019    0.622    0.000    1.017    0.000 level.py:235(collide)
+     3348    0.002    0.000    0.627    0.000 player.py:56(update)
+     4631    0.003    0.000    0.418    0.000 blob.py:34(update)
+  2942160    0.391    0.000    0.391    0.000 {method 'collidepoint' of 'pygame.rect.Rect' objects}
+       15    0.003    0.000    0.318    0.021 level.py:34(__init__)
+    35401    0.017    0.000    0.307    0.000 object.py:190(render)
+     4955    0.020    0.000    0.289    0.000 animation.py:16(__init__)
+     2011    0.002    0.000    0.216    0.000 level.py:343(add_tile)
+     2011    0.010    0.000    0.213    0.000 tile.py:16(__init__)
+     3615    0.028    0.000    0.190    0.000 level.py:138(update)
+   124682    0.030    0.000    0.161    0.000 tile.py:29(update)
+     5639    0.008    0.000    0.161    0.000 frame.py:14(__init__)
+   175536    0.118    0.000    0.150    0.000 visibleobject.py:49(update)
+   183075    0.118    0.000    0.140    0.000 animation.py:48(update_and_get_image)
+    23560    0.024    0.000    0.118    0.000 spider.py:39(update)
+     2273    0.011    0.000    0.118    0.000 visibleobject.py:20(__init__)
+     5802    0.002    0.000    0.116    0.000 wwisup-plan-audit.py:38(counted_load)
+     5802    0.113    0.000    0.114    0.000 {built-in method pygame.image.load}
+    14818    0.065    0.000    0.107    0.000 level.py:219(ground_check)
+     3615    0.017    0.000    0.063    0.000 game.py:30(render_gui)
+    20100    0.031    0.000    0.052    0.000 <frozen posixpath>:72(join)
+     3615    0.004    0.000    0.050    0.000 player.py:94(render)
+     1542    0.002    0.000    0.048    0.000 projectile.py:31(update)
+   218696    0.046    0.000    0.046    0.000 tile.py:60(is_aligned)
+
+

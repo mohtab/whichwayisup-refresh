@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Which Way is Up
+GenericName=whichwayisup
+Comment=2D platform game with a slight rotational twist
+Comment[de]=2D-Jump'n'Run-Spiel mit einem leichten Rotationsdrall
+Icon=whichwayisup
+Exec=whichwayisup
+Terminal=false
+Categories=Game;ArcadeGame;
+Keywords=2D;game;arcade;platform;

@@ -1,0 +1,22 @@
+From: Debian Games Team <pkg-games-devel@lists.alioth.debian.org>
+Date: Mon, 27 May 2013 23:37:46 +0200
+Subject: font_path
+
+Forwarded: no
+---
+ lib/util.py |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/lib/util.py b/lib/util.py
+index 6989474..c81e758 100644
+--- a/lib/util.py
++++ b/lib/util.py
+@@ -29,7 +29,7 @@ class Score:
+ class Util:
+ 
+   pygame.font.init()
+-  smallfont = pygame.font.Font(data.filepath(os.path.join("misc", "Vera.ttf")), FONT_SIZE)
++  smallfont = pygame.font.Font(data.filepath(os.path.join("/usr/share/fonts/truetype/dejavu", "DejaVuSans.ttf")), FONT_SIZE)
+   cached_text_images = {}
+   cached_images = {}
+   cached_images["key_z"] = pygame.image.load(data.picpath("key", "z"))

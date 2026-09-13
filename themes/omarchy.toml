@@ -1,0 +1,16 @@
+schema = 1
+id = "omarchy"
+name = "Omarchy"
+subtitle = "An independent tribute. Featuring DHH."
+style = "omarchy"
+character = "dhh"
+author = "Omarchy Refresh contributors"
+license = "GPL-2.0-only"
+[palette]
+background = "#151b18"
+panel = "#242f27"
+foreground = "#f0ead4"
+muted = "#a4b39d"
+accent = "#c1d283"
+secondary = "#7cbca4"
+hazard = "#ff8268"

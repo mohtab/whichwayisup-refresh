@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Which Way Is Up? — Refresh
+Comment=An independent homage with modern themes and a stage studio
+Exec=whichwayisup-refresh
+Icon=whichwayisup-refresh
+Terminal=false
+Categories=Game;ArcadeGame;
+Keywords=platform;omarchy;whichwayisup;
+StartupNotify=true

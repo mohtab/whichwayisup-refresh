@@ -1,0 +1,16 @@
+schema = 1
+id = "system"
+name = "Follow Omarchy"
+subtitle = "Your desktop palette. Your world."
+style = "omarchy"
+character = "dhh"
+author = "Omarchy Refresh contributors"
+license = "GPL-2.0-only"
+[palette]
+background = "#111c18"
+panel = "#23372b"
+foreground = "#d6d5bc"
+muted = "#81b8a8"
+accent = "#509475"
+secondary = "#2dd5b7"
+hazard = "#ff5345"

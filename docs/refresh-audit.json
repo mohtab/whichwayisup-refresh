@@ -1,0 +1,114 @@
+{
+  "method": "Headless SDL dummy video/audio; capped at 240 loop iterations per stage; clock sleep removed; synthetic movement/jumps and debug rotations at iterations 50/150; fixed random seed. No completed-playthrough or actual display-performance claim.",
+  "python": "3.14.7 (main, Aug 10 2026, 07:46:56) [GCC 16.1.1 20260728]",
+  "pygame": "2.6.1",
+  "levels": [
+    {
+      "level": "w0-l0",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.0956,
+      "image_loads": 36
+    },
+    {
+      "level": "w0-l1",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.0986,
+      "image_loads": 0
+    },
+    {
+      "level": "w0-l2",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1093,
+      "image_loads": 0
+    },
+    {
+      "level": "w0-l3",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1098,
+      "image_loads": 0
+    },
+    {
+      "level": "w0-l4",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1112,
+      "image_loads": 0
+    },
+    {
+      "level": "w0-l5",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1143,
+      "image_loads": 0
+    },
+    {
+      "level": "w0-l6",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1084,
+      "image_loads": 1
+    },
+    {
+      "level": "w1-l0",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.0898,
+      "image_loads": 16
+    },
+    {
+      "level": "w1-l1",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.121,
+      "image_loads": 2
+    },
+    {
+      "level": "w1-l2",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.117,
+      "image_loads": 0
+    },
+    {
+      "level": "w1-l3",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.11,
+      "image_loads": 0
+    },
+    {
+      "level": "w1-l4",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1021,
+      "image_loads": 0
+    },
+    {
+      "level": "w1-l5",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1161,
+      "image_loads": 0
+    },
+    {
+      "level": "w1-l6",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.1024,
+      "image_loads": 0
+    },
+    {
+      "level": "w2-l0",
+      "frames": 241,
+      "exit": 5,
+      "seconds": 0.087,
+      "image_loads": 15
+    }
+  ],
+  "image_loads": 70,
+  "game_log": "Created configuration file to /tmp/wwisup-plan-yckrafny/config.txt"
+}

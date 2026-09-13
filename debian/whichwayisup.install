@@ -1,0 +1,8 @@
+*.py                        usr/share/games/whichwayisup
+data/levels/*               usr/share/games/whichwayisup/data/levels
+data/pictures/*             usr/share/games/whichwayisup/data/pictures
+data/sounds/*               usr/share/games/whichwayisup/data/sounds
+debian/*.desktop            usr/share/applications/
+debian/*.png                usr/share/icons/hicolor/64x64/apps
+debian/bin/whichwayisup     usr/games
+lib                         usr/share/games/whichwayisup

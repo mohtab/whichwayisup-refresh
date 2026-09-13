@@ -1,0 +1,5 @@
+#!/bin/sh
+set -e
+
+cd /usr/share/games/whichwayisup/
+exec python3 run_game.py "$@"

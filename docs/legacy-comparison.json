@@ -1,0 +1,15 @@
+{
+  "level": "w0-l0",
+  "frames_before": 221,
+  "frames_after": 221,
+  "compared_fields": [
+    "tick",
+    "player_x",
+    "player_y",
+    "health",
+    "score_ticks",
+    "orientation"
+  ],
+  "differences": [],
+  "difference_count": 0
+}

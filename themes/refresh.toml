@@ -1,0 +1,16 @@
+schema = 1
+id = "refresh"
+name = "Refresh"
+subtitle = "A new perspective on an old favorite."
+style = "refresh"
+character = "guy"
+author = "Omarchy Refresh contributors"
+license = "GPL-2.0-only"
+[palette]
+background = "#101c25"
+panel = "#192b35"
+foreground = "#f2ebda"
+muted = "#a1b7bb"
+accent = "#e9ad78"
+secondary = "#78bcb0"
+hazard = "#ff7569"

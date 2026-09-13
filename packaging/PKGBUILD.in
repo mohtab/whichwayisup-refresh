@@ -1,0 +1,26 @@
+pkgname=whichwayisup-refresh
+pkgver=0.1.0
+pkgrel=1
+pkgdesc='An independent Which Way Is Up? homage with modern themes and stage tools'
+arch=('any')
+url='https://salsa.debian.org/games-team/whichwayisup'
+license=('GPL-2.0-only' 'CC-BY-3.0' 'Bitstream-Vera')
+depends=('python>=3.11' 'python-pygame>=2.6')
+source=("$pkgname-$pkgver.tar.gz")
+sha256sums=('@SHA256@')
+
+check() {
+  cd "$srcdir/$pkgname-$pkgver"
+  SDL_VIDEODRIVER=dummy SDL_AUDIODRIVER=dummy python -B -m unittest discover -s tests -q
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  install -d "$pkgdir/usr/share/$pkgname" "$pkgdir/usr/bin"
+  cp -r refresh lib data themes run_game.py README.md CREDITS.md LICENSE licenses "$pkgdir/usr/share/$pkgname/"
+  printf '#!/bin/sh\nexec python /usr/share/whichwayisup-refresh/run_game.py "$@"\n' > "$pkgdir/usr/bin/$pkgname"
+  chmod 755 "$pkgdir/usr/bin/$pkgname"
+  install -Dm644 packaging/whichwayisup-refresh.desktop "$pkgdir/usr/share/applications/whichwayisup-refresh.desktop"
+  install -Dm644 packaging/icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/whichwayisup-refresh.svg"
+  install -Dm644 licenses/original-copyright "$pkgdir/usr/share/licenses/$pkgname/original-copyright"
+}

@@ -1,0 +1,4 @@
+font_path.patch
+initialize-only-required-pygame-modules.patch
+check-for-joystick-axes-not-null.patch
+python3.patch
