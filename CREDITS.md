@@ -33,7 +33,7 @@ for preserving and maintaining the game. Their notices remain in
   The font file is unmodified.
 - The new interface, palette-driven drawings and integration were developed for this
   refresh with AI coding assistance. They do not imply authorship of the original game.
-- The DHH character is a newly code-drawn, stylized fan-art cameo. This is an
+- The DHH character is a newly generated, stylized fan-art cameo inspired by his public X profile portrait. This is an
   unofficial homage with no affiliation or endorsement claimed. No third-party
   portrait photograph or Omarchy logo is bundled.
 - The Follow Omarchy design reads the user's installed palette locally; no desktop
@@ -54,3 +54,7 @@ OpenAI’s built-in image generation tool on September 13, 2026. Selected source
 PNGs and exact prompts are included in `assets/sprites/`. Animation integration
 and presentation code were developed with AI coding assistance. New sprite assets
 use GPL-2.0-only to the extent copyright applies.
+
+The September 13 clockwork props and DHH atlas also use built-in image generation.
+Their exact prompts and the public portrait reference are documented in
+`assets/sprites/V3-PROMPTS.md`. The reference photograph is not redistributed.

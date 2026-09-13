@@ -6,7 +6,7 @@ import os
 import shutil
 import tempfile
 
-DEFAULTS = dict(theme='refresh', character='theme', tempo=1.0, fps=60, effects=True,
+DEFAULTS = dict(theme='refresh', character='theme', tempo=1.0, fps=60, effects=True, depth=True, board_only=False,
                 sound=True, music=False, music_volume=50, sfx_volume=75, profile='story', dialogue=True, smooth=False, accent='', fullscreen=False,
                 window=[1100, 760], stage='w0-l0', key_left='left', key_right='right',
                 key_jump='z', key_interact='down')
@@ -72,7 +72,7 @@ class Store:
         s = self.settings
         for key in ('theme','character','accent','stage','key_left','key_right','key_jump','key_interact'):
             if not isinstance(s.get(key),str): s[key]=DEFAULTS[key]
-        for key in ('sound','music','dialogue','effects','smooth','fullscreen'):
+        for key in ('sound','music','dialogue','effects','smooth','fullscreen','depth','board_only'):
             if not isinstance(s.get(key),bool): s[key]=DEFAULTS[key]
         if s.get('profile') not in ('story','speedrun'):s['profile']='story'
         for key in ('music_volume','sfx_volume'):

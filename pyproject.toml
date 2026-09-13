@@ -1,6 +1,6 @@
 [project]
 name = "whichwayisup-refresh"
-version = "0.2.1"
+version = "0.2.2"
 description = "An independently maintained homage to Which Way Is Up?"
 requires-python = ">=3.11"
 dependencies = ["pygame>=2.6,<3"]

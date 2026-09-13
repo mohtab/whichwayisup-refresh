@@ -46,6 +46,7 @@ Then open **Which Way Is Up? — Refresh**, or run `whichwayisup-refresh`.
 | Cycle window sizes | F2 |
 | Next / previous theme | F6 / Shift+F6 |
 | Settings, including during play | F10 |
+| Board-only play / restore HUD | F9 |
 | Fullscreen (Enter confirms, Esc reverts) | F11 |
 | Music on / off | M |
 | Save stage in studio; settings and practice replay during play | Ctrl+S |
@@ -101,7 +102,8 @@ palette roles can be edited there. Restart to discover new files. Packs contain 
 not executable plugins. Original sound remains available across designs.
 
 Refresh uses generated raster sprite sheets, rendered at twice the logical resolution.
-The DHH cameo remains code-drawn. The Original theme preserves the original assets;
+The Omarchy DHH cameo now has an illustrated 24-pose atlas inspired by his public X
+portrait: long hair, short beard, expressive running, falling, gliding and hit poses. The Original theme preserves the original assets;
 choose Refresh with F6 to see the new art. This is a local art review build.
 
 ## Smooth display and gameplay speed
@@ -182,3 +184,23 @@ Arch package is a separate system action. A local launcher is sufficient for dev
 Native window verification is in `docs/verify_desktop.py`; it deliberately opens and
 changes the game window using temporary saves, then closes it. See [build status](docs/BUILD_STATUS.md)
 for measured results and remaining work, and [credits](CREDITS.md) for all licensing.
+
+## Board-only play and scene depth (0.2.2)
+
+Press **F9** during a stage, or choose **Board only / F9** in Settings. The square
+playfield fills the available window while preserving its aspect ratio. This does
+not float, resize or change the window manager layout; portrait, landscape and
+square tiles work alongside other apps. Empty space is letterboxed. Esc restores
+the pause menu; F10 opens Settings. Dialogue, results and fullscreen confirmation
+temporarily show the interface so a run never silently waits for hidden controls.
+Focus loss still pauses. The preference is saved.
+
+Carved stone/brass tiles, metal spike plinths, animated gear switches and directional
+crystalline bolts replace the earlier primitives in modern themes. Spider placement
+uses the actual nearby supporting face; wall art fills the collision tile footprint.
+**Depth** in Settings toggles software lighting: directional sprite shading, local
+light response, glow and cast shadows. This is an SDL surface pass, not a GPU/GLSL
+shader pipeline. It changes neither collision geometry nor replay inputs.
+
+[Visual preview](docs/visual-review-v3/visual-review.mp4) ·
+[New artwork prompts and reference provenance](assets/sprites/V3-PROMPTS.md)

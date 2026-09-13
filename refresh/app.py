@@ -263,7 +263,7 @@ class App:
                 if event.key==pygame.K_ESCAPE:self.modal=None;pygame.key.stop_text_input();return
                 if 'binding' in self.modal:
                     name=pygame.key.name(event.key)
-                    reserved=(pygame.K_F1,pygame.K_F2,pygame.K_F5,pygame.K_F6,pygame.K_F10,pygame.K_F11,pygame.K_TAB,pygame.K_RETURN,pygame.K_p,pygame.K_r,pygame.K_m)
+                    reserved=(pygame.K_F1,pygame.K_F2,pygame.K_F5,pygame.K_F6,pygame.K_F9,pygame.K_F10,pygame.K_F11,pygame.K_TAB,pygame.K_RETURN,pygame.K_p,pygame.K_r,pygame.K_m)
                     if event.key in reserved:self.notify('Choose a key other than a menu or fullscreen shortcut.');return
                     action=self.modal['binding']
                     conflicts={self.s['key_'+a] for a in ('left','right','jump','interact') if a!=action}
@@ -295,6 +295,7 @@ class App:
                 except pygame.error as e:self.notify('Resize failed: '+str(e))
                 return
             if event.key==pygame.K_F6:self.cycle_theme(-1 if event.mod & pygame.KMOD_SHIFT else 1);return
+            if event.key==pygame.K_F9:self.setting('board_only',[False,True]);return
             if event.key==pygame.K_F10:self.open_settings();return
             if event.mod & pygame.KMOD_CTRL and event.key==pygame.K_s:
                 if self.screen=='editor' and event.mod & pygame.KMOD_SHIFT:self.editor_export()
@@ -476,6 +477,8 @@ class App:
         u.button('Done',(40,687,160,44),lambda:self.route(self.return_screen),primary=True)
         u.button('Save theme pack',(216,687,190,44),self.export_theme)
         u.button('Reset accent',(422,687,174,44),lambda:self.set_accent(''))
+        u.button('Depth: '+('On' if self.s['depth'] else 'Off'),(608,687,172,44),lambda:self.setting('depth',[True,False]))
+        u.button('Board only / F9'+(' ✓' if self.s['board_only'] else ''),(792,687,186,44),lambda:self.setting('board_only',[False,True]))
         u.button('Controls / F1',(990,687,166,44),self.show_help)
 
 
@@ -553,14 +556,14 @@ class App:
             ('Tab / Shift+Tab','Next / previous menu item'),('Enter','Activate selected item'),
             ('Ctrl+S','Save stage, or settings + practice replay')]),
             ('WINDOW, SOUND & STUDIO',[
-            ('F2 / F11','Window size / fullscreen'),('F6 / Shift+F6','Next / previous theme'),
+            ('F9','Board only / restore interface'),('F2 / F11','Window size / fullscreen'),('F6 / Shift+F6','Next / previous theme'),
             ('F10 / M','Settings / toggle music'),('Arrows / Space','Studio cursor / place selected tool'),
             ('[ / ] · Delete','Previous / next tool · erase cell'),('Ctrl+Z / Ctrl+Y','Undo / redo'),
             ('F5 / Ctrl+R','Playtest / rotate board'),('Ctrl+Shift+S','Export stage JSON')])]
         for col,(title,rows) in enumerate(columns):
             x=40+col*584;u.panel((x,178,550,478));u.text(title,x+22,200,13,t['accent'])
             for i,(key,action) in enumerate(rows):
-                y=243+i*50
+                y=243+i*44
                 u.fit(key,x+22,y,506,17)
                 u.fit(action,x+22,y+23,506,13,t['muted'])
         u.text('Runs save on completion. A practice replay records inputs; it is not a resume checkpoint.',44,676,15,t['muted'])
@@ -590,6 +593,12 @@ class App:
 
     def draw(self):
         self.ui.begin(self.theme);self.painter.configure(self.theme,self.s)
+        # Board-only never resizes/floats the OS window. Essential dialogue and
+        # pause/settings screens temporarily restore the interface.
+        if (self.s['board_only'] and self.screen=='play' and not self.session.scene['dialogue']
+                and not self.modal and not self.display.deadline):
+            world=self.painter.draw(self.session,self.theme,self.s,self.stepper.alpha)
+            self.display.present(world);return
         if self.screen=='home':self.draw_home()
         elif self.screen=='stages':self.draw_stages()
         elif self.screen=='settings':self.draw_settings()

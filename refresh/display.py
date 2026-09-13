@@ -14,6 +14,7 @@ class Display:
         pygame.display.set_caption('Which Way Is Up? — Omarchy Refresh')
         self.fullscreen=False;self.deadline=0.;self.confirmed=False
         self.viewport=pygame.Rect(0,0,*self.screen.get_size())
+        self.content_size=(1200,800)
     def cycle_size(self):
         if self.fullscreen:self.toggle()
         desktop=pygame.display.get_desktop_sizes()[0]
@@ -42,12 +43,13 @@ class Display:
     def present(self,surface):
         self.screen=pygame.display.get_surface()
         w,h=self.screen.get_size()
-        factor=min(w/1200,h/800)
-        size=(max(1,round(1200*factor)),max(1,round(800*factor)))
+        sw,sh=surface.get_size();self.content_size=(sw,sh)
+        factor=min(w/sw,h/sh)
+        size=(max(1,round(sw*factor)),max(1,round(sh*factor)))
         self.viewport=pygame.Rect(0,0,*size);self.viewport.center=(w//2,h//2)
         self.screen.fill((5,8,12))
         scaled=pygame.transform.smoothscale(surface,size)
         self.screen.blit(scaled,self.viewport)
         pygame.display.flip()
     def map(self,pos):
-        return ((pos[0]-self.viewport.x)*1200/max(1,self.viewport.w),(pos[1]-self.viewport.y)*800/max(1,self.viewport.h))
+        return ((pos[0]-self.viewport.x)*self.content_size[0]/max(1,self.viewport.w),(pos[1]-self.viewport.y)*self.content_size[1]/max(1,self.viewport.h))

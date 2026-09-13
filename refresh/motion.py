@@ -1,5 +1,5 @@
 """Presentation-only motion events. No simulation objects, clocks or RNG are modified."""
-from dataclasses import dataclass
+from dataclasses import dataclass,field
 
 @dataclass
 class Motion:
@@ -13,9 +13,15 @@ class Motion:
     pickup_tick: int = -1000
     pickup_pos: tuple = (0.,0.)
     inventory_count: int = 0
+    levers: dict = field(default_factory=dict)
 
     def observe(self, scene, tick):
         player=scene['player']
+        for item in scene['objects']:
+            if item.itemclass!='lever':continue
+            count=item.activated_times
+            previous,changed=self.levers.get(id(item),(count,-1000))
+            self.levers[id(item)]=(count,tick if count!=previous else changed)
         if self.grounded is not None and not player.flipping and not scene['level'].flipping:
             if self.grounded and not player.on_ground and player.dy < -1:
                 self.takeoff=tick

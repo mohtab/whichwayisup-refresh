@@ -1,3 +1,33 @@
+# Build status — 0.2.2 materials and board-only play, 2026-09-13
+
+Local visual review build; not a public release.
+
+- F9 saved board-only preference: aspect-correct square playfield inside arbitrary
+  tiled windows. No compositor mutation. Pause, Settings, dialogue and results stay
+  reachable; focus loss pauses. Depth and board-only toggles are in Settings.
+- Illustrated stone/brass tiles, sharp metal spikes, animated gear switches and
+  directional crystalline projectiles. Actual wall faces determine spider foot contact.
+- Omarchy's DHH uses a generated 24-pose atlas based on the observed public X portrait.
+  Both characters have animated freefall body flutter, distinct from slow-fall glide.
+- Optional cached software shading, local light response, glow and cast shadows.
+  This is not a GPU shader implementation. Original simulation/collision rules remain.
+- Assets, exact prompts and provenance accompany the source. No portrait photo bundled.
+
+38 automated tests pass, covering board-only at portrait/landscape/square sizes,
+no window resize/fullscreen calls during toggles, menu/dialogue/focus-loss recovery,
+DHH animation, alpha preservation, non-mutating lighting, all four wall contacts,
+and single lever activation events, plus previous physics/replay/profile checks.
+
+Native Wayland: board-only remained tiled alongside five other mapped windows.
+The 1280×774 window contained a 774×774 playfield. A short scripted diagnostic
+measured median 8.79 ms and p95 13.06 ms frame work, not a sustained FPS guarantee.
+Review movie, screenshots and reports: docs/visual-review-v3/.
+
+Human acceptance, sustained sessions, full campaign completion and the proposed
+online architecture remain release gates. No global scores or uploads are connected.
+
+---
+
 # Build status — 0.2.1 sprite polish, 2026-09-13
 
 Local review build; not a public release.

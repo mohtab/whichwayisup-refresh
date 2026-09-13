@@ -4,7 +4,7 @@ Created September 13, 2026 using OpenAI's built-in image generation tool for Moh
 
 New sprite assets are distributed under the project's GPL-2.0-only terms to the extent copyright applies; see ../../LICENSE. Original game assets under data/ retain their existing attribution and licenses. These generated assets do not claim authorship by the original creator.
 
-The explorer uses a separate six-frame run cycle and event poses. The spider is authored with its feet at the bottom, then rotated to its supporting surface. The compass key has sixteen glint/sway frames. The DHH cameo and Original theme retain their existing art. Generated sheets contain unused variants; the selected frame map is in refresh/sprites.py.
+The explorer uses a separate six-frame run cycle and event poses. The spider is authored with its feet at the bottom, then rotated to its supporting surface. The compass key has sixteen glint/sway frames. The Original theme retains its existing art. The later DHH atlas and clockwork prop pass are documented in [V3-PROMPTS.md](V3-PROMPTS.md). Generated sheets contain unused variants; the selected frame map is in refresh/sprites.py.
 
 ## explorer-v1.png
 

@@ -58,3 +58,11 @@ in the backup patch. This refresh does not claim those changes as newly authored
 - `refresh/app.py`: Explorer character label and updated credits terminology.
 - `tests/test_sprite_motion.py`, `tools/review_sprites.py`, `docs/sprite-review-v2/`: regression tests and scripted visual review.
 - `README.md`, `CREDITS.md`, `docs/BUILD_STATUS.md`, `pyproject.toml`, `packaging/`: documentation, version and bundled asset updates.
+
+## September 13 materials, depth and board-only mode (0.2.2)
+
+- `refresh/app.py`, `refresh/display.py`, `refresh/storage.py`: F9 board-only mode, arbitrary source aspect ratio, saved depth/view options, reachable dialogue/pause/settings and updated shortcut layout.
+- `refresh/sprites.py`, `refresh/art.py`, `refresh/motion.py`, `refresh/lighting.py`: new DHH/prop atlases, animated falling and switches, correctly directed bolts, nearby wall contact, bounded software lighting caches.
+- `assets/sprites/`: intact generated props/DHH sheets, provenance and prompts.
+- `tests/test_visual_v3.py`, `tools/review_visual_v3.py`, `docs/visual-review-v3/`: shape/navigation/lighting/contact/animation checks and native tiled verification.
+- `README.md`, `CREDITS.md`, `docs/BUILD_STATUS.md`, `pyproject.toml`, `packaging/`: documentation and version update.

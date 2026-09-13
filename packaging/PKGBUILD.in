@@ -1,5 +1,5 @@
 pkgname=whichwayisup-refresh
-pkgver=0.2.1
+pkgver=0.2.2
 pkgrel=1
 pkgdesc='An independent Which Way Is Up? homage with modern themes and stage tools'
 arch=('any')
