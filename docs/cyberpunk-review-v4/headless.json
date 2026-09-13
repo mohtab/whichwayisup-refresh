@@ -1,0 +1,14 @@
+{
+  "backend": "dummy",
+  "viewport": [
+    675,
+    675
+  ],
+  "window": [
+    921,
+    675
+  ],
+  "median_ms": 7.46,
+  "p95_ms": 8.51,
+  "note": "Scripted rendering diagnostic, not sustained performance or human playtesting."
+}

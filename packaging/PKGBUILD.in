@@ -1,10 +1,10 @@
 pkgname=whichwayisup-refresh
-pkgver=0.2.2
+pkgver=0.3.0
 pkgrel=1
 pkgdesc='An independent Which Way Is Up? homage with modern themes and stage tools'
 arch=('any')
 url='https://salsa.debian.org/games-team/whichwayisup'
-license=('GPL-2.0-only' 'CC-BY-3.0' 'Bitstream-Vera')
+license=('GPL-2.0-only' 'CC-BY-3.0' 'Bitstream-Vera' 'MIT')
 depends=('python>=3.11' 'python-pygame>=2.6')
 source=("$pkgname-$pkgver.tar.gz")
 sha256sums=('@SHA256@')
@@ -22,5 +22,6 @@ package() {
   chmod 755 "$pkgdir/usr/bin/$pkgname"
   install -Dm644 packaging/whichwayisup-refresh.desktop "$pkgdir/usr/share/applications/whichwayisup-refresh.desktop"
   install -Dm644 packaging/icon.svg "$pkgdir/usr/share/icons/hicolor/scalable/apps/whichwayisup-refresh.svg"
+  install -Dm644 licenses/omarchy-MIT.txt "$pkgdir/usr/share/licenses/$pkgname/omarchy-MIT.txt"
   install -Dm644 licenses/original-copyright "$pkgdir/usr/share/licenses/$pkgname/original-copyright"
 }

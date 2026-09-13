@@ -1,0 +1,16 @@
+{
+  "backend": "wayland",
+  "viewport": [
+    774,
+    774
+  ],
+  "window": [
+    1280,
+    774
+  ],
+  "median_ms": 14.15,
+  "p95_ms": 15.44,
+  "tiled": true,
+  "other_mapped_windows": 5,
+  "note": "Scripted rendering diagnostic, not sustained performance or human playtesting."
+}

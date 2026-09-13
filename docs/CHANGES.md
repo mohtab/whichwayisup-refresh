@@ -66,3 +66,11 @@ in the backup patch. This refresh does not claim those changes as newly authored
 - `assets/sprites/`: intact generated props/DHH sheets, provenance and prompts.
 - `tests/test_visual_v3.py`, `tools/review_visual_v3.py`, `docs/visual-review-v3/`: shape/navigation/lighting/contact/animation checks and native tiled verification.
 - `README.md`, `CREDITS.md`, `docs/BUILD_STATUS.md`, `pyproject.toml`, `packaging/`: documentation and version update.
+
+## September 13 Cyberpunk and Omarchy collectibles (0.3.0)
+
+- `refresh/sprites.py`, `refresh/atlas_regions.py`, `refresh/art.py`: dedicated Cyberpunk art for all sprite categories; explicit complete-frame bounds and bounded component caches.
+- `refresh/branding.py`, `assets/branding/`, `licenses/omarchy-MIT.txt`: upstream Omarchy emblem, soft glow and steady reduced-effects alternative.
+- `assets/sprites/`: three intact Cyberpunk atlases and exact generation prompts.
+- `tests/test_theme_art.py`, `tools/review_cyberpunk.py`, `docs/cyberpunk-review-v4/`: distinct theme assets, complete frame/contact, pulse and native verification.
+- `README.md`, `CREDITS.md`, `docs/BUILD_STATUS.md`, `pyproject.toml`, `packaging/`: private GitHub review packaging, fresh-checkout instructions and correct virtual-environment launcher interpreter.

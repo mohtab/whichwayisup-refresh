@@ -1,7 +1,7 @@
 """Palette-driven world art and illustrated sprites; original art remains optional."""
 import math
 import pygame
-from . import sprites,lighting
+from . import sprites,lighting,branding
 
 
 def mix(a,b,t):return tuple(round(x+(y-x)*t) for x,y in zip(a,b))
@@ -37,10 +37,14 @@ class Painter:
             pygame.draw.circle(s,mix(t['background'],t['accent'],.07),(440,80),180,1)
         return s
     def sprite(self,kind,w,h,state='default',phase=0,character=None,scale=1):
-        if kind=='player':return sprites.player(w,h,state,phase,scale,character)
-        if kind=='spider':return sprites.spider(w,h,state,phase,scale)
+        style=self.theme.style
+        if kind=='player':return sprites.player(w,h,state,phase,scale,character,style)
+        if kind=='spider':return sprites.spider(w,h,state,phase,scale,style)
+        if kind=='key' and style=='omarchy':return branding.collectible(w,h,phase,scale,self.settings['effects'])
+        if style=='cyberpunk' and kind in ('key','bars','blob','other_pants','cake'):
+            return sprites.prop(kind,w,h,state,phase,scale,style)
         if kind=='key':return sprites.key(w,h,phase,scale)
-        if kind in ('wall','spikes','lever','projectile'):return sprites.prop(kind,w,h,state,phase,scale)
+        if kind in ('wall','spikes','lever','projectile'):return sprites.prop(kind,w,h,state,phase,scale,style)
         if scale!=1:return pygame.transform.scale(self.sprite(kind,w,h,state,phase,character),(w*scale,h*scale))
         key=(kind,w,h,state,phase,character)
         if key in self.cache:return self.cache[key]
@@ -114,6 +118,7 @@ class Painter:
                 phase=o.animations[state].i
                 if kind in ('player','spider','blob','key') and state not in ('dying','exit','gone'):
                     phase=int((max(0,session.tick-1)+alpha)*1.5)%16
+                if kind=='key' and theme.style=='omarchy':phase=int((max(0,session.tick-1)+alpha)*.7)%32
                 if kind=='wall':phase=(o.tilex*7+o.tiley*11)%6
                 if kind=='spikes':phase=int((session.tick+alpha)/5)%6
                 if kind=='projectile':phase=int(session.tick+alpha)%6

@@ -1,11 +1,23 @@
-# Which Way Is Up? — Omarchy Refresh
+# Which Way Is Up? — Refresh
 
 A playable desktop homage to Olli “Hectigo” Etuaho's 2007 platform game.
 Turn the world, find the key, and choose how the adventure looks.
 
+![Cyberpunk gameplay](docs/cyberpunk-review-v4/board-only.png)
+
 ## Play
 
-Requires Python 3.11+ and Pygame 2.6+. This machine already has both.
+Requires Python 3.11+ and Pygame 2.6+. For a fresh checkout:
+
+```sh
+git clone https://github.com/mohtab/whichwayisup-refresh.git
+cd whichwayisup-refresh
+python -m venv .venv
+.venv/bin/python -m pip install 'pygame>=2.6,<3'
+.venv/bin/python run_game.py
+```
+
+For an environment with Pygame already installed:
 
 ```sh
 python run_game.py
@@ -91,10 +103,12 @@ and essential character animation.
 
 - **Original:** original assets, colors and levels with crisp scaling.
 - **Refresh:** warm brass and teal, with an illustrated explorer and clockwork creatures.
-- **Omarchy:** an independent tribute featuring a stylized DHH cameo.
+- **Omarchy:** an independent tribute featuring an animated DHH cameo and glowing
+  Omarchy emblem collectibles. The emblem pulses gently; Reduced effects holds it steady.
 - **Follow Omarchy:** reads the current desktop palette and applies changes at a safe
   menu boundary. Falls back to Osaka Jade-derived colors outside Omarchy.
-- **Cyberpunk:** circuit tiles, neon colors, mechanical spiders and laser-like bolts.
+- **Cyberpunk:** a neon courier, chrome spider drones, titanium bulkheads, plasma spikes,
+  security gates, holographic access keys, nanogel enemies and matching collectibles.
 
 Choose the character independently. Override the accent in Customize; **Save theme
 pack** creates an editable TOML file in the user-data `themes/` directory. Additional
@@ -204,3 +218,19 @@ shader pipeline. It changes neither collision geometry nor replay inputs.
 
 [Visual preview](docs/visual-review-v3/visual-review.mp4) ·
 [New artwork prompts and reference provenance](assets/sprites/V3-PROMPTS.md)
+
+## Cyberpunk art pass (0.3.0)
+
+Every Cyberpunk sprite category has its own artwork. Explicitly choosing Original
+Guy or DHH in Settings still overrides the theme-default courier. Omarchy and
+Follow Omarchy use the upstream emblem for key collectibles; interaction and
+stage goals continue to use the original key rules. F6 cycles themes.
+
+[Animation review](docs/cyberpunk-review-v4/visual-review.mp4) ·
+[Generated artwork prompts](assets/sprites/CYBERPUNK-PROMPTS.md) ·
+[Omarchy logo provenance](assets/branding/README.md)
+
+Run the automated suite with `python -m unittest discover -s tests -v` (or the
+virtual environment's Python). Build a complete source archive and Arch recipe
+with `python packaging/build_release.py`. Local installation records the Python
+interpreter used to run `packaging/install_local.py`, including virtual environments.

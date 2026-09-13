@@ -390,7 +390,7 @@ class App:
     def settings_screen(self,back):self.return_screen=back;self.route('settings')
     def draw_home(self):
         u=self.ui;t=self.theme
-        u.header('THE PERSPECTIVE PROJECT / 0.2')
+        u.header('WHICHWAYISUP REFRESH / 0.3')
         u.text('TURN THE WORLD. FIND YOUR LINE.',40,115,14,t['accent'])
         u.text('Which way',36,151,65)
         u.text('is up?',36,225,65)

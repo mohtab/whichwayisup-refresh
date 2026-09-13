@@ -1,3 +1,31 @@
+# Build status — 0.3.0 Cyberpunk art review, 2026-09-13
+
+Private review build for mohtab/whichwayisup-refresh. Not a public release.
+
+- Dedicated Cyberpunk courier and spider drone animations, titanium bulkheads,
+  plasma spikes, security gates, industrial switches, plasma bolts, access keys,
+  nanogel blobs, armored trousers and futuristic cake collectibles.
+- Actual Omarchy emblem replaces keys in Omarchy/Follow Omarchy, with a gentle
+  pulse and glow. Reduced effects freezes the pulse. Pickup and goal rules unchanged.
+- Explicit atlas frame bounds preserve complete strides and tile edges. Source
+  PNGs remain intact. Generated artwork prompts and upstream MIT logo notice included.
+- Fresh-checkout instructions and source/Arch packaging. Local installer remembers
+  its Python interpreter, including virtual environments.
+
+42 automated tests pass. New tests cover every Cyberpunk sprite category, all atlas
+frames, four-way spider contact across the scuttle cycle, Omarchy pulse and reduced
+motion behavior. Earlier simulation, replay, profile and board-only checks also pass.
+
+Native Wayland remained tiled alongside five mapped windows. A short scripted
+rendering diagnostic measured median 14.15 ms and p95 15.44 ms frame work; not a
+sustained FPS guarantee. Preview movie and screenshots: docs/cyberpunk-review-v4/.
+
+Human art/playtesting acceptance and full campaign completion remain open. Global
+scores and community hosting remain proposed; no online service is connected.
+The current Git history scan found no credential-pattern matches or blobs over 50 MB.
+
+---
+
 # Build status — 0.2.2 materials and board-only play, 2026-09-13
 
 Local visual review build; not a public release.

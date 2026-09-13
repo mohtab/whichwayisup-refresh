@@ -35,7 +35,7 @@ for preserving and maintaining the game. Their notices remain in
   refresh with AI coding assistance. They do not imply authorship of the original game.
 - The DHH character is a newly generated, stylized fan-art cameo inspired by his public X profile portrait. This is an
   unofficial homage with no affiliation or endorsement claimed. No third-party
-  portrait photograph or Omarchy logo is bundled.
+  portrait photograph is bundled. The Omarchy emblem is attributed separately below.
 - The Follow Omarchy design reads the user's installed palette locally; no desktop
   theme wallpaper or other third-party theme asset is redistributed.
 - User stages keep their own author and license metadata. The editor suggests
@@ -58,3 +58,12 @@ use GPL-2.0-only to the extent copyright applies.
 The September 13 clockwork props and DHH atlas also use built-in image generation.
 Their exact prompts and the public portrait reference are documented in
 `assets/sprites/V3-PROMPTS.md`. The reference photograph is not redistributed.
+
+Cyberpunk's courier, spider drone, bulkhead tiles, hazards and collectibles were
+generated with OpenAI's built-in image-generation tool. Exact prompts and frame
+selection notes are in `assets/sprites/CYBERPUNK-PROMPTS.md`.
+
+The Omarchy collectible uses the unmodified Omarchy v4.0.3 `icon.png`, copyright
+David Heinemeier Hansson, under its upstream MIT notice in `licenses/omarchy-MIT.txt`.
+Source and provenance: `assets/branding/README.md`. Runtime pulse and glow are new
+presentation code; Omarchy does not sponsor or endorse this game.

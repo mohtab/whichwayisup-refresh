@@ -7,18 +7,30 @@ from functools import lru_cache
 from pathlib import Path
 import math
 import pygame
+from .atlas_regions import REGIONS
 
 ROOT=Path(__file__).resolve().parents[1]/'assets/sprites'
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=12)
 def sheet(name):
     surface=pygame.image.load(str(ROOT/name)).convert_alpha()
     if surface.get_at((0,0)).a!=0:raise ValueError('Sprite sheet must have a transparent background: '+name)
     return surface
 
-@lru_cache(maxsize=80)
+@lru_cache(maxsize=3)
+def components(name):
+    return {tuple(m.get_bounding_rects()[0]):m for m in pygame.mask.from_surface(sheet(name),96).connected_components(400)}
+
+@lru_cache(maxsize=160)
 def source_frame(name,columns,rows,index):
     source=sheet(name);w,h=source.get_size()
+    if name in REGIONS:
+        rect=pygame.Rect(REGIONS[name][index]);frame=source.subsurface(rect).copy()
+        component=components(name)[tuple(rect)]
+        alpha=component.to_surface(setcolor=(255,255,255,255),unsetcolor=(255,255,255,0)).subsurface(rect)
+        frame.blit(alpha,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
+        # A local contact-centered offset is used for these independently bounded poses.
+        return frame,pygame.Rect(145-frame.get_width()//2,0,*frame.get_size())
     if name=='explorer-run-v1.png':
         # Reviewed alpha bounds: the long stride/scarf exceeds nominal grid cells.
         rects=((22,18,271,235),(330,36,178,220),(542,10,179,246),
@@ -34,7 +46,7 @@ def source_frame(name,columns,rows,index):
     return frame.subsurface(bounds).copy(),bounds
 
 @lru_cache(maxsize=768)
-def player(w,h,state,phase,scale=1,character=None):
+def player(w,h,state,phase,scale=1,character=None,style=None):
     phase=int(phase)%16
     if state=='walking':index=(0,1,2,3,4,5)[int(phase*6/16)]
     elif state=='takeoff':index=7 if phase<2 else 8
@@ -47,11 +59,11 @@ def player(w,h,state,phase,scale=1,character=None):
     elif state in ('dying','gone'):index=23
     elif state=='exit':index=7
     else:index=18 if phase==15 else 17
-    atlas='dhh-v2.png' if character=='dhh' else 'explorer-run-v1.png' if state=='walking' else 'explorer-v1.png'
+    atlas='dhh-v2.png' if character=='dhh' else 'cyber-courier-v1.png' if style=='cyberpunk' else 'explorer-run-v1.png' if state=='walking' else 'explorer-v1.png'
     frame,bounds=source_frame(atlas,6,4,index)
     # A standing body is ~225 source pixels. Crouches keep this scale instead of
     # being stretched back to standing height. The scarf can extend past the body.
-    factor=(h+7)*scale/(240 if character=='dhh' else 235 if state=='walking' else 225)
+    factor=(h+7)*scale/(260 if style=='cyberpunk' and character!='dhh' else 240 if character=='dhh' else 235 if state=='walking' else 225)
     size=(max(1,round(frame.get_width()*factor)),max(1,round(frame.get_height()*factor)))
     art=pygame.transform.smoothscale(frame,size)
     canvas=pygame.Surface(((w+36)*scale,(h+14)*scale),pygame.SRCALPHA)
@@ -71,13 +83,13 @@ def player(w,h,state,phase,scale=1,character=None):
     return canvas
 
 @lru_cache(maxsize=768)
-def spider(w,h,state,phase,scale=1):
+def spider(w,h,state,phase,scale=1,style=None):
     phase=int(phase)%16
     if state=='firing':index=(15,16,17)[min(2,phase//2)]
     elif state=='charged':index=13
     elif state=='walking':index=6+int(phase*6/16)
     else:index=18+int(phase*6/16)
-    frame,bounds=source_frame('spider-v1.png',6,4,index)
+    frame,bounds=source_frame('cyber-spider-v1.png' if style=='cyberpunk' else 'spider-v1.png',6,4,index)
     factor=(w-2)*scale/245
     art=pygame.transform.smoothscale(frame,(max(1,round(frame.get_width()*factor)),max(1,round(frame.get_height()*factor))))
     canvas=pygame.Surface((w*scale,h*scale),pygame.SRCALPHA)
@@ -95,20 +107,26 @@ def key(w,h,phase,scale=1):
 
 
 @lru_cache(maxsize=192)
-def prop(kind,w,h,state,phase,scale=1):
+def prop(kind,w,h,state,phase,scale=1,style=None):
     if kind=='projectile':w=max(w,20);h=max(h,10)
-    if kind=='wall':index=int(phase)%6
+    cyber=style=='cyberpunk'
+    if cyber and kind in ('spikes','bars','blob','key','other_pants','cake'):
+        index={'spikes':6,'bars':7,'blob':8,'key':9,'other_pants':10,'cake':11}[kind]
+    elif kind=='wall':index=int(phase)%6
     elif kind=='spikes':index=6+int(phase)%6
     elif kind=='lever':index=17 if state=='broken' else 12+min(4,int(phase))
     else:index=18+int(phase)%6
-    frame,_=source_frame('clockwork-props-v1.png',6,4,index)
+    frame,_=source_frame('cyber-props-v1.png' if cyber else 'clockwork-props-v1.png',6,4,index)
     canvas=pygame.Surface((w*scale,h*scale),pygame.SRCALPHA)
     if kind=='wall':
-        canvas.fill((26,45,48))
+        canvas.fill((17,20,35) if cyber else (26,45,48))
         canvas.blit(pygame.transform.smoothscale(frame,canvas.get_size()),(0,0))
     else:
         factor=min(w*scale/frame.get_width(),h*scale/frame.get_height())
         art=pygame.transform.smoothscale(frame,(max(1,round(frame.get_width()*factor)),max(1,round(frame.get_height()*factor))))
+        if cyber and kind=='blob':
+            squash=round(math.sin(phase*math.tau/16)*2*scale)
+            art=pygame.transform.smoothscale(art,(max(1,art.get_width()),max(1,art.get_height()-abs(squash))))
         anchor=art.get_rect(center=canvas.get_rect().center) if kind=='projectile' else art.get_rect(midbottom=(w*scale//2,h*scale))
         canvas.blit(art,anchor)
     return canvas

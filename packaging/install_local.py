@@ -2,10 +2,11 @@
 from pathlib import Path
 import shlex
 import shutil
+import sys
 root=Path(__file__).resolve().parents[1]
 launcher=Path.home()/'.local/bin/whichwayisup-refresh'
 launcher.parent.mkdir(parents=True,exist_ok=True)
-launcher.write_text('#!/bin/sh\nexec python '+shlex.quote(str(root/'run_game.py'))+' "$@"\n')
+launcher.write_text('#!/bin/sh\nexec '+shlex.quote(sys.executable)+' '+shlex.quote(str(root/'run_game.py'))+' "$@"\n')
 launcher.chmod(0o755)
 icons=Path.home()/'.local/share/icons/hicolor/scalable/apps'
 icons.mkdir(parents=True,exist_ok=True)
