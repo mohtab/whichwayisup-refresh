@@ -1,5 +1,5 @@
 pkgname=whichwayisup-refresh
-pkgver=0.2.0
+pkgver=0.2.1
 pkgrel=1
 pkgdesc='An independent Which Way Is Up? homage with modern themes and stage tools'
 arch=('any')
@@ -17,7 +17,7 @@ check() {
 package() {
   cd "$srcdir/$pkgname-$pkgver"
   install -d "$pkgdir/usr/share/$pkgname" "$pkgdir/usr/bin"
-  cp -r refresh lib data themes run_game.py README.md CREDITS.md LICENSE licenses "$pkgdir/usr/share/$pkgname/"
+  cp -r refresh lib data themes assets run_game.py README.md CREDITS.md LICENSE licenses "$pkgdir/usr/share/$pkgname/"
   printf '#!/bin/sh\nexec python /usr/share/whichwayisup-refresh/run_game.py "$@"\n' > "$pkgdir/usr/bin/$pkgname"
   chmod 755 "$pkgdir/usr/bin/$pkgname"
   install -Dm644 packaging/whichwayisup-refresh.desktop "$pkgdir/usr/share/applications/whichwayisup-refresh.desktop"

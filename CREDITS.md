@@ -21,7 +21,7 @@ Jon Dowland, Evgeni Golov, Ansgar Burchardt, Markus Koschany and Reiner Herrmann
 for preserving and maintaining the game. Their notices remain in
 `licenses/original-copyright` and `debian/copyright`.
 
-- Original code, the refresh code, and new procedural artwork and ambient music: **GNU GPL version 2**.
+- Original code, the refresh code, and new artwork and ambient music: **GNU GPL version 2**.
   See `LICENSE`. Refresh changes were made on **2026-09-12 and 2026-09-13**; the changed files are
   listed in `docs/CHANGES.md`. Source and installation scripts accompany releases.
 - Original game content (including graphics, sound and levels):
@@ -48,3 +48,9 @@ copyright licenses. Review public branding and new contributions before publicat
 The September 13 refresh adapts three tutorial control hints at display time.
 Original stage files are preserved. The eight-second ambient arpeggio loop is
 synthesized by `refresh/audio.py` and uses no sampled third-party recording.
+
+The explorer, armored spider and compass key sprite sheets were generated with
+OpenAI’s built-in image generation tool on September 13, 2026. Selected source
+PNGs and exact prompts are included in `assets/sprites/`. Animation integration
+and presentation code were developed with AI coding assistance. New sprite assets
+use GPL-2.0-only to the extent copyright applies.

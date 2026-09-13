@@ -4,7 +4,7 @@ import hashlib
 import tarfile
 root=Path(__file__).resolve().parents[1]
 dist=root/'dist';dist.mkdir(exist_ok=True)
-name='whichwayisup-refresh-0.2.0'
+name='whichwayisup-refresh-0.2.1'
 archive=dist/(name+'.tar.gz')
 def include(member):
     if '__pycache__' in Path(member.name).parts or member.name.endswith('.pyc'):return None

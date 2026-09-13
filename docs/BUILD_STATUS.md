@@ -1,3 +1,32 @@
+# Build status — 0.2.1 sprite polish, 2026-09-13
+
+Local review build; not a public release.
+
+- Illustrated explorer with scarf, goggles, six-frame stride, jump stretch, apex,
+  falling/gliding poses, landing compression, damage recoil and collapse.
+- Armored spiders with articulated scuttle poses and feet anchored to all four
+  supporting directions, interpolated through room turns. Studio previews match.
+- Ornate compass key with glint/sway animation; restrained pickup, landing and hit effects.
+- World art rendered at 1040×1040, preserving more sprite detail when enlarged.
+- Original theme and original physics remain available. DHH retains its existing art.
+- Four intact generated PNG sheets, exact prompts and provenance in assets/sprites/.
+  Arch packaging now includes these required assets.
+
+32 automated tests pass. New checks cover actual jump/landing/damage events, four-way
+spider contact, continuous rotation, uncut run strides, grounded crouches, frozen pause
+poses and presentation that leaves physics and replay inputs unchanged.
+
+Native Wayland scripted review observed takeoff, rising, apex, falling, gliding,
+landing and hurt. Short diagnostic: median frame work 12.78 ms, p95 19.30 ms with
+rendering/presentation; not a sustained FPS promise. Preview movie, screenshots and
+native/headless reports are in docs/sprite-review-v2/.
+
+Human art approval, sustained play and campaign completion remain release gates.
+Online scores and uploads remain proposed, not implemented. Local replay validation
+cannot establish that a human performed a run. The prior release gates below still apply.
+
+---
+
 # Build status — 0.2.0 local polish, 2026-09-13
 
 A tested local review build. Not yet approved for a public release.

@@ -3,7 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 import time
 import pygame
-from . import stages
+from . import stages, sprites
 from .storage import user_path, atomic_json
 
 class Editor:
@@ -97,7 +97,9 @@ class Editor:
         for e in d['entities']:
             pos=(36+e['x']*28,154+e['y']*28)
             sprite=app.painter.sprite(e['type'],24,26,character='guy')
-            ui.surface.blit(sprite,sprite.get_rect(center=pos))
+            if e['type']=='spider':sprite=sprites.orient_spider(sprite,{'RIGHT':0,'DOWN':1,'LEFT':2,'UP':3}[e['attached']])
+            rect=sprite.get_rect(midbottom=(pos[0],pos[1]+13)) if e['type']=='player' else sprite.get_rect(center=pos)
+            ui.surface.blit(sprite,rect)
         pygame.draw.rect(ui.surface,t['accent'],(36+7*28,154+7*28,13*28,13*28),2)
         cursor=pygame.Rect(self.GRID.x+self.cursor[0]*28,self.GRID.y+self.cursor[1]*28,28,28)
         pygame.draw.rect(ui.surface,t['foreground'],cursor,2)

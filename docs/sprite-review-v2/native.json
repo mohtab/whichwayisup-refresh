@@ -1,0 +1,21 @@
+{
+  "backend": "wayland",
+  "sprite_sheets": 4,
+  "renderer_size": [
+    1040,
+    1040
+  ],
+  "observed_poses": [
+    "apex",
+    "default",
+    "falling",
+    "gliding",
+    "hurt",
+    "landing",
+    "rising",
+    "takeoff"
+  ],
+  "work_ms_median": 12.78,
+  "work_ms_p95": 19.3,
+  "note": "Scripted fixture and debug-triggered damage/rotation; not a campaign playthrough. Timing is a short diagnostic."
+}

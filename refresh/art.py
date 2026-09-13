@@ -1,6 +1,7 @@
-"""Palette-driven, code-drawn art; original sprites remain an independent option."""
+"""Palette-driven world art and illustrated sprites; original art remains optional."""
 import math
 import pygame
+from . import sprites
 
 
 def mix(a,b,t):return tuple(round(x+(y-x)*t) for x,y in zip(a,b))
@@ -8,13 +9,14 @@ def mix(a,b,t):return tuple(round(x+(y-x)*t) for x,y in zip(a,b))
 class Painter:
     def __init__(self):
         self.key=None;self.cache={}
-        self.world=pygame.Surface((520,520))
+        self.scale=2
+        self.world=pygame.Surface((520*self.scale,520*self.scale))
     def configure(self,theme,settings):
         key=(theme.id,tuple(theme.palette.items()),settings['character'],settings['effects'])
         if key!=self.key:
             self.key=key;self.cache.clear()
             self.theme=theme;self.settings=settings.copy()
-            self.background=self.make_background()
+            self.background=pygame.transform.scale(self.make_background(),self.world.get_size())
     def make_background(self):
         t=self.theme
         s=pygame.Surface((520,520))
@@ -32,7 +34,11 @@ class Painter:
             pygame.draw.circle(s,mix(t['background'],t['accent'],.06),(440,80),140,1)
             pygame.draw.circle(s,mix(t['background'],t['accent'],.07),(440,80),180,1)
         return s
-    def sprite(self,kind,w,h,state='default',phase=0,character=None):
+    def sprite(self,kind,w,h,state='default',phase=0,character=None,scale=1):
+        if kind=='player' and character!='dhh':return sprites.player(w,h,state,phase,scale)
+        if kind=='spider':return sprites.spider(w,h,state,phase,scale)
+        if kind=='key':return sprites.key(w,h,phase,scale)
+        if scale!=1:return pygame.transform.scale(self.sprite(kind,w,h,state,phase,character),(w*scale,h*scale))
         key=(kind,w,h,state,phase,character)
         if key in self.cache:return self.cache[key]
         t=self.theme
@@ -47,6 +53,8 @@ class Painter:
                 pygame.draw.rect(s,mix(t['panel'],second,.12),(1,1,w-2,h-2),border_radius=3)
                 pygame.draw.line(s,mix(second,pale,.2),(2,2),(w-3,2),2)
                 pygame.draw.line(s,mix(t['panel'],second,.3),(1,h-2),(w-2,h-2))
+                pygame.draw.line(s,mix(t['panel'],ink,.4),(w-2,3),(w-2,h-3),2)
+                pygame.draw.line(s,mix(t['panel'],pale,.08),(3,4),(3,h-4))
                 if t.style=='cyberpunk':
                     pygame.draw.lines(s,mix(t['panel'],accent,.5),False,[(5,h-7),(14,h-7),(20,10),(w-7,10)],1)
                     pygame.draw.circle(s,accent,(w-7,10),2)
@@ -116,17 +124,6 @@ class Painter:
                 pygame.draw.arc(body,second,(cx-12,-3,24,13),0,math.pi,2)
             s=pygame.transform.scale(body,(w,h))
             if state in ('dying','exit'):s.set_alpha(max(0,255-phase*17))
-        elif kind=='spider':
-            cy=h//2
-            for side in (-1,1):
-                for n in range(3):
-                    yy=cy-6+n*6
-                    pygame.draw.lines(s,second,False,[(cx+side*5,yy),(cx+side*(12+n%2*2),yy-4),(cx+side*(w//2-1),yy+3+round(math.sin(phase*math.tau/16+n)*3))],2)
-            pygame.draw.ellipse(s,ink,(cx-9,cy-10,18,21))
-            pygame.draw.ellipse(s,mix(t['panel'],second,.4),(cx-7,cy-8,14,16))
-            pygame.draw.circle(s,hazard,(cx-3,cy-3),2)
-            pygame.draw.circle(s,hazard,(cx+3,cy-3),2)
-            pygame.draw.rect(s,accent,(cx-3,cy+6,6,5),border_radius=2)
         elif kind=='projectile':
             cy=h//2
             pygame.draw.line(s,accent,(0,cy),(w-1,cy),max(3,h-2))
@@ -144,11 +141,6 @@ class Painter:
             end=(w-6,4) if state=='broken' else (6,4)
             pygame.draw.line(s,pale,(cx,cy),end,3)
             pygame.draw.circle(s,hazard if state=='broken' else accent,end,4)
-        elif kind=='key':
-            pygame.draw.circle(s,accent,(cx,h//3),max(3,w//3),3)
-            pygame.draw.line(s,accent,(cx,h//3+4),(cx,h-3),3)
-            pygame.draw.line(s,accent,(cx,h-4),(w-2,h-4),3)
-            pygame.draw.line(s,accent,(cx,h-8),(w-4,h-8),2)
         elif kind=='other_pants':
             pygame.draw.polygon(s,accent,[(2,2),(w-2,2),(w-2,h-1),(cx+2,h-1),(cx,h//2),(cx-2,h-1),(2,h-1)])
         elif kind=='cake':
@@ -164,50 +156,109 @@ class Painter:
     def draw(self,session,theme,settings,alpha=1.,preview=False):
         self.configure(theme,settings)
         scene=session.scene
+        scale=self.scale
         level=scene['level']
         original=theme.style=='original'
         if original:
             bg=level.bg_animations[level.current_animation].image
-            self.world.blit(bg,(0,0))
+            self.world.blit(pygame.transform.scale(bg,self.world.get_size()),(0,0))
         else:self.world.blit(self.background,(0,0))
         objects=(*level.tiles,*scene['objects'])
         for o in objects:
             x,y=session.position(o,alpha)
             if x < -60 or y < -80 or x>580 or y>580:continue
+            x*=scale;y*=scale
             kind=getattr(o,'tileclass',o.itemclass)
             character=settings['character'] if settings['character']!='theme' else theme.character
             use_original=original or (kind=='player' and character=='original')
             # A chosen non-original character can be used inside the Original world.
             if kind=='player' and settings['character'] not in ('theme','original'):use_original=False
             if use_original:
-                im=o.image
+                im=pygame.transform.scale(o.image,(o.image.get_width()*scale,o.image.get_height()*scale))
             else:
                 state=o.current_animation
                 phase=o.animations[state].i
-                if kind in ('player','spider','blob') and state not in ('dying','exit','gone'):
-                    phase=int((max(0,session.tick-1)+alpha)*2)%16
-                if kind=='player' and state=='jumping':
-                    state='rising' if o.dy<0 else 'gliding' if session.driver.inputs.get('UP') else 'falling'
-                im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character)
+                if kind in ('player','spider','blob','key') and state not in ('dying','exit','gone'):
+                    phase=int((max(0,session.tick-1)+alpha)*1.5)%16
+                if kind=='player':
+                    state,age=session.motion.pose(o,session.tick,session.driver.inputs)
+                    if state in ('hurt','landing','takeoff'):phase=min(15,int(age))
+                if kind=='spider':
+                    delay=getattr(o,'fire_delay',0)
+                    if delay>=25:state='firing';phase=30-delay
+                    elif 0<delay<4 and o.current_animation!='walking':state='charged'
+                im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
             orientation=o.get_orientation()
-            if orientation==2:im=pygame.transform.flip(im,True,False)
-            elif orientation==3:im=pygame.transform.rotate(im,90)
-            elif orientation==1:im=pygame.transform.rotate(im,-90)
-            rect=im.get_rect(center=(round(x),round(y)))
+            if kind=='spider' and not use_original:
+                im=sprites.orient_spider(im,orientation,o.flipcounter,o.flipping,o.flip_direction,alpha)
+                # Spider support checks sit two pixels beyond its collision box.
+                angle=math.radians(sprites.spider_angle(orientation,o.flipcounter,o.flipping,o.flip_direction,alpha))
+                x+=math.sin(angle)*2*scale;y+=math.cos(angle)*2*scale
+            else:
+                if orientation==2:im=pygame.transform.flip(im,True,False)
+                elif orientation==3:im=pygame.transform.rotate(im,90)
+                elif orientation==1:im=pygame.transform.rotate(im,-90)
+            if kind=='player' and not use_original:
+                rect=im.get_rect(midbottom=(round(x),round(y+(o.rect.height/2+1)*scale)))
+                hit_age=session.tick-session.motion.hit
+                if 0<=hit_age<2:
+                    im=im.copy()
+                    flash=pygame.Surface(im.get_size(),pygame.SRCALPHA);flash.fill((120,75,55,0))
+                    im.blit(flash,(0,0),special_flags=pygame.BLEND_RGB_ADD)
+                if state in ('dying','exit'):
+                    im=im.copy();im.set_alpha(max(0,255-o.animations[o.current_animation].i*32))
+            else:
+                if kind=='key' and not original and settings['effects']:y+=math.sin((session.tick+alpha)/8)*1.5*scale
+                rect=im.get_rect(center=(round(x),round(y)))
             if kind=='projectile' and not original and settings['effects']:
                 dx,dy=getattr(o,'dx',0),getattr(o,'dy',0)
                 if dx or dy:
                     norm=max(1,math.hypot(dx,dy))
-                    end=(x-dx/norm*20,y-dy/norm*20)
-                    pygame.draw.line(self.world,mix(theme['background'],theme['accent'],.35),(x,y),end,6)
-                    pygame.draw.line(self.world,theme['accent'],(x,y),end,2)
+                    end=(x-dx/norm*20*scale,y-dy/norm*20*scale)
+                    pygame.draw.line(self.world,mix(theme['background'],theme['accent'],.35),(x,y),end,6*scale)
+                    pygame.draw.line(self.world,theme['accent'],(x,y),end,2*scale)
             self.world.blit(im,rect)
             if kind=='player' and y<0:
-                pygame.draw.polygon(self.world,theme['accent'],[(x,3),(x-5,12),(x+5,12)])
+                pygame.draw.polygon(self.world,theme['accent'],[(x,3*scale),(x-5*scale,12*scale),(x+5*scale,12*scale)])
         if settings['effects']:
             for p in scene['particles']:
                 x,y=session.position(p,alpha)
-                pygame.draw.circle(self.world,p.color if original else theme['accent'],(round(x),round(y)),max(0,int(p.radius)))
+                pygame.draw.circle(self.world,p.color if original else theme['accent'],(round(x*scale),round(y*scale)),max(0,int(p.radius*scale)))
+        if settings['effects'] and not original:
+            player=scene['player'];px,py=session.position(player,alpha)
+            age=session.tick-session.motion.landing+alpha
+            if 0<=age<7 and not player.flipping:
+                # Short ground-level dust wisps, without displacing the camera/world.
+                dust=pygame.Surface((72,22),pygame.SRCALPHA)
+                opacity=round(145*(1-age/7))
+                for side in (-1,1):
+                    for n in range(3):
+                        dx=side*(6+age*(2+n*.5));dy=-age*(.45+n*.18)
+                        pygame.draw.ellipse(dust,(*theme['secondary'],opacity),(36+dx,15+dy,8-age*.65,3))
+                self.world.blit(pygame.transform.scale(dust,(72*scale,22*scale)),((round(px)-36)*scale,(round(py+player.rect.height/2)-15)*scale))
+            hit_age=session.tick-session.motion.hit+alpha
+            if 0<=hit_age<4:
+                impact=pygame.Surface((80,80),pygame.SRCALPHA)
+                for n in range(7):
+                    angle=n*math.tau/7
+                    start=16+hit_age*3;end=start+6*(1-hit_age/4)
+                    pygame.draw.line(impact,(*theme['hazard'],round(210*(1-hit_age/4))),
+                                     (40+math.cos(angle)*start,40+math.sin(angle)*start),
+                                     (40+math.cos(angle)*end,40+math.sin(angle)*end),2)
+                self.world.blit(pygame.transform.scale(impact,(80*scale,80*scale)),((round(px)-40)*scale,(round(py)-40)*scale))
+            pickup_age=session.tick-session.motion.pickup_tick+alpha
+            if 0<=pickup_age<10:
+                gleam=pygame.Surface((80,80),pygame.SRCALPHA)
+                radius=8+pickup_age*2
+                for n in range(6):
+                    angle=n*math.tau/6
+                    cx=40+math.cos(angle)*radius;cy=40+math.sin(angle)*radius
+                    length=max(1,4-pickup_age*.3)
+                    rgba=(*theme['accent'],round(230*(1-pickup_age/10)))
+                    pygame.draw.line(gleam,rgba,(cx-length,cy),(cx+length,cy),1)
+                    pygame.draw.line(gleam,rgba,(cx,cy-length),(cx,cy+length),1)
+                qx,qy=session.motion.pickup_pos
+                self.world.blit(pygame.transform.scale(gleam,(80*scale,80*scale)),((round(qx)-40)*scale,(round(qy)-40)*scale))
         if scene['fade'] and not preview:
-            overlay=pygame.Surface((520,520));overlay.set_alpha(scene['fade']);self.world.blit(overlay,(0,0))
+            overlay=pygame.Surface(self.world.get_size());overlay.set_alpha(scene['fade']);self.world.blit(overlay,(0,0))
         return self.world

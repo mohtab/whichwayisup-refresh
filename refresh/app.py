@@ -451,7 +451,7 @@ class App:
         theme_ids=list(THEME_ORDER)+[k for k in self.themes.packs if k not in THEME_ORDER]
         u.text('LOOK & FEEL',44,169,13,t['accent'])
         left=[('World design',t.name,lambda:self.setting('theme',theme_ids)),
-              ('Character',{'theme':'Theme default','original':'Original Guy','guy':'Refresh Guy','dhh':'DHH cameo'}[self.s['character']],lambda:self.setting('character',['theme','original','guy','dhh'])),
+              ('Character',{'theme':'Theme default','original':'Original Guy','guy':'Explorer','dhh':'DHH cameo'}[self.s['character']],lambda:self.setting('character',['theme','original','guy','dhh'])),
               ('Display refresh',str(self.s['fps'])+' FPS',lambda:self.setting('fps',[30,60,120,144,240])),
               ('Extra effects','On' if self.s['effects'] else 'Reduced',lambda:self.setting('effects',[True,False])),
               ('World scaling','Smooth' if self.s['smooth'] else 'Crisp',lambda:self.setting('smooth',[False,True])),
@@ -537,7 +537,7 @@ class App:
         u.text('THE ORIGINAL PERSPECTIVE',44,353,14,t['accent'])
         u.wrap('Created by Olli “Hectigo” Etuaho in 2007. His original game design, stages, artwork, dialogue and sound effects are the foundation of this independent adaptation. Thank you to the Debian Games Team and the original contributors for keeping it available.',44,387,1088,19,t['muted'])
         u.text('BUILT TO BE SHARED',44,506,14,t['accent'])
-        u.wrap('Code, new procedural art and ambient music: GNU GPL version 2. Original content: Creative Commons Attribution 3.0. Font: Bitstream Vera license. Full notices are in CREDITS.md, LICENSE and licenses/original-copyright.',44,540,1088,18)
+        u.wrap('Code, new artwork and ambient music: GNU GPL version 2. Original content: Creative Commons Attribution 3.0. Font: Bitstream Vera license. Full notices are in CREDITS.md, LICENSE and licenses/original-copyright.',44,540,1088,18)
         u.wrap('Refresh direction: Mohtab Arabiat, with AI coding assistance. The Omarchy / DHH cameo is unofficial and implies no endorsement. Community stages retain their own credits and licenses.',44,627,1088,15,t['muted'])
         u.button('Back to the game',(40,696,260,42),lambda:self.route('home'),primary=True)
 

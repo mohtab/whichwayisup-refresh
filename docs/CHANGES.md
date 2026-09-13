@@ -47,3 +47,14 @@ in the backup patch. This refresh does not claim those changes as newly authored
   New code: refresh/audio.py, desktop.py, runs.py; tools/verify_replay.py and review tooling.
 - Mohtab Arabiat credited for refresh direction and Linux origin story; original
   creator and all upstream license notices retained in Credits, not the home footer.
+
+## September 13 sprite polish (0.2.1)
+
+- `assets/sprites/`: transparent generated explorer, run, spider and compass key sheets; exact prompts and provenance included.
+- `refresh/sprites.py`: bounded frame caches, scale-preserving body poses, foot anchors and supporting-surface rotation.
+- `refresh/motion.py`, `refresh/runtime.py`: presentation-only jump, landing, damage and pickup events.
+- `refresh/art.py`: 2× world rendering, new sprites, grounded dust, hit flashes and pickup glints; original physics unchanged.
+- `refresh/editor.py`: correctly attached spider previews and explorer foot anchors.
+- `refresh/app.py`: Explorer character label and updated credits terminology.
+- `tests/test_sprite_motion.py`, `tools/review_sprites.py`, `docs/sprite-review-v2/`: regression tests and scripted visual review.
+- `README.md`, `CREDITS.md`, `docs/BUILD_STATUS.md`, `pyproject.toml`, `packaging/`: documentation, version and bundled asset updates.

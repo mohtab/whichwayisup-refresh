@@ -10,6 +10,7 @@ sys.path.insert(0,str(ROOT/'lib'))
 import game
 from util import Score, Util
 from variables import Variables
+from .motion import Motion
 
 @dataclass
 class Driver:
@@ -47,6 +48,7 @@ class Session:
         self.tick=0
         self.result=None
         self.previous={}
+        self.motion=Motion()
         self.history=[]
         self.random_state=random.Random(seed).getstate()
         self.simulation=game.steps(self.canvas,stage,score=self.score,driver=self.driver)
@@ -80,6 +82,7 @@ class Session:
         else:
             self.history_truncated = True
         self.tick+=1
+        if self.scene is not None:self.motion.observe(self.scene,self.tick)
     def entities(self):
         if self.scene is None:return ()
         return (*self.scene['level'].tiles,*self.scene['objects'],*self.scene['particles'])

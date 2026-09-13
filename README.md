@@ -78,7 +78,10 @@ single-press refresh dialogue. Pauses and scripted sequences are excluded by the
 in-game clock; this is not a real-time speedrun clock. Recorded pauses are metadata.
 No global rankings or online uploads are live. See [the polish/release plan](docs/POLISH_PLAN.md).
 
-New procedural sprites have a 16-phase run cycle and distinct rise/fall/glide poses.
+The new scarf-wearing explorer has a six-frame run cycle, jump stretch, apex/fall/glide
+poses, landing compression and hit recoil. Articulated spiders keep their feet against
+the supporting surface, including during room rotation. A clockwork compass key
+sways and glints. See [sprite preview and provenance](assets/sprites/README.md).
 Music is an original synthesized ambient loop, off by default; music and original sound
 effects have independent volume controls. Reduced effects retain smooth positioning
 and essential character animation.
@@ -86,7 +89,7 @@ and essential character animation.
 ## Five visual options
 
 - **Original:** original assets, colors and levels with crisp scaling.
-- **Refresh:** the initial warm/cool material design, ready for further art direction.
+- **Refresh:** warm brass and teal, with an illustrated explorer and clockwork creatures.
 - **Omarchy:** an independent tribute featuring a stylized DHH cameo.
 - **Follow Omarchy:** reads the current desktop palette and applies changes at a safe
   menu boundary. Falls back to Osaka Jade-derived colors outside Omarchy.
@@ -97,8 +100,9 @@ pack** creates an editable TOML file in the user-data `themes/` directory. Addit
 palette roles can be edited there. Restart to discover new files. Packs contain data,
 not executable plugins. Original sound remains available across designs.
 
-This is a first playable art pass. Refresh and the DHH cameo are code-drawn and can
-be revised; they are not the final collaboratively approved artwork.
+Refresh uses generated raster sprite sheets, rendered at twice the logical resolution.
+The DHH cameo remains code-drawn. The Original theme preserves the original assets;
+choose Refresh with F6 to see the new art. This is a local art review build.
 
 ## Smooth display and gameplay speed
 
