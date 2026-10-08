@@ -443,9 +443,9 @@ class App:
                 if n%24<12:inp['UP']=True
                 self.preview.step(inp)
                 if self.preview.result is not None or self.preview.tick>1400:self.preview=self.make_preview()
-    def blit_world(self,session,rect,preview=False):
+    def blit_world(self,session,rect,preview=False,*,resolved=False):
         alpha=self.preview_clock.alpha if preview else self.stepper.alpha
-        image=self.painter.draw(session,self.theme,self.s,alpha if self.screen=='play' or preview else 1,preview)
+        image=self.painter.draw(session,self.theme,self.s,alpha if self.screen=='play' or preview else 1,preview,**({'resolved':True} if resolved else {}))
         if self.screen in ('home','play') and not self.modal and not self.display.deadline:
             self.world_layers.append((image.copy(),rect,self.s['smooth'] and self.theme.style!='original',
                                       self.s['integer_scale'] and self.theme.style=='original',self.painter.scale))
@@ -584,6 +584,8 @@ class App:
 
     def draw_play(self):
         u=self.ui;t=self.theme;session=self.session;scene=session.scene
+        if self.theme.id=='refresh' and self.screen=='complete':
+            ui_refresh.complete(self);return
         if self.theme.id=='refresh':ui_refresh.play(self)
         else:
             u.header('STUDIO PLAYTEST' if self.playtest else self.active_stage.world.upper())

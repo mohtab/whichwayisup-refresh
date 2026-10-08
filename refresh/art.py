@@ -121,7 +121,7 @@ class Painter:
         if len(self.cache)>512:self.cache.clear()
         self.cache[key]=s
         return s
-    def draw(self,session,theme,settings,alpha=1.,preview=False):
+    def draw(self,session,theme,settings,alpha=1.,preview=False,*,resolved=False):
         self.configure(theme,settings)
         scene=session.scene
         scale=self.scale
@@ -295,6 +295,6 @@ class Painter:
                     pygame.draw.line(gleam,rgba,(cx,cy-length),(cx,cy+length),1)
                 qx,qy=session.motion.pickup_pos
                 self.world.blit(pygame.transform.scale(gleam,(80*scale,80*scale)),((round(qx)-40)*scale,(round(qy)-40)*scale))
-        if scene['fade'] and not preview:
+        if scene['fade'] and not preview and not (resolved and theme.id=='refresh'):
             overlay=pygame.Surface(self.world.get_size());overlay.set_alpha(scene['fade']);self.world.blit(overlay,(0,0))
         return self.world

@@ -83,3 +83,25 @@ def play(app):
 def compact_frame(surface,theme):
     surface.blit(metal_panel((1040,80),theme['background'],theme['accent']),(0,0))
     pygame.draw.line(surface,theme['accent'],(0,78),(1040,78))
+
+
+def complete(app):
+    """Resolved real room and final actions; no obsolete active-run HUD."""
+    u=app.ui;t=app.theme;s=app.session
+    u.header('WHICH WAY IS UP?  /  '+('STUDIO PLAYTEST' if app.playtest else app.active_stage.world.upper()))
+    u.panel((476,68,696,696));app.blit_world(s,BOARD,resolved=True)
+    u.text('Campaign clear!' if app.completed_world else 'Stage clear.',48,94,38)
+    u.fit(stages.display_name(app.active_stage),48,150,396,18,t['muted'])
+    u.panel((32,194,420,176))
+    u.text('FINISH TIME',62,221,16,t['muted'])
+    u.text(runs.clock_text(s.score.time/24/app.run_tempo),60,250,36)
+    detail=('Playtest complete' if app.playtest else 'Save failed · Ctrl+S to retry' if not app.completion_saved
+            else 'New personal best!' if app.new_best else 'Personal best: '+runs.clock_text(app.previous_best or 0))
+    u.fit(detail,62,312,356,18,t['accent'])
+    if app.previous_best is not None:
+        delta=s.score.time/24/app.run_tempo-app.previous_best
+        u.fit('Equal to your best' if abs(delta)<.0005 else f'{abs(delta):.3f}s '+('faster than your best' if delta<0 else 'behind your best'),48,385,396,17,t['muted'])
+    choices=[('Back to studio' if app.playtest else 'Campaign results' if app.completed_world else 'Next stage',lambda:app.route('ending') if app.completed_world else app.next_stage()),
+             ('Retry / R',app.restart),('Customize',lambda:app.settings_screen('complete')),
+             ('Controls / F1',app.show_help),('Back to studio' if app.playtest else 'Stage library',app.return_editor if app.playtest else lambda:app.route('stages')),('Main menu',lambda:app.route('home'))]
+    for i,(label,action) in enumerate(choices):u.button(label,(42,425+i*54,406,46),action,primary=i==0)

@@ -88,3 +88,22 @@ class RefreshUITests(unittest.TestCase):
         wide=metal_panel((606,48),(25,43,53),(180,150,90))
         for rect in ((0,0,20,20),(20,0,160,12)):
             self.assertTrue(pygame.image.tobytes(small.subsurface(rect),'RGBA')==pygame.image.tobytes(wide.subsurface(rect),'RGBA'))
+
+    def test_terminal_world_is_visible_without_mutating_fade_or_showing_active_hud(self):
+        a=self.app;a.s.update(dialogue=False,board_only=False);a.start_stage(a.catalog.stages[0])
+        for _ in range(70):a.update(1/24)
+        a.screen='complete';a.session.scene['fade']=255
+        tick=a.session.tick
+        for saved in (True,False):
+            a.completion_saved=saved
+            with patch.object(a.ui,'text',wraps=a.ui.text) as text:
+                a.draw()
+                copy=' '.join(str(c.args[0]) for c in text.call_args_list)
+                self.assertNotIn('Find the key',copy);self.assertNotIn('RUN TIME',copy)
+            board=a.ui.surface.subsurface(BOARD)
+            self.assertGreater(sum(pygame.transform.average_color(board)[:3]),45)
+            self.assertEqual(a.session.scene['fade'],255);self.assertEqual(a.session.tick,tick)
+            self.assertEqual(a.ui.buttons[0].label,'Next stage');self.assert_buttons()
+        a.set_theme('original');a.painter.configure(a.theme,a.s)
+        image=a.painter.draw(a.session,a.theme,a.s,resolved=True)
+        self.assertEqual(pygame.transform.average_color(image)[:3],(0,0,0))
