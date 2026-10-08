@@ -2,6 +2,7 @@
 import time
 import pygame
 from .desktop import resize_own_window
+from . import chamber
 
 def opaque_canvas(surface):
     """Present finished RGB content without interpreting unused native alpha bytes.
@@ -72,7 +73,8 @@ class Display:
             if native_factor>=1:factor=int(native_factor)/max(1,pixel_scale)
         size=(max(1,round(sw*factor)),max(1,round(sh*factor)))
         self.viewport=pygame.Rect(0,0,*size);self.viewport.center=(w//2,h//2)
-        self.screen.fill((5,8,12))
+        if self.settings.get('theme')=='refresh':self.screen.blit(chamber.surround((w,h)),(0,0))
+        else:self.screen.fill((5,8,12))
         if smooth is None:smooth=self.settings.get('smooth',False)
         transform=pygame.transform.smoothscale if smooth and not integer_scale else pygame.transform.scale
         scaled=surface if size==(sw,sh) else transform(surface,size)

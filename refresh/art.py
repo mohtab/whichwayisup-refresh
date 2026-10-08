@@ -1,7 +1,7 @@
 """Palette-driven world art and illustrated sprites; original art remains optional."""
 import math
 import pygame
-from . import sprites,lighting,branding
+from . import sprites,lighting,branding,chamber
 
 
 def mix(a,b,t):return tuple(round(x+(y-x)*t) for x,y in zip(a,b))
@@ -21,6 +21,7 @@ class Painter:
             self.background=pygame.transform.scale(self.make_background(),self.world.get_size())
     def make_background(self):
         t=self.theme
+        if t.style=='refresh':return chamber.background()
         s=pygame.Surface((520,520))
         for y in range(520):
             pygame.draw.line(s,mix(t['background'],t['panel'],y/900),(0,y),(520,y))

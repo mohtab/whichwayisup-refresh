@@ -16,7 +16,9 @@ with tempfile.TemporaryDirectory(prefix='wwiup-capture-') as profile:
  def save(name):
   app.draw();pygame.image.save(app.display.screen,OUT/'stills'/name)
  save('still-01-home.png')
- app.start_stage(app.catalog.stages[0]);app.update(.1);save('still-02-full-gameplay.png')
+ app.start_stage(app.catalog.stages[0])
+ for _ in range(70):app.update(1/24)
+ save('still-02-full-gameplay.png')
  app.s.update(board_only=True,compact_hud=True);save('still-03-compact-gameplay.png')
  app.settings_screen('home');save('still-04-settings.png')
  manifest={'commit':sha,'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'resolution':[1920,1080],'capture':'Unmodified App.draw display surface, SDL dummy driver. Game internal UI 1200x800 and board 1040x1040; normal Display.present fits these to 1920x1080. No post-render enlargement, compositing, or retouching. Not physical desktop evidence.','profile':'temporary isolated WWISUP_USER_DIR, destroyed on exit','stills':['home','Refresh full gameplay w0-l0','Refresh compact HUD gameplay w0-l0','Display settings'],'refs':'Matching pending Stage A reference lock.'}
