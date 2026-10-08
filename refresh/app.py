@@ -516,7 +516,11 @@ class App:
             elif t.style!='original':u.panel((x,y,362,112))
             else:u.panel((x,y,362,99))
             u.fit(stage.world.upper(),x+26 if t.style!='original' else x+14,y+10 if t.style!='original' else y+9,310 if t.style!='original' else 330,16 if t.id=='system' else 11,secondary if t.id=='system' else t['muted'])
-            u.button(self.short_name(stage),(x+12,y+31 if t.style!='original' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.style!='original' and u.focus==len(u.buttons))
+            title=self.short_name(stage)
+            if t.style!='original':
+                while title and font(18).size(title)[0]>204:
+                    title=title[:-2].rstrip()+'…' if not title.endswith('…') else title[:-2]+'…'
+            u.button(title,(x+12,y+31 if t.style!='original' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.style!='original' and u.focus==len(u.buttons))
             u.button('Remix',(x+258,y+31 if t.style!='original' else y+28,92,37),lambda v=stage:self.new_editor(v.document),quiet=t.style!='original')
             best=self.stage_best(stage)
             status='Complete' if self.completed(stage) else 'Not yet completed'

@@ -69,3 +69,12 @@ class PresentationTests(unittest.TestCase):
    self.assertGreaterEqual(args[3],16)
    from refresh.ui_refresh import card_secondary
    self.assertEqual(args[4],card_secondary(a.theme))
+
+ def test_long_custom_card_name_cannot_wrap_into_metadata(self):
+  from refresh.ui import font
+  a=self.app();a.set_theme('system');a.new_editor()
+  title='A very long custom chamber name for checking the stage library'
+  a.editor.document['title']=title;a.editor_save();a.route('stages');a.page=1;a.draw()
+  label=next(b.label for b in a.ui.buttons if b.label.startswith('A very'))
+  self.assertTrue(label.endswith('…'));self.assertLessEqual(font(18).size(label)[0],204)
+  self.assertTrue(any(s.document['title']==title for s in a.catalog.stages))
