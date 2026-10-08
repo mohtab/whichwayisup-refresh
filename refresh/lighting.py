@@ -56,3 +56,30 @@ def halo(radius,color):
 def proximity(x,y,emitters):
     distance=min(((x-ex)**2+(y-ey)**2 for ex,ey in emitters),default=100000)
     return 3 if distance<35**2 else 2 if distance<65**2 else 1 if distance<95**2 else 0
+
+
+@lru_cache(maxsize=384)
+def refresh_relief(image,glow=0,wall=False,scale=1):
+    """Upper-left key over opaque sprite faces; warm nearby light bounce.
+
+    Alpha is unchanged, so visual silhouette and collision alignment agree.
+    Bounded cached surfaces use only quantized emitter proximity.
+    """
+    result=image.copy()
+    ramp=pygame.Surface((2,2))
+    if wall:
+        ramp.set_at((0,0),(44,47,34));ramp.set_at((1,0),(28,34,27))
+        ramp.set_at((0,1),(18,23,20));ramp.set_at((1,1),(3,8,12))
+    else:
+        ramp.set_at((0,0),(23,24,17));ramp.set_at((1,0),(13,17,16))
+        ramp.set_at((0,1),(8,12,13));ramp.set_at((1,1),(0,4,8))
+    result.blit(pygame.transform.smoothscale(ramp,image.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
+    if glow:result.fill((glow*16,glow*9,glow*2,0),special_flags=pygame.BLEND_RGB_ADD)
+    if wall:
+        # Lit upper return and dark lower return reinforce the existing bevel.
+        w,h=image.get_size()
+        edge=pygame.Surface((w,h),pygame.SRCALPHA)
+        pygame.draw.line(edge,(212,188,126,105),(2,1),(w-3,1),max(1,scale))
+        pygame.draw.line(edge,(2,10,15,155),(2,h-2),(w-2,h-2),max(1,scale*2))
+        result.blit(edge,(0,0))
+    return result

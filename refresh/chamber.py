@@ -41,8 +41,10 @@ def background():
         for x in range(130):
             warm=max(0,1-math.hypot((x-16)/100,(y-4)/96))
             cool=max(0,1-math.hypot((x-120)/82,(y-110)/90))
-            light.set_at((x,y),(round(49*warm+7*cool),round(31*warm+18*cool),round(13*warm+24*cool),255))
+            light.set_at((x,y),(round(12*warm+3*cool),round(8*warm+7*cool),round(3*warm+10*cool),255))
     s.blit(pygame.transform.smoothscale(light,s.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
+    # Relief falls into recess; keep rear architecture below playable faces.
+    s.fill((175,180,186),special_flags=pygame.BLEND_RGB_MULT)
     return s
 
 @lru_cache(maxsize=8)

@@ -47,7 +47,7 @@ class Painter:
         if kind=='key':return sprites.key(w,h,phase,scale)
         if kind in ('wall','spikes','lever','projectile'):
             image=sprites.prop(kind,w,h,state,phase,scale,style)
-            return lighting.quiet_wall(image,self.theme['panel'],scale) if kind=='wall' and style!='original' else image
+            return lighting.quiet_wall(image,self.theme['panel'],scale) if kind=='wall' and style not in ('original','refresh') else image
         if scale!=1:return pygame.transform.scale(self.sprite(kind,w,h,state,phase,character),(w*scale,h*scale))
         key=(kind,w,h,state,phase,character)
         if key in self.cache:return self.cache[key]
@@ -100,7 +100,7 @@ class Painter:
                 if tile.tileclass!='wall':continue
                 tx,ty=session.position(tile,alpha)
                 if not (-60<tx<580 and -60<ty<580):continue
-                self.world.blit(self.tile_shadow,((tx-17)*scale,(ty-15)*scale))
+                self.world.blit(self.tile_shadow,((tx-15)*scale,(ty-12)*scale))
             for ex,ey in emitters:
                 glow=lighting.halo(35*scale,theme['accent'])
                 self.world.blit(glow,((ex-35)*scale,(ey-35)*scale))
@@ -137,7 +137,10 @@ class Painter:
                     if delay>=25:state='firing';phase=30-delay
                     elif 0<delay<4 and o.current_animation!='walking':state='charged'
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
-            if depth and not use_original and kind not in ('projectile','key'):
+            if theme.style=='refresh' and not use_original:
+                glow=lighting.proximity(x/scale,y/scale,emitters)
+                im=lighting.refresh_relief(im,glow,kind=='wall',scale)
+            if depth and theme.style!='refresh' and not use_original and kind not in ('projectile','key'):
                 im=lighting.shade(im,lighting.proximity(x/scale,y/scale,emitters) if kind in ('player','spider') else 0)
             if not original and not use_original and kind in ('player','spider'):
                 high_contrast=settings.get('high_contrast',False)
