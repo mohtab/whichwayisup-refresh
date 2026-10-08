@@ -19,7 +19,7 @@ from .audio import Audio
 from . import runs, __version__
 from .display import Display
 from .editor import Editor
-from . import stages
+from . import stages, ui_refresh
 from variables import Variables
 
 THEME_ORDER=('original','refresh','omarchy','system','cyberpunk')
@@ -245,7 +245,7 @@ class App:
                 "I jump with the up arrow or Z. Hold it longer, and I'll jump higher.":f"Jump with {self.s['key_jump'].upper()}, Space or Up. Hold jump to slow your fall.",
                 'Collect stuff and pull levers with the down arrow. Got it now?':f"Use {self.s['key_interact'].upper()}, S or E to collect items and pull levers."}
             text=replacements.get(text,text)
-        return wrapped_lines(text,392,18)
+        return wrapped_lines(text,ui_refresh.DIALOGUE_WIDTH if self.theme.id=='refresh' else 392,18)
     def advance_dialogue(self):
         if not self.session or not self.session.scene['dialogue']:return False
         lines=self.dialogue_lines()
@@ -454,6 +454,7 @@ class App:
         pygame.draw.rect(self.ui.surface,self.theme['accent'],rect,1,border_radius=2)
     def settings_screen(self,back):self.return_screen=back;self.route('settings')
     def draw_home(self):
+        if self.theme.id=='refresh':return ui_refresh.home(self)
         u=self.ui;t=self.theme
         u.header('REFRESH / '+__version__)
         u.text('TURN THE WORLD. FIND YOUR LINE.',40,115,14,t['accent'])
@@ -522,9 +523,9 @@ class App:
     def reload_catalog(self):self.catalog.refresh();self.page=min(self.page,(len(self.catalog.stages)-1)//12);self.notify('; '.join(self.catalog.errors) or 'Stage library refreshed.')
     def draw_settings(self):
         u=self.ui;t=self.theme;u.header('SETTINGS / SAVED AUTOMATICALLY')
-        u.text('Find your rhythm.',40,104,36)
+        u.text('Customize your journey.' if t.id=='refresh' else 'Find your rhythm.',40,98 if t.id=='refresh' else 104,30 if t.id=='refresh' else 36)
         for i,tab in enumerate(('Display','Audio','Controls','Gameplay','Advanced')):
-            u.button(tab,(40+i*226,170,214,44),lambda value=tab:setattr(self,'settings_tab',value),selected=self.settings_tab==tab)
+            u.button(tab,(40+i*226,150 if t.id=='refresh' else 170,214,48 if t.id=='refresh' else 44),lambda value=tab:setattr(self,'settings_tab',value),selected=self.settings_tab==tab)
         theme_ids=list(THEME_ORDER)+[k for k in self.themes.packs if k not in THEME_ORDER]
         on=lambda key:'On' if self.s[key] else 'Off'
         toggle=lambda key:lambda:self.setting(key,[False,True])
@@ -556,9 +557,11 @@ class App:
             'Controls':[(action.title(),self.s['key_'+action].upper(),lambda v=action:self.remap(v)) for action in ('left','right','jump','interact')]
         }[self.settings_tab]
         for i,(label,value,action) in enumerate(rows):
-            y=250+i*(50 if self.settings_tab=='Display' else 57)
+            y=(224+i*52) if t.id=='refresh' else 250+i*(50 if self.settings_tab=='Display' else 57)
+            if t.id=='refresh':
+                pygame.draw.line(u.surface,t['panel'],(65,y+49),(1132,y+49))
             u.text(label,65,y+10,19,t['muted'])
-            u.button(value,(624,y,508,43),action)
+            u.button(value,(502,y,606,46) if t.id=='refresh' else (624,y,508,43),action,align='left' if t.id=='refresh' else 'center')
         if self.settings_tab=='Controls':
             u.button('Reset keyboard bindings',(65,489,420,43),self.reset_bindings)
             u.wrap('Controller: stick or D-pad to move. Button 1 jumps / confirms; Button 2 interacts / goes back. Buttons 7 or 8 pause / resume.',65,554,1050,18,t['muted'])
@@ -576,32 +579,34 @@ class App:
 
     def draw_play(self):
         u=self.ui;t=self.theme;session=self.session;scene=session.scene
-        u.header('STUDIO PLAYTEST' if self.playtest else self.active_stage.world.upper())
-        u.fit(stages.display_name(self.active_stage),40,94,620,17,t['muted'])
-        self.blit_world(session,(40,123,620,620))
-        u.text('IN-GAME TIME',704,111,13,t['accent'])
-        u.text(runs.clock_text(session.score.time/24/self.run_tempo),699,137,56)
-        u.text(f'ATTEMPT {self.attempts:02d}   /   {session.score.time} TICKS',704,207,13,t['muted'])
-        u.panel((692,242,464,100))
-        u.text('PERSONAL BEST',712,260,12,t['muted'])
-        u.text(runs.clock_text(self.previous_best) if self.previous_best is not None else 'Set your first time',710,285,26)
-        u.text(f"{self.run_tempo:g}×  ·  {'Story' if self.run_dialogue else 'Dialogue skipped'}  ·  Local IGT",704,365,15,t['muted'])
-        u.text('HEALTH',704,401,12,t['muted'])
-        pygame.draw.rect(u.surface,t['panel'],(790,405,294,10),border_radius=5)
-        pygame.draw.rect(u.surface,t['accent'] if scene['player'].life>10 else t['hazard'],(790,405,max(0,min(294,294*scene['player'].life/36)),10),border_radius=5)
-        u.text(str(max(0,scene['player'].life)),1100,398,16)
-        u.panel((692,443,464,211))
-        if scene['dialogue']:
-            lines=self.dialogue_lines();pages=max(1,(len(lines)+5)//6)
-            for i,line in enumerate(lines[self.dialogue_page*6:(self.dialogue_page+1)*6]):u.text(line,712,459+i*26,18)
-            hint='Next page' if self.dialogue_page+1<pages else 'Continue'
-            u.fit(('Button 1 / Button 2  '+hint) if self.input_device=='controller' else f"{self.s['key_jump'].upper()} / Space / {self.s['key_interact'].upper()}  {hint}"+(f'  {self.dialogue_page+1}/{pages}' if pages>1 else ''),712,629,425,12,t['accent'])
+        if self.theme.id=='refresh':ui_refresh.play(self)
         else:
-            u.text('FIND YOUR LINE',712,463,13,t['accent'])
-            u.wrap(f"Move  {self.s['key_left'].upper()} / {self.s['key_right'].upper()} or A / D\nJump  {self.s['key_jump'].upper()} / Space / Up\nInteract  {self.s['key_interact'].upper()} / S / E",712,496,410,17,t['muted'])
-            u.text('Button 1: jump  /  Button 2: interact' if self.input_device=='controller' else 'Hold jump to slow your fall.',712,610,15,t['muted'])
-        u.button('Pause / Esc',(700,679,218,45),self.pause)
-        u.button('Retry / R',(934,679,218,45),self.restart)
+            u.header('STUDIO PLAYTEST' if self.playtest else self.active_stage.world.upper())
+            u.fit(stages.display_name(self.active_stage),40,94,620,17,t['muted'])
+            self.blit_world(session,(40,123,620,620))
+            u.text('IN-GAME TIME',704,111,13,t['accent'])
+            u.text(runs.clock_text(session.score.time/24/self.run_tempo),699,137,56)
+            u.text(f'ATTEMPT {self.attempts:02d}   /   {session.score.time} TICKS',704,207,13,t['muted'])
+            u.panel((692,242,464,100))
+            u.text('PERSONAL BEST',712,260,12,t['muted'])
+            u.text(runs.clock_text(self.previous_best) if self.previous_best is not None else 'Set your first time',710,285,26)
+            u.text(f"{self.run_tempo:g}×  ·  {'Story' if self.run_dialogue else 'Dialogue skipped'}  ·  Local IGT",704,365,15,t['muted'])
+            u.text('HEALTH',704,401,12,t['muted'])
+            pygame.draw.rect(u.surface,t['panel'],(790,405,294,10),border_radius=5)
+            pygame.draw.rect(u.surface,t['accent'] if scene['player'].life>10 else t['hazard'],(790,405,max(0,min(294,294*scene['player'].life/36)),10),border_radius=5)
+            u.text(str(max(0,scene['player'].life)),1100,398,16)
+            u.panel((692,443,464,211))
+            if scene['dialogue']:
+                lines=self.dialogue_lines();pages=max(1,(len(lines)+5)//6)
+                for i,line in enumerate(lines[self.dialogue_page*6:(self.dialogue_page+1)*6]):u.text(line,712,459+i*26,18)
+                hint='Next page' if self.dialogue_page+1<pages else 'Continue'
+                u.fit(('Button 1 / Button 2  '+hint) if self.input_device=='controller' else f"{self.s['key_jump'].upper()} / Space / {self.s['key_interact'].upper()}  {hint}"+(f'  {self.dialogue_page+1}/{pages}' if pages>1 else ''),712,629,425,12,t['accent'])
+            else:
+                u.text('FIND YOUR LINE',712,463,13,t['accent'])
+                u.wrap(f"Move  {self.s['key_left'].upper()} / {self.s['key_right'].upper()} or A / D\nJump  {self.s['key_jump'].upper()} / Space / Up\nInteract  {self.s['key_interact'].upper()} / S / E",712,496,410,17,t['muted'])
+                u.text('Button 1: jump  /  Button 2: interact' if self.input_device=='controller' else 'Hold jump to slow your fall.',712,610,15,t['muted'])
+            u.button('Pause / Esc',(700,679,218,45),self.pause)
+            u.button('Retry / R',(934,679,218,45),self.restart)
         if self.screen!='play':
             shade=pygame.Surface((1200,800),pygame.SRCALPHA);shade.fill((0,0,0,190));u.surface.blit(shade,(0,0));u.buttons=[]
             u.panel((325,116,550,588))
@@ -721,6 +726,7 @@ class App:
         world=self.painter.draw(self.session,self.theme,self.s,self.stepper.alpha)
         if self.s['compact_hud']:
             surface=pygame.Surface((1040,1120));surface.fill(self.theme['background']);surface.blit(world,(0,80))
+            if self.theme.id=='refresh':ui_refresh.compact_frame(surface,self.theme)
             player=self.session.scene['player']
             clock=runs.clock_text(self.session.score.time/24/self.run_tempo)
             surface.blit(font(28).render(clock,True,self.theme['foreground']),(22,14))

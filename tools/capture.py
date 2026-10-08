@@ -31,6 +31,11 @@ with tempfile.TemporaryDirectory(prefix='wwiup-capture-') as profile:
   screens=[]
   for frame in range(2250):
    if frame==120:app.settings_screen('home')
+   if frame==145:app.ui.move(1)
+   if frame==160:app.ui.activate()
+   if frame==180:app.ui.focus=5;app.ui.activate()
+   if frame==210:
+    next(b for b in app.ui.buttons if b.label=='Done').action()
    if frame==240:
     app.s['dialogue']=True;app.start_stage(app.catalog.stages[0])
    if frame==420:app.pause()
