@@ -1,7 +1,7 @@
 """Palette-driven world art and illustrated sprites; original art remains optional."""
 import math
 import pygame
-from . import sprites,lighting,branding,chamber
+from . import sprites,lighting,branding,chamber,objects
 
 
 def mix(a,b,t):return tuple(round(x+(y-x)*t) for x,y in zip(a,b))
@@ -39,6 +39,8 @@ class Painter:
         return s
     def sprite(self,kind,w,h,state='default',phase=0,character=None,scale=1):
         style=self.theme.style
+        if style=='refresh' and kind in ('blob','other_pants','power_crystal','cake'):
+            return objects.sprite(kind,w,h,state,phase,scale)
         if kind=='player':return sprites.player(w,h,state,phase,scale,character,style)
         if kind=='spider':return sprites.spider(w,h,state,phase,scale,style)
         if kind=='key' and style=='omarchy':return branding.collectible(w,h,phase,scale,self.settings['effects'])
@@ -144,6 +146,7 @@ class Painter:
             for ex,ey in emitters:
                 glow=lighting.halo(35*scale,theme['accent'])
                 self.world.blit(glow,((ex-35)*scale,(ey-35)*scale))
+        wall_cells={(o.tilex,o.tiley) for o in level.tiles if o.tileclass=='wall'} if theme.style=='refresh' else set()
         objects=(*level.tiles,*scene['objects'])
         for o in objects:
             x,y=session.position(o,alpha)
@@ -177,13 +180,17 @@ class Painter:
                     if delay>=25:state='firing';phase=30-delay
                     elif 0<delay<4 and o.current_animation!='walking':state='charged'
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
+            if theme.style=='refresh' and kind=='wall' and not use_original:
+                tx,ty=o.tilex,o.tiley
+                neighbors=tuple(pos in wall_cells for pos in ((tx,ty-1),(tx+1,ty),(tx,ty+1),(tx-1,ty)))
+                im=lighting.connected_wall(im,neighbors,(tx*7+ty*11)%6,scale)
             if theme.style=='refresh' and not use_original:
                 im=lighting.refresh_relief(im,0,kind=='wall',scale)
             if depth and theme.style!='refresh' and not use_original and kind not in ('projectile','key'):
                 im=lighting.shade(im,lighting.proximity(x/scale,y/scale,emitters) if kind in ('player','spider') else 0)
             if not original and not use_original and kind in ('player','spider'):
                 high_contrast=settings.get('high_contrast',False)
-                edge=theme.readable(theme['panel']) if high_contrast else mix(theme['background'],(0,0,0),.55)
+                edge=theme.readable(theme['panel']) if high_contrast else (160,77,48) if theme.style=='refresh' and kind=='spider' else mix(theme['background'],(0,0,0),.55)
                 im=lighting.silhouette(im,edge,scale,high_contrast)
             orientation=o.get_orientation()
             if kind=='spider' and not use_original:

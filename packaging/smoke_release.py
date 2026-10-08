@@ -40,7 +40,7 @@ def smoke(root):
     version = tomllib.loads((root / 'pyproject.toml').read_text())['project']['version']
     required = ('run_game.py', 'LICENSE', 'CREDITS.md', 'licenses/original-copyright',
                 'licenses/omarchy-MIT.txt', 'data/misc/Vera.ttf',
-                'assets/refresh/chamber-relief-v1.png', 'assets/refresh/PROVENANCE.md')
+                'assets/refresh/chamber-relief-v1.png', 'assets/refresh/objects-v1.png', 'assets/refresh/PROVENANCE.md')
     for name in required:
         if not (root / name).is_file():
             raise ValueError(f'Missing packaged file: {name}')

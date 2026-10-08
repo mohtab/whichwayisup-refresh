@@ -72,3 +72,7 @@ The October 8 Refresh rear chamber relief is original built-in generated artwork
 The original transparent output and complete prompt/provenance are retained in
 `assets/refresh/chamber-relief-v1.png` and `assets/refresh/PROVENANCE.md`.
 It uses GPL-2.0-only to the extent copyright applies. Existing attribution is unchanged.
+
+The Refresh trousers, crystal, cake and blob in `assets/refresh/objects-v1.png`
+are original built-in generated artwork; prompt/provenance in the same folder.
+These assets use GPL-2.0-only to the extent copyright applies.

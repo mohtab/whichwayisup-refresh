@@ -145,3 +145,23 @@ def room_key_radiance():
             lower=math.exp(-(((x-24)/45)**2+((y-118)/36)**2))
             layer.set_at((x,y),(round(88*upper+43*lower),round(42*upper+20*lower),round(6*upper+2*lower)))
     return layer
+
+@lru_cache(maxsize=256)
+def connected_wall(image,neighbors,variant,scale):
+    """Connected stone facing; no repeated corner cap at interior tile joins."""
+    w,h=image.get_size();inset=5*scale
+    face=pygame.transform.smoothscale(image.subsurface((inset,inset,w-2*inset,h-2*inset)),(w,h))
+    north,east,south,west=neighbors
+    if not north:
+        pygame.draw.line(face,(146,149,111),(0,0),(w-1,0),scale)
+        pygame.draw.line(face,(99,117,103),(0,scale),(w-1,scale),scale)
+    if not south:pygame.draw.line(face,(17,36,41),(0,h-scale),(w,h-scale),2*scale)
+    if not west:pygame.draw.line(face,(100,120,107),(0,0),(0,h-1),scale)
+    if not east:pygame.draw.line(face,(20,41,46),(w-scale,0),(w-scale,h),2*scale)
+    # Chips are incised within the solid support line; outer collision stays clear.
+    if not north and variant%3:
+        x=(9+variant*5)%max(10,w//scale-6)*scale
+        pygame.draw.lines(face,(49,66,62),False,[(x,scale),(x+2*scale,3*scale),(x+4*scale,2*scale)],scale)
+    if not (west and north) and variant%2==0:
+        pygame.draw.line(face,(74,91,80),(2*scale,4*scale),(6*scale,2*scale),scale)
+    return face
