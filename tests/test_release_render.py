@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 os.environ.update(SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy')
 import pygame
-from refresh import lighting, sprites
+from refresh import lighting, sprites, chamber
 from refresh.app import App
 from refresh.display import Display
 
@@ -107,12 +107,31 @@ class ReleaseRenderTests(unittest.TestCase):
             for name in ('refresh','cyberpunk','omarchy','original'):
                 settings=dict(app.s,theme=name)
                 theme=app.themes.get(settings)
-                with patch.object(lighting,'silhouette',wraps=lighting.silhouette) as outline,patch.object(lighting,'quiet_wall',wraps=lighting.quiet_wall) as quiet:
+                with patch.object(lighting,'silhouette',wraps=lighting.silhouette) as outline,patch.object(lighting,'quiet_wall',wraps=lighting.quiet_wall) as quiet,patch.object(lighting,'refresh_relief',wraps=lighting.refresh_relief) as relief:
                     app.painter.draw(app.session,theme,settings,1)
-                    if name=='original':outline.assert_not_called();quiet.assert_not_called()
-                    else:self.assertTrue(outline.called);self.assertTrue(quiet.called)
+                    if name=='original':outline.assert_not_called();quiet.assert_not_called();relief.assert_not_called()
+                    elif name=='refresh':self.assertTrue(outline.called);self.assertTrue(relief.called);quiet.assert_not_called()
+                    else:self.assertTrue(outline.called);self.assertTrue(quiet.called);relief.assert_not_called()
             self.assertEqual(before,[(o.x,o.y,tuple(o.rect),o.current_animation,self.pixels(o.image)) for o in objects])
             self.assertEqual(app.session.tick,0)
+
+    def test_refresh_relief_preserves_source_and_keeps_foreground_above_recess(self):
+        wall=sprites.prop('wall',40,40,'default',0,2)
+        actor=sprites.player(28,33,'walking',0,2)
+        for source,is_wall in ((wall,True),(actor,False)):
+            before=self.pixels(source)
+            shaded=lighting.refresh_relief(source,0,is_wall,2)
+            lit=lighting.refresh_relief(source,3,is_wall,2)
+            self.assertEqual(self.pixels(source),before)
+            self.assertEqual(source.get_size(),shaded.get_size())
+            self.assertEqual(pygame.mask.from_surface(source).count(),pygame.mask.from_surface(shaded).count())
+            self.assertEqual(pygame.mask.from_surface(source).count(),pygame.mask.from_surface(lit).count())
+            self.assertNotEqual(self.pixels(shaded),self.pixels(lit))
+        # A mechanical pixel guard, not a substitute for the visual reference gate.
+        foreground=pygame.transform.average_color(lighting.refresh_relief(wall,0,True,2))
+        recess=pygame.transform.average_color(chamber.background())
+        luma=lambda c:.2126*c[0]+.7152*c[1]+.0722*c[2]
+        self.assertGreater(luma(foreground),luma(recess)+15)
 
 
 if __name__=='__main__':unittest.main()
