@@ -81,7 +81,7 @@ class Editor:
             e['x'],e['y']=20-e['y'],e['x']
             if 'attached' in e:e['attached']=directions[e['attached']]
     def draw(self,app):
-        ui=app.ui;t=app.theme;d=self.document
+        ui=app.ui;t=app.theme;d=self.document;modern=t.style!='original'
         ui.header('STAGE STUDIO / LOCAL CREATION')
         ui.fit(d['title'],36,99,560,28)
         ui.text('20 × 20 board  /  outlined area is the initial view',36,132,13,t['muted'])
@@ -106,24 +106,25 @@ class Editor:
         ui.panel((620,96,544,643))
         ui.text('BUILD YOUR PERSPECTIVE',646,118,16,t['accent'])
         labels={'W':'Wall','S':'Spikes','B':'Bars','erase':'Erase','player':'Spawn','key':'Key','lever':'Lever','spider':'Spider','blob':'Blob','power_crystal':'Crystal','cake':'Cake'}
+        if modern:ui.button('Playtest',(810,627,150,44),lambda:app.editor_test(),primary=True)
         for i,tool in enumerate(self.TOOLS):
-            ui.button(labels[tool],(646+(i%4)*120,155+(i//4)*43,110,35),lambda v=tool:setattr(self,'tool',v),selected=self.tool==tool)
-        ui.button('Spider: '+self.attached,(646,292,230,35),self.cycle_direction)
-        ui.button('Rotate board 90°',(890,292,244,35),self.rotate)
-        ui.button('Undo',(646,338,110,35),self.go_undo)
-        ui.button('Redo',(768,338,110,35),self.go_redo)
-        ui.button('Title',(890,338,110,35),lambda:app.prompt('Stage title',d['title'],lambda v:self.set_field('title',v)))
-        ui.button('Author',(1012,338,122,35),lambda:app.prompt('Author / adaptation credit',d['author'],lambda v:self.set_field('author',v)))
-        ui.text('Built-in event',646,393,16)
-        ui.button('On: '+d['events'][0]['trigger'] if d['events'] else 'Add goal event',(646,422,230,36),self.cycle_trigger)
-        ui.button('Edit goal message',(890,422,244,36),lambda:app.prompt('Dialogue before stage completion',self.message(),self.set_message))
-        ui.wrap('Collect the goal item to complete the stage. Add levers to rotate the world. Right-click erases.',646,477,470,16,t['muted'])
-        ui.fit('Credit: '+d['author'],646,558,484,13,t['muted'])
-        ui.fit('License: '+d['license'],646,580,484,13,t['muted'])
-        ui.button('Save stage',(646,617,150,40),lambda:app.editor_save())
-        ui.button('Playtest',(810,617,150,40),lambda:app.editor_test(),primary=True)
-        ui.button('Export JSON',(974,617,160,40),lambda:app.editor_export())
-        ui.button('Back',(646,680,150,36),lambda:app.leave_editor())
+            ui.button(labels[tool],(646+(i%4)*120,155+(i//4)*(48 if modern else 43),110,44 if modern else 35),lambda v=tool:setattr(self,'tool',v),selected=self.tool==tool)
+        ui.button('Spider: '+self.attached,(646,(309 if modern else 292),230,35),self.cycle_direction)
+        ui.button('Rotate board 90°',(890,(309 if modern else 292),244,35),self.rotate)
+        ui.button('Undo',(646,(363 if modern else 338),110,35),self.go_undo)
+        ui.button('Redo',(768,(363 if modern else 338),110,35),self.go_redo)
+        ui.button('Title',(890,(363 if modern else 338),110,35),lambda:app.prompt('Stage title',d['title'],lambda v:self.set_field('title',v)))
+        ui.button('Author',(1012,(363 if modern else 338),122,35),lambda:app.prompt('Author / adaptation credit',d['author'],lambda v:self.set_field('author',v)))
+        ui.text('Built-in event',646,(423 if modern else 393),16)
+        ui.button('On: '+d['events'][0]['trigger'] if d['events'] else 'Add goal event',(646,(450 if modern else 422),230,36),self.cycle_trigger)
+        ui.button('Edit goal message',(890,(450 if modern else 422),244,36),lambda:app.prompt('Dialogue before stage completion',self.message(),self.set_message))
+        ui.wrap('Collect the goal to finish. Levers turn the room. Right-click erases.',646,(514 if modern else 477),470,16,t['muted'])
+        ui.fit('Credit: '+d['author'],646,(570 if modern else 558),484,13,t['muted'])
+        ui.fit('License: '+d['license'],646,(592 if modern else 580),484,13,t['muted'])
+        ui.button('Save stage',(646,(627 if modern else 617),150,40),lambda:app.editor_save())
+        if not modern:ui.button('Playtest',(810,(627 if modern else 617),150,40),lambda:app.editor_test(),primary=True)
+        ui.button('Export JSON',(974,(627 if modern else 617),160,40),lambda:app.editor_export())
+        ui.button('Back',(646,(684 if modern else 680),150,36),lambda:app.leave_editor())
         ui.text('Arrows: cursor  Space: paint  [ / ]: tool  F5: test  Ctrl+S: save',36,730,14,t['muted'])
     def set_field(self,key,value):
         stages.text(value,key);self.checkpoint();self.document[key]=value

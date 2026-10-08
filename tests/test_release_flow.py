@@ -8,7 +8,7 @@ from unittest.mock import patch
 os.environ.update(SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy')
 import pygame
 from refresh.app import App
-from refresh import stages,runs
+from refresh import stages,runs,rules
 from refresh.storage import Store,DEFAULTS
 
 class ReleaseFlow(unittest.TestCase):
@@ -25,7 +25,7 @@ class ReleaseFlow(unittest.TestCase):
         self.a.draw();self.a.ui.focus=next(i for i,b in enumerate(self.a.ui.buttons) if b.label==label)
         self.a.ui.activate();self.a.draw()
     def record(self,stage,tempo=1.,dialogue=False):
-        self.a.store.records[runs.record_key(stage.document,tempo,dialogue)]={'stage':stage.title,'best_seconds':12.5,'category':runs.category(tempo,dialogue)}
+        self.a.store.records[runs.record_key(stage.document,tempo,dialogue,rules.for_theme(self.a.theme))]={'stage':stage.title,'best_seconds':12.5,'category':runs.category(tempo,dialogue)}
     def test_fullscreen_blocks_controller_mouse_and_direct_resume_until_confirmed(self):
         a=self.a;a.start_stage(a.catalog.stages[0]);a.pause();a.draw()
         old_button=a.ui.buttons[0].rect.center
@@ -92,7 +92,7 @@ class ReleaseFlow(unittest.TestCase):
         with patch('refresh.app.atomic_json',side_effect=OSError('disk full')):a.finish()
         self.assertFalse(a.completed(stage));self.assertFalse(a.completion_saved)
         a.save_now();self.assertTrue(a.completed(stage));self.assertTrue(a.completion_saved)
-        key=runs.record_key(d,1.,False);row=a.store.records[key]
+        key=runs.record_key(d,1.,False,a.session.rules_id);row=a.store.records[key]
         self.assertTrue((Path(self.tmp.name)/'data/replays'/row['replay_file']).exists())
         self.assertEqual(Store().records[key],row)
     def test_malformed_drop_keeps_app_usable(self):

@@ -40,13 +40,29 @@ def masonry(size):
     source=pygame.image.load(str(Path(__file__).resolve().parents[1]/'assets/refresh/masonry-v1.png')).convert()
     return pygame.transform.smoothscale(source,size)
 
-def terrain_layer(rectangles,size,scale):
+@lru_cache(maxsize=2)
+def material_source(scale):
+    # Full 20x20 level is centered on the actual120,120 pivot, including offscreen tiles.
+    size=800*scale;result=pygame.Surface((size,size));texture=masonry((520*scale,520*scale))
+    for x in (-240*scale,280*scale):
+        for y in (-240*scale,280*scale):result.blit(texture,(x,y))
+    return result
+
+def attached_material(size,scale,matrix):
+    c,s=matrix;image=pygame.transform.rotozoom(material_source(scale),-math.degrees(math.atan2(s,c)),math.hypot(c,s))
+    result=pygame.Surface(size);result.blit(image,image.get_rect(center=(120*scale,120*scale)))
+    return result
+
+def terrain_layer(rectangles,size,scale,polygons=None,matrix=None):
     """One authored material coordinate system, clipped to actual moving solids."""
     occupancy=pygame.Surface(size,pygame.SRCALPHA)
-    for rect in rectangles:pygame.draw.rect(occupancy,(255,255,255,255),rect)
+    if polygons is None:
+        for rect in rectangles:pygame.draw.rect(occupancy,(255,255,255,255),rect)
+    else:
+        for polygon in polygons:pygame.draw.polygon(occupancy,(255,255,255,255),polygon)
     mask=pygame.mask.Mask(size)
     for rect in rectangles:mask.draw(solid_rectangle((rect[2],rect[3])),rect[:2])
-    result=pygame.Surface(size,pygame.SRCALPHA);result.blit(masonry(size),(0,0))
+    result=pygame.Surface(size,pygame.SRCALPHA);result.blit(attached_material(size,scale,matrix) if matrix is not None else masonry(size),(0,0))
     result.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
     # Shade a low-resolution relief field; the exact full-resolution union retains alpha.
     relief_size=(max(1,size[0]//4),max(1,size[1]//4))

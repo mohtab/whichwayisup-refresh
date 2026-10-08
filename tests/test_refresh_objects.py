@@ -77,7 +77,7 @@ class RefreshObjectTests(unittest.TestCase):
                         if t.tileclass!='wall':continue
                         x,y=app.session.position(t,.5)
                         expected.append((round((x-t.rect.width/2)*2),round((y-t.rect.height/2)*2),t.rect.width*2,t.rect.height*2))
-                    self.assertEqual(app.painter.terrain_key,tuple(expected))
+                    self.assertEqual(app.painter.terrain_key[0],tuple(tuple((x*2,y*2) for x,y in app.session.rules.geometry(t,.5)) for t in app.session.scene['level'].tiles if t.tileclass=='wall'))
                     self.assertEqual(before,[(t.x,t.y,tuple(t.rect)) for t in tiles]);checked+=1
                     if seen and not flipping:break
                     seen=True

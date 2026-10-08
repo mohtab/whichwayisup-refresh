@@ -186,7 +186,7 @@ def parse_inputs(joystick = None):
   return inputs
 
 
-def steps(screen, level_name="w0-l0", score_mod=0, score=None, joystick=None, driver=None):
+def steps(screen, level_name="w0-l0", score_mod=0, score=None, joystick=None, driver=None, rules=None):
 
   if (Variables.vdict["devmode"]):
     edit_utils = Edit_utils()
@@ -207,6 +207,9 @@ def steps(screen, level_name="w0-l0", score_mod=0, score=None, joystick=None, dr
   objects = level.get_objects()
   player = level.get_player()
   objects.append(player)
+
+  if rules is not None:
+    rules.bind(level, player)
 
   player.life = score.life
 
@@ -352,10 +355,16 @@ def steps(screen, level_name="w0-l0", score_mod=0, score=None, joystick=None, dr
 
     #Updating level and objects:
 
+    if rules is not None:
+      rules.before_tick()
+
     if scripted_event_trigger == None:
       scripted_event_trigger = level.update()
     else:
       level.update()
+
+    if rules is not None:
+      rules.after_terrain()
 
     #Objects are only updated when there's not a scripted event going on
 
@@ -368,8 +377,11 @@ def steps(screen, level_name="w0-l0", score_mod=0, score=None, joystick=None, dr
         if o.dead and o.itemclass != "player":
           objects.remove(o)
           continue
-        new_particles = o.update(level)
-        if o.itemclass == "projectile":
+        if rules is not None and o.itemclass == "projectile":
+          new_particles = rules.update_projectile(o)
+        else:
+          new_particles = o.update(level)
+        if rules is None and o.itemclass == "projectile":
           if player.rect.collidepoint(o.x, o.y) and o.current_animation == "default":
             new_particles = player.take_damage(o.damage)
             o.die()

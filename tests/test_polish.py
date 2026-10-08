@@ -48,7 +48,7 @@ class GamerProfiles(unittest.TestCase):
         self.assertEqual(a.session.tick,tick)
         self.key(pygame.K_F10);self.assertEqual(a.screen,'pause')
         self.key(pygame.K_p);self.assertEqual(a.screen,'play')
-        before=a.theme.id;self.key(pygame.K_F6);self.assertNotEqual(a.theme.id,before)
+        before=a.s['theme'];active=a.session.rules_id;self.key(pygame.K_F6);self.assertNotEqual(a.s['theme'],before);self.assertEqual(a.session.rules_id,active)
         self.key(pygame.K_F6,pygame.KMOD_SHIFT);self.assertEqual(a.theme.id,before)
         self.key(pygame.K_F2);self.assertEqual(a.screen,'pause')
         self.assertFalse(a.display.fullscreen)
@@ -66,7 +66,7 @@ class GamerProfiles(unittest.TestCase):
     def test_speedrunner_pb_retry_rules_and_replay(self):
         a=self.app;a.preset('speedrun');stage=self.easy_stage();a.start_stage(stage)
         self.complete();self.assertTrue(a.new_best)
-        key=runs.record_key(stage.document,1.,False)
+        key=runs.record_key(stage.document,1.,False,a.session.rules_id)
         best=deepcopy(a.store.records[key])
         replay=json.loads((Path(self.tmp.name)/'data/last-completion-replay.json').read_text())
         result=runs.verify(replay,stage.document,DEFAULTS)

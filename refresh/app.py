@@ -12,6 +12,7 @@ import traceback
 import pygame
 from .storage import Store, user_path, atomic_json, DEFAULTS
 from .themes import Themes, color
+from . import rules
 from .runtime import Session, Stepper
 from .art import Painter
 from .ui import UI, font, wrapped_lines, reading_surface
@@ -77,11 +78,12 @@ class App:
             try:
                 joy=pygame.joystick.Joystick(i);joy.init();self.joys[joy.get_instance_id()]=joy
             except pygame.error:logging.exception('Controller unavailable')
-    def completed(self,stage):
-        prefix=stages.fingerprint(stage.document)+':'+runs.RULES+':'
+    def completed(self,stage,rules_id=None):
+        profile=rules_id or (self.session.rules_id if self.session and self.screen in ('complete','ending') else rules.for_theme(self.themes.get(self.s)))
+        prefix=stages.fingerprint(stage.document)+':'+profile+':'
         return any(key.startswith(prefix) for key in self.store.records)
     def stage_best(self,stage):
-        return self.store.records.get(runs.record_key(stage.document,self.s['tempo'],self.s['dialogue']),{}).get('best_seconds')
+        return self.store.records.get(runs.record_key(stage.document,self.s['tempo'],self.s['dialogue'],rules.for_theme(self.themes.get(self.s))),{}).get('best_seconds')
     def continue_stage(self):
         originals=[stage for stage in self.catalog.stages if stage.original]
         selected=self.catalog.stages[self.stage_index]
@@ -106,9 +108,16 @@ class App:
     def notify(self,message):self.message=str(message);self.message_until=time.monotonic()+7
     def route(self,screen):
         self.screen=screen;self.ui.focus=0;self.ui.buttons=[];self.held.clear();self.pending.clear();self.stepper.reset()
+    def rules_notice(self):
+        pending=rules.for_theme(self.themes.get(self.s))
+        if self.session and self.screen in ('play','pause','lost','complete','settings'):
+            current=self.session.rules_id
+            return rules.label(current)+(' · Next stage: '+rules.label(pending) if pending!=current else '')
+        return rules.label(pending)+' · '+('Story' if self.s['dialogue'] else 'Speedrun')
     def set_theme(self,ident):
         self.s['theme']=ident;self.s['accent']=''
-        self.theme=self.themes.get(self.s);self.painter.configure(self.theme,self.s);self.store.save()
+        self.theme=self.run_theme if self.session and self.screen in ('play','pause','lost','complete') else self.themes.get(self.s);self.painter.configure(self.theme,self.s);self.store.save()
+        if self.session:self.notify('Design saved for the next stage. Retry keeps this run. '+self.rules_notice())
     def setting(self,key,values):
         current=self.s.get(key)
         self.s[key]=values[(values.index(current)+1)%len(values)] if current in values else values[0]
@@ -135,14 +144,17 @@ class App:
         path=self.themes.export(self.theme);self.notify('Saved '+str(path))
     def remap(self,action):
         self.modal={'title':'Press a key for '+action,'binding':action}
-    def start_stage(self,stage,playtest=False):
+    def start_stage(self,stage,playtest=False,*,run_rules=None,run_theme=None,run_tempo=None,run_dialogue=None):
+        self.run_theme=run_theme or self.themes.get(self.s)
+        self.theme=self.run_theme
+        self.run_rules=run_rules or rules.for_theme(self.run_theme)
         self.attempts=self.attempts+1 if self.active_stage and self.active_stage.id==stage.id else 1
-        self.active_stage=stage;self.run_tempo=self.s['tempo'];self.playtest=playtest
-        self.run_dialogue=self.s['dialogue'];self.pauses=0;self.new_best=False;self.completed_world=None;self.completion_saved=False
-        self.previous_best=self.store.records.get(runs.record_key(stage.document,self.run_tempo,self.run_dialogue),{}).get('best_seconds')
+        self.active_stage=stage;self.run_tempo=self.s['tempo'] if run_tempo is None else run_tempo;self.playtest=playtest
+        self.run_dialogue=self.s['dialogue'] if run_dialogue is None else run_dialogue;self.pauses=0;self.new_best=False;self.completed_world=None;self.completion_saved=False
+        self.previous_best=self.store.records.get(runs.record_key(stage.document,self.run_tempo,self.run_dialogue,self.run_rules),{}).get('best_seconds')
         self.dialogue_token=None;self.dialogue_page=0
-        settings=dict(self.s,sound=self.s['sound'] and self.audio)
-        self.session=Session(stage.engine_path,settings)
+        settings=dict(self.s,sound=self.s['sound'] and self.audio,dialogue=self.run_dialogue)
+        self.session=Session(stage.engine_path,settings,rules=self.run_rules)
         self.s['stage']=stage.id
         self.stage_index=next((i for i,v in enumerate(self.catalog.stages) if v.id==stage.id),self.stage_index)
         if not playtest:self.store.save()
@@ -157,10 +169,10 @@ class App:
         if self.active_stage:
             # Retry the same category even when next-run settings were changed.
             tempo,dialogue=self.run_tempo,self.run_dialogue
-            self.start_stage(self.active_stage,self.playtest)
+            self.start_stage(self.active_stage,self.playtest,run_rules=self.session.rules_id,run_theme=self.run_theme,run_tempo=tempo,run_dialogue=dialogue)
             self.run_tempo=tempo;self.run_dialogue=dialogue
             self.session.settings['dialogue']=dialogue
-            self.previous_best=self.store.records.get(runs.record_key(self.active_stage.document,tempo,dialogue),{}).get('best_seconds')
+            self.previous_best=self.store.records.get(runs.record_key(self.active_stage.document,tempo,dialogue,self.session.rules_id),{}).get('best_seconds')
     def new_editor(self,document=None):
         if self.editor and self.editor.dirty:self.editor.save(draft=True)
         self.editor=Editor(document);self.route('editor')
@@ -185,7 +197,7 @@ class App:
         result=self.session.result
         if result==3:
             seconds=self.session.score.time/24/self.run_tempo
-            key=runs.record_key(self.active_stage.document,self.run_tempo,self.run_dialogue)
+            key=runs.record_key(self.active_stage.document,self.run_tempo,self.run_dialogue,self.session.rules_id)
             self.new_best=self.previous_best is None or seconds<self.previous_best
             if not self.playtest:
                 replay=runs.replay(self.active_stage.document,self.session,self.run_tempo,self.run_dialogue,self.pauses,True)
@@ -194,7 +206,7 @@ class App:
                     if self.new_best:
                         replay_name=hashlib.sha256(json.dumps(replay,sort_keys=True).encode()).hexdigest()+'.json'
                         updated[key]={'stage':self.active_stage.title,'best_seconds':seconds,
-                            'legacy_ticks':self.session.score.time,'tempo':self.run_tempo,'rules':runs.RULES,
+                            'legacy_ticks':self.session.score.time,'tempo':self.run_tempo,'rules':self.session.rules_id,
                             'category':runs.category(self.run_tempo,self.run_dialogue),'pauses':self.pauses,'replay_file':replay_name}
                         atomic_json(user_path('data')/'replays'/replay_name,replay)
                     atomic_json(self.store.records_path,updated)
@@ -204,7 +216,7 @@ class App:
                 except OSError as e:self.notify('Finished, but saving failed: '+str(e))
             if self.active_stage.original and not self.playtest:
                 group=[stage for stage in self.catalog.stages if stage.original and stage.world==self.active_stage.world]
-                if all(self.completed(stage) for stage in group):self.completed_world=self.active_stage.world
+                if all(self.completed(stage,self.session.rules_id) for stage in group):self.completed_world=self.active_stage.world
             self.route('complete')
         elif result==1:self.route('lost')
         else:self.route('pause')
@@ -224,9 +236,9 @@ class App:
         except OSError as e:self.notify('Could not save: '+str(e))
     def cycle_theme(self,direction=1):
         choices=list(self.themes.packs)
-        index=choices.index(self.theme.id)
+        index=choices.index(self.s['theme'])
         self.set_theme(choices[(index+direction)%len(choices)])
-        self.notify('Theme: '+self.theme.name)
+        self.notify('Next stage design: '+self.themes.get(self.s).name+'. '+self.rules_notice())
     def show_help(self):
         if self.screen=='help':self.route(self.help_return);return
         self.pause();self.help_return=self.screen;self.route('help')
@@ -422,7 +434,8 @@ class App:
         if now-self.last_poll>2:
             self.last_poll=now
             self.themes.poll_system()
-        if self.screen!='play':self.theme=self.themes.get(self.s)
+        if self.session and self.screen in ('play','pause','lost','complete'):self.theme=self.run_theme
+        else:self.theme=self.themes.get(self.s)
         if self.editor and self.editor.dirty and now-self.last_autosave>20:
             self.last_autosave=now
             try:self.editor.save(draft=True)
@@ -454,7 +467,7 @@ class App:
         pygame.draw.rect(self.ui.surface,self.theme['accent'],rect,1,border_radius=2)
     def settings_screen(self,back):self.return_screen=back;self.route('settings')
     def draw_home(self):
-        if self.theme.id=='refresh':return ui_refresh.home(self)
+        if self.theme.style!='original':return ui_refresh.home(self)
         u=self.ui;t=self.theme
         u.header('REFRESH / '+__version__)
         u.text('TURN THE WORLD. FIND YOUR LINE.',40,115,14,t['accent'])
@@ -486,7 +499,7 @@ class App:
         u=self.ui;t=self.theme;u.header('CAMPAIGNS / YOUR STAGES')
         u.text('Every world starts with a stage.',40,101,34)
         groups=[(world,[v for v in self.catalog.stages if v.original and v.world==world]) for world in stages.WORLD_NAMES]
-        if t.id=='refresh':
+        if t.style!='original':
             summary='CAMPAIGN PROGRESS  /  '+'  ·  '.join(f'{world}: {sum(self.completed(v) for v in group)}/{len(group)}' for world,group in groups)
             u.fit(summary,40,148,1116,16,t['muted'])
         else:
@@ -495,23 +508,24 @@ class App:
                 u.fit(f'{world}  {count}/{len(group)}',40+i*378,153,355,15,t['accent'])
         subset=self.catalog.stages[self.page*12:self.page*12+12]
         for i,stage in enumerate(subset):
-            x=40+(i%3)*378;y=(176+(i//3)*120) if t.id=='refresh' else 192+(i//3)*111
+            x=40+(i%3)*378;y=(176+(i//3)*120) if t.style!='original' else 192+(i//3)*111
             if t.id=='refresh':u.surface.blit(reading_surface((362,112)),(x,y))
+            elif t.style!='original':u.panel((x,y,362,112))
             else:u.panel((x,y,362,99))
-            u.fit(stage.world.upper(),x+26 if t.id=='refresh' else x+14,y+10 if t.id=='refresh' else y+9,310 if t.id=='refresh' else 330,11,t['muted'])
-            u.button(self.short_name(stage),(x+12,y+31 if t.id=='refresh' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.id=='refresh' and u.focus==len(u.buttons))
-            u.button('Remix',(x+258,y+31 if t.id=='refresh' else y+28,92,37),lambda v=stage:self.new_editor(v.document),quiet=t.id=='refresh')
+            u.fit(stage.world.upper(),x+26 if t.style!='original' else x+14,y+10 if t.style!='original' else y+9,310 if t.style!='original' else 330,11,t['muted'])
+            u.button(self.short_name(stage),(x+12,y+31 if t.style!='original' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.style!='original' and u.focus==len(u.buttons))
+            u.button('Remix',(x+258,y+31 if t.style!='original' else y+28,92,37),lambda v=stage:self.new_editor(v.document),quiet=t.style!='original')
             best=self.stage_best(stage)
             status='Complete' if self.completed(stage) else 'Not yet completed'
             if best is not None:status+='  /  PB '+runs.clock_text(best)
-            u.fit(status,x+26 if t.id=='refresh' else x+14,y+80 if t.id=='refresh' else y+75,310 if t.id=='refresh' else 333,12,t['accent'] if self.completed(stage) else t['muted'])
+            u.fit(status,x+26 if t.style!='original' else x+14,y+80 if t.style!='original' else y+75,310 if t.style!='original' else 333,12,t['accent'] if self.completed(stage) else t['muted'])
         u.button('Back',(40,676,130,44),lambda:self.route('home'))
-        u.button('New stage',(184,676,170,44),lambda:self.new_editor(),primary=t.id!='refresh')
+        u.button('New stage',(184,676,170,44),lambda:self.new_editor(),primary=t.style=='original')
         u.button('Import file',(368,676,170,44),self.import_prompt)
         u.button('Resume draft',(552,676,166,44),self.resume_draft)
         if self.page>0:u.button('Previous',(760,676,170,44),lambda:setattr(self,'page',self.page-1))
         if (self.page+1)*12<len(self.catalog.stages):u.button('Next',(944,676,170,44),lambda:setattr(self,'page',self.page+1))
-        u.fit('PBs: '+runs.category(self.s['tempo'],self.s['dialogue'])+'  /  Drop a stage JSON or TXT here to import.',40,737,1100,14,t['muted'])
+        u.fit(self.rules_notice()+' / PBs: '+runs.category(self.s['tempo'],self.s['dialogue'])+'  /  Drop a stage JSON or TXT here to import.',40,737,1100,14,t['muted'])
     def resume_draft(self):
         paths=sorted((user_path('data')/'drafts').glob('*.json'),key=lambda p:p.stat().st_mtime,reverse=True)
         if not paths:self.notify('No saved draft yet. Create a stage in the studio.');return
@@ -528,9 +542,9 @@ class App:
     def reload_catalog(self):self.catalog.refresh();self.page=min(self.page,(len(self.catalog.stages)-1)//12);self.notify('; '.join(self.catalog.errors) or 'Stage library refreshed.')
     def draw_settings(self):
         u=self.ui;t=self.theme;u.header('SETTINGS / SAVED AUTOMATICALLY')
-        u.text('Customize your journey.' if t.id=='refresh' else 'Find your rhythm.',40,98 if t.id=='refresh' else 104,30 if t.id=='refresh' else 36)
+        u.text('Customize your journey.' if t.style!='original' else 'Find your rhythm.',40,98 if t.style!='original' else 104,30 if t.style!='original' else 36)
         for i,tab in enumerate(('Display','Audio','Controls','Gameplay','Advanced')):
-            u.button(tab,(40+i*226,150 if t.id=='refresh' else 170,214,48 if t.id=='refresh' else 44),lambda value=tab:setattr(self,'settings_tab',value),selected=self.settings_tab==tab)
+            u.button(tab,(40+i*226,150 if t.style!='original' else 170,214,48 if t.style!='original' else 44),lambda value=tab:setattr(self,'settings_tab',value),selected=self.settings_tab==tab)
         theme_ids=list(THEME_ORDER)+[k for k in self.themes.packs if k not in THEME_ORDER]
         on=lambda key:'On' if self.s[key] else 'Off'
         toggle=lambda key:lambda:self.setting(key,[False,True])
@@ -562,16 +576,16 @@ class App:
             'Controls':[(action.title(),self.s['key_'+action].upper(),lambda v=action:self.remap(v)) for action in ('left','right','jump','interact')]
         }[self.settings_tab]
         for i,(label,value,action) in enumerate(rows):
-            y=(224+i*52) if t.id=='refresh' else 250+i*(50 if self.settings_tab=='Display' else 57)
-            if t.id=='refresh':
+            y=(224+i*52) if t.style!='original' else 250+i*(50 if self.settings_tab=='Display' else 57)
+            if t.style!='original':
                 pygame.draw.line(u.surface,t['panel'],(65,y+49),(1132,y+49))
             u.text(label,65,y+10,19,t['muted'])
-            u.button(value,(502,y,606,46) if t.id=='refresh' else (624,y,508,43),action,align='left' if t.id=='refresh' else 'center')
+            u.button(value,(502,y,606,46) if t.style!='original' else (624,y,508,43),action,align='left' if t.style!='original' else 'center')
         if self.settings_tab=='Controls':
             u.button('Reset keyboard bindings',(65,489,420,43),self.reset_bindings)
             u.wrap('Controller: stick or D-pad to move. Button 1 jumps / confirms; Button 2 interacts / goes back. Buttons 7 or 8 pause / resume.',65,554,1050,18,t['muted'])
         elif self.settings_tab=='Gameplay':
-            u.wrap('Tempo and dialogue apply to the next stage. Retry keeps the current run rules. Reduced effects preserves essential character motion.',65,573,1040,17,t['muted'])
+            u.wrap(self.rules_notice()+'. Design, tempo and dialogue apply to the next stage. Retry keeps this run.',65,573,1040,17,t['muted'])
         elif self.settings_tab=='Display':
             u.fit('F9 switches board / full view. Integer fit applies to Original; small windows use a fractional fit.',65,618,1050,16,t['muted'])
             u.fit('High contrast adds bright player and enemy outlines to modern artwork.',65,644,1050,16,t['muted'])
@@ -584,6 +598,7 @@ class App:
 
     def draw_play(self):
         u=self.ui;t=self.theme;session=self.session;scene=session.scene
+        u.fit(self.rules_notice(),42,766,1100,14,t['muted'])
         if self.theme.id=='refresh' and self.screen=='complete':
             ui_refresh.complete(self);return
         if self.theme.id=='refresh':ui_refresh.play(self)
@@ -712,7 +727,8 @@ class App:
         for i,row in enumerate(entries[self.records_page*6:(self.records_page+1)*6]):
             y=231+i*68;u.panel((40,y,1116,58))
             u.fit(row.get('stage','Stage'),59,y+17,536,19)
-            u.fit(row.get('category','Legacy record / category unknown'),624,y+20,295,13,t['muted'])
+            u.fit(rules.label(row.get('rules',rules.LEGACY)),624,y+10,295,14,t['muted'])
+            u.fit(row.get('category','Category unknown'),624,y+33,295,13,t['muted'])
             u.text(runs.clock_text(row['best_seconds']),940,y+15,24,t['accent'])
         u.wrap('Global rankings and community uploads are planned. This board contains local records only.',44,666,1090,16,t['muted'])
         u.button('Back',(40,710,150,36),lambda:self.route('home'),primary=True)
@@ -738,7 +754,7 @@ class App:
             player=self.session.scene['player']
             clock=runs.clock_text(self.session.score.time/24/self.run_tempo)
             surface.blit(font(26 if self.theme.id=='refresh' else 28).render(clock,True,self.theme['foreground']),(22,14))
-            surface.blit(font(22 if self.theme.id=='refresh' else 17).render('ATTEMPT '+str(self.attempts),True,self.theme['foreground'] if self.theme.id=='refresh' else self.theme['muted']),(24,48))
+            surface.blit(font(22 if self.theme.id=='refresh' else 17).render(('ORIGINAL' if self.session.rules_id==rules.LEGACY else 'ENHANCED')+' · '+str(self.attempts),True,self.theme['foreground'] if self.theme.id=='refresh' else self.theme['muted']),(24,48))
             pygame.draw.rect(surface,self.theme['panel'],(278,23,170,12),border_radius=5)
             pygame.draw.rect(surface,self.theme['accent'] if player.life>10 else self.theme['hazard'],(278,23,max(0,round(170*player.life/36)),12),border_radius=5)
             if self.theme.id=='refresh':ui_refresh.health(surface,(274,17,180,24),player.life,self.theme)
@@ -759,6 +775,7 @@ class App:
 
     def draw(self):
         self.world_layers=[]
+        self.theme=self.run_theme if self.session and self.screen in ('play','pause','lost','complete') else self.themes.get(self.s)
         self.ui.begin(self.theme);self.painter.configure(self.theme,self.s)
         # Board-only never resizes/floats the OS window. Essential dialogue and
         # pause/settings screens temporarily restore the interface.

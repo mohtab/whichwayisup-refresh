@@ -91,3 +91,13 @@ The Omarchy and DHH tributes are unofficial and imply no endorsement.
 
 Want to help? Read [Contributing](CONTRIBUTING.md), the
 [developer guide](docs/DEVELOPING.md), or the [stage format](docs/STAGE_FORMAT.md).
+
+### Gameplay profiles
+
+Original starts the preserved24Hz gameplay. Other designs start Enhanced gameplay,
+with connected turning terrain and finite swept missile contacts. Story and
+Speedrun still control dialogue and tempo independently. A run and its retries
+keep their starting gameplay profile; changing design during play takes effect
+on the next stage. Current/next gameplay is shown in the interface. Existing
+recordings and personal bests remain Original gameplay; enhanced records and
+replays are stored separately.

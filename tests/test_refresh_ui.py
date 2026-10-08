@@ -104,6 +104,6 @@ class RefreshUITests(unittest.TestCase):
             self.assertGreater(sum(pygame.transform.average_color(board)[:3]),45)
             self.assertEqual(a.session.scene['fade'],255);self.assertEqual(a.session.tick,tick)
             self.assertEqual(a.ui.buttons[0].label,'Next stage');self.assert_buttons()
-        a.set_theme('original');a.painter.configure(a.theme,a.s)
+        a.set_theme('original');a.start_stage(a.catalog.stages[0]);a.session.scene['fade']=255;a.painter.configure(a.theme,a.s)
         image=a.painter.draw(a.session,a.theme,a.s,resolved=True)
         self.assertEqual(pygame.transform.average_color(image)[:3],(0,0,0))

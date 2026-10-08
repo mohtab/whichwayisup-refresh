@@ -2,7 +2,8 @@
 import math
 from . import stages
 
-RULES='refresh24-v2'
+from .rules import LEGACY, SUPPORTED
+RULES=LEGACY
 ACTIONS={'LEFT','RIGHT','UP','JUMP','DOWN'}
 MAX_INPUTS=86400
 
@@ -15,18 +16,18 @@ def clock_text(seconds):
 def category(tempo,dialogue):
     return f'{tempo:g}x:'+('story' if dialogue else 'no-dialogue')
 
-def record_key(document,tempo,dialogue):
-    return f'{stages.fingerprint(document)}:{RULES}:{category(tempo,dialogue)}'
+def record_key(document,tempo,dialogue,rules=LEGACY):
+    return f'{stages.fingerprint(document)}:{rules}:{category(tempo,dialogue)}'
 
 def replay(document,session,tempo,dialogue,pauses,finished=False):
-    return dict(schema=2,stage_hash=stages.fingerprint(document),rules=RULES,tempo=tempo,
+    return dict(schema=2,stage_hash=stages.fingerprint(document),rules=session.rules_id,tempo=tempo,
                 dialogue=dialogue,seed=session.seed,inputs=session.history,
                 complete=finished and not getattr(session,'history_truncated',False),
                 ticks=session.score.time,pauses=pauses,category=category(tempo,dialogue))
 
 def validate_replay(payload,document):
     if not isinstance(payload,dict) or payload.get('schema')!=2:raise ValueError('Expected replay schema 2')
-    if payload.get('rules')!=RULES:raise ValueError('Unsupported rules')
+    if payload.get('rules',LEGACY) not in SUPPORTED:raise ValueError('Unsupported rules')
     if payload.get('stage_hash')!=stages.fingerprint(document):raise ValueError('Replay belongs to different stage content')
     tempo=payload.get('tempo')
     if type(tempo) not in (int,float) or not math.isfinite(tempo) or tempo not in (.75,1.,1.25,1.5):raise ValueError('Invalid tempo')
@@ -47,7 +48,7 @@ def verify(payload,document,settings):
     """Local deterministic verification, to be isolated/bounded by a future server."""
     from .runtime import Session
     validate_replay(payload,document)
-    session=Session(stages.materialize(document),dict(settings,sound=False,dialogue=payload['dialogue']),seed=payload['seed'])
+    session=Session(stages.materialize(document),dict(settings,sound=False,dialogue=payload['dialogue']),seed=payload['seed'],rules=payload.get('rules',LEGACY))
     for index,frame in enumerate(payload['inputs']):
         if session.result is not None:raise ValueError('Inputs continue after the run ended')
         session.step(frame)

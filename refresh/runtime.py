@@ -11,6 +11,7 @@ import game
 from util import Score, Util
 from variables import Variables
 from .motion import Motion
+from .rules import LEGACY, ENHANCED, SUPPORTED
 
 @dataclass
 class Driver:
@@ -35,7 +36,11 @@ class Stepper:
     def reset(self): self.accumulator=0.; self.overrun=False
 
 class Session:
-    def __init__(self, stage, settings, seed=0):
+    def __init__(self, stage, settings, seed=0, *, rules=LEGACY):
+        if rules not in SUPPORTED:raise ValueError("Unsupported rules")
+        self._rules_id=rules
+        from .enhanced import EnhancedRules
+        self.rules=EnhancedRules() if rules==ENHANCED else None
         Variables.vdict.update(devmode=False, verbose=False, sound=settings['sound'],
                                dialogue=settings['dialogue'], fullscreen=False)
         self.settings=dict(settings)
@@ -51,11 +56,13 @@ class Session:
         self.motion=Motion()
         self.history=[]
         self.random_state=random.Random(seed).getstate()
-        self.simulation=game.steps(self.canvas,stage,score=self.score,driver=self.driver)
+        self.simulation=game.steps(self.canvas,stage,score=self.score,driver=self.driver,rules=self.rules)
         self.scene=None
         self.step({})
         self.history.clear()
         self.tick=0
+    @property
+    def rules_id(self):return self._rules_id
     def step(self,inputs):
         if self.result is not None:return
         self.previous={id(o):(o.x,o.y) for o in self.entities()}

@@ -153,7 +153,11 @@ class UI:
         if hovered:bg=mix(bg,t['foreground'],.10)
         pygame.draw.rect(self.surface,bg,rect,border_radius=9)
         if not (primary or selected):pygame.draw.rect(self.surface,mix(t['panel'],t['muted'],.25),rect,1,border_radius=9)
-        if hovered:pygame.draw.rect(self.surface,t['accent'],rect,2,border_radius=9)
+        if hovered and self.theme.style=='original':pygame.draw.rect(self.surface,t['accent'],rect,2,border_radius=9)
+        if hovered and self.theme.style!='original':
+            pygame.draw.rect(self.surface,t['foreground'],rect,2,border_radius=9)
+            pygame.draw.line(self.surface,t['accent'],(rect.x+5,rect.y+10),(rect.x+5,rect.bottom-10),3)
+        if selected and self.theme.style!='original':pygame.draw.line(self.surface,t.readable(bg),(rect.x+16,rect.bottom-5),(rect.right-16,rect.bottom-5),2)
         fg=t.readable(bg)
         label=display_text(label)
         size=17

@@ -9,7 +9,8 @@ DIALOGUE_LINES=6
 
 def home(app):
     u=app.ui;t=app.theme
-    u.header('REFRESH EDITION  /  '+__version__)
+    u.header(('REFRESH EDITION' if t.id=='refresh' else t.name.upper())+'  /  '+__version__)
+    u.fit(app.rules_notice(),44,82,470,16,t['muted'])
     u.text('Which Way',40,115,52);u.text('Is Up?',40,175,52)
     pygame.draw.line(u.surface,t['accent'],(44,252),(168,252),3)
     u.text('A little gravity. A lot of possibility.',44,262,19)

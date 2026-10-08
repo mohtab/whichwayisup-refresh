@@ -127,6 +127,7 @@ class Painter:
         scale=self.scale
         level=scene['level']
         original=theme.style=='original'
+        enhanced=session.rules if not original else None
         if original:
             bg=level.bg_animations[level.current_animation].image
             self.world.blit(pygame.transform.scale(bg,self.world.get_size()),(0,0))
@@ -155,9 +156,13 @@ class Painter:
                 if tile.tileclass!='wall':continue
                 tx,ty=session.position(tile,alpha)
                 rectangles.append((round((tx-tile.rect.width/2)*scale),round((ty-tile.rect.height/2)*scale),tile.rect.width*scale,tile.rect.height*scale))
-            signature=tuple(rectangles)
+            polygons=None;material=None
+            if enhanced:
+                polygons=tuple(tuple((x*scale,y*scale) for x,y in enhanced.geometry(tile,alpha)) for tile in level.tiles if tile.tileclass=='wall')
+                material=enhanced.material_matrix(alpha)
+            signature=(polygons,material) if enhanced else tuple(rectangles)
             if signature!=self.terrain_key:
-                terrain,shadow=objects.terrain_layer(signature,self.world.get_size(),scale)
+                terrain,shadow=objects.terrain_layer(() if enhanced else rectangles,self.world.get_size(),scale,polygons,material)
                 terrain.blit(objects.stone_response(terrain.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
                 self.terrain=terrain
                 self.terrain_shadow=shadow;self.terrain_key=signature;self.terrain_lit_key=None
@@ -167,10 +172,28 @@ class Painter:
                 self.terrain_lit=lighting.spatial_response(self.terrain,self.terrain.get_rect(),field,warm=warm)
                 self.terrain_lit_key=light_key
             self.world.blit(self.terrain_lit,(0,0))
+        # Foreground occlusion is derived from real solids, never the previous framebuffer.
+        occlusion=pygame.Surface(self.world.get_size(),pygame.SRCALPHA)
+        if not original:
+            for tile in level.tiles:
+                if tile.tileclass!='wall':continue
+                if enhanced:pygame.draw.polygon(occlusion,(255,255,255,255),[(x*scale,y*scale) for x,y in enhanced.geometry(tile,alpha)])
+                else:
+                    tx,ty=session.position(tile,alpha)
+                    pygame.draw.rect(occlusion,(255,255,255,255),((tx-tile.rect.w/2)*scale,(ty-tile.rect.h/2)*scale,tile.rect.w*scale,tile.rect.h*scale))
+        def occlude(image,rect):
+            result=image.copy();cut=pygame.Surface(image.get_size(),pygame.SRCALPHA)
+            cut.blit(occlusion,(-rect.x,-rect.y));result.blit(cut,(0,0),special_flags=pygame.BLEND_RGBA_SUB)
+            return result
         lever_layers=[];spider_layers=[]
         render_objects=(*level.tiles,*scene['objects'])
         for o in render_objects:
             x,y=session.position(o,alpha)
+            fresh_impact=enhanced and getattr(o,'impact_rule_tick',-1)==enhanced.tick
+            before_impact=fresh_impact and alpha<o.impact_fraction
+            if fresh_impact:
+                start=session.previous.get(id(o),(o.x,o.y));fraction=min(1.,alpha/max(1e-10,o.impact_fraction))
+                x=start[0]+(o.x-start[0])*fraction;y=start[1]+(o.y-start[1])*fraction
             if x < -60 or y < -80 or x>580 or y>580:continue
             x*=scale;y*=scale
             kind=getattr(o,'tileclass',o.itemclass)
@@ -210,18 +233,42 @@ class Painter:
                 high_contrast=settings.get('high_contrast',False)
                 edge=theme.readable(theme['panel']) if high_contrast else (24,10,30) if theme.style=='refresh' and kind=='spider' else mix(theme['background'],(0,0,0),.55)
                 im=lighting.silhouette(im,edge,scale,high_contrast)
+            if kind=='player' and not use_original and state in ('exit','dying'):
+                # Terminal poses stay inside the original body; raised hands cannot punch through a low ceiling.
+                bounds=im.get_bounding_rect();body=im.subsurface(bounds)
+                factor=min(o.rect.w*scale/max(1,body.get_width()),o.rect.h*scale/max(1,body.get_height()))
+                im=pygame.transform.smoothscale(body,(max(1,round(body.get_width()*factor)),max(1,round(body.get_height()*factor))))
             orientation=o.get_orientation()
             if kind=='spider' and not use_original:
-                im=sprites.orient_spider(im,orientation,o.flipcounter,o.flipping,o.flip_direction,alpha)
-                # Follow the actual solid face; bevels and transparent padding must not create a gap.
-                angle=math.radians(sprites.spider_angle(orientation,o.flipcounter,o.flipping,o.flip_direction,alpha))
-                gap=sprites.support_gap(o,level.tiles)
+                if enhanced:
+                    from .enhanced import ray_contact
+                    c,ss=enhanced.material_matrix(alpha)
+                    relative=math.atan2(ss,c)-level.orientation*math.pi/2
+                    relative=math.atan2(math.sin(relative),math.cos(relative))
+                    angle=math.radians({0:90,1:0,2:-90,3:180}[orientation])-relative
+                    im=pygame.transform.rotate(im,math.degrees(angle))
+                    normal=(math.sin(angle),math.cos(angle));half=o.rect.h/2
+                    distance=ray_contact((x/scale,y/scale),normal,[enhanced.geometry(t,alpha) for t in level.tiles if t.tileclass in ('wall','bars')],half-4,half+12)
+                    gap=distance-half+1 if distance is not None else 0
+                else:
+                    im=sprites.orient_spider(im,orientation,o.flipcounter,o.flipping,o.flip_direction,alpha)
+                    angle=math.radians(sprites.spider_angle(orientation,o.flipcounter,o.flipping,o.flip_direction,alpha))
+                    gap=sprites.support_gap(o,level.tiles)
                 x+=math.sin(angle)*gap*scale;y+=math.cos(angle)*gap*scale
             elif kind=='projectile' and not use_original:
-                dx,dy=getattr(o,'dx',0),getattr(o,'dy',0)
-                if dx or dy:im=pygame.transform.rotate(im,-math.degrees(math.atan2(dy,dx)))
-                if o.current_animation=='dying':
+                if enhanced:im=pygame.transform.smoothscale(im,(20*scale,8*scale))
+                if enhanced and hasattr(o,'body_angle'):
+                    from .enhanced import lerp
+                    dx,dy=lerp(o.body_previous,o.body_current,alpha)
+                else:dx,dy=getattr(o,'dx',0),getattr(o,'dy',0)
+
+                if dx or dy:
+                    im=pygame.transform.rotozoom(im,-math.degrees(math.atan2(dy,dx)),math.hypot(dx,dy) if hasattr(o,'body_current') else 1.) if enhanced else pygame.transform.rotate(im,-math.degrees(math.atan2(dy,dx)))
+                if o.current_animation=='dying' and not before_impact:
                     im=im.copy();im.set_alpha(max(0,255-o.animations['dying'].i*40))
+            elif enhanced and kind in ('wall','bars'):
+                c,ss=enhanced.material_matrix(alpha)
+                im=pygame.transform.rotozoom(im,-math.degrees(math.atan2(ss,c)),math.hypot(c,ss))
             else:
                 if orientation==2:im=pygame.transform.flip(im,True,False)
                 elif orientation==3:im=pygame.transform.rotate(im,90)
@@ -238,7 +285,26 @@ class Painter:
             else:
                 if kind=='key' and not original and settings['effects']:y+=math.sin((session.tick+alpha)/8)*1.5*scale
                 rect=im.get_rect(center=(round(x),round(y)))
-            if kind=='projectile' and not original and settings['effects']:
+            if enhanced and kind=='projectile' and o.current_animation=='dying' and not before_impact:
+                age=o.animations['dying'].i
+                im=pygame.Surface((32*scale,32*scale),pygame.SRCALPHA)
+                if settings['effects']:
+                    radius=(3+age*2)*scale
+                    pygame.draw.circle(im,(*theme['accent'],max(0,220-age*65)),(16*scale,16*scale),min(14*scale,radius),max(1,scale))
+                    pygame.draw.circle(im,(*theme['foreground'],max(0,220-age*70)),(16*scale,16*scale),max(1,3*scale-age*scale))
+                qx,qy=getattr(o,'impact_point',(o.x,o.y));rect=im.get_rect(center=(round(qx*scale),round(qy*scale)))
+            if enhanced and kind=='lever':
+                from .enhanced import closest
+                base=(x/scale,y/scale+o.rect.h/2-2)
+                contacts=[closest(base,enhanced.geometry(t,alpha)) for t in level.tiles if t.tileclass in ('wall','bars')]
+                if contacts:
+                    contact=min(contacts,key=lambda p:math.dist(base,p))
+                    if math.dist(base,contact)<=30:
+                        a=(round(base[0]*scale),round(base[1]*scale));b=(round(contact[0]*scale),round(contact[1]*scale))
+                        pygame.draw.line(self.world,(39,38,29),a,b,5*scale)
+                        pygame.draw.line(self.world,(163,135,76),a,b,2*scale)
+                        pygame.draw.circle(self.world,(202,168,93),b,3*scale)
+            if kind=='projectile' and not original and settings['effects'] and o.current_animation=='default':
                 dx,dy=getattr(o,'dx',0),getattr(o,'dy',0)
                 if dx or dy:
                     norm=max(1,math.hypot(dx,dy))
@@ -249,6 +315,7 @@ class Painter:
                 im=lighting.spatial_response(im,rect,field,kind in ('player','spider'),warm)
             if depth and not use_original and kind in ('player','spider','lever'):
                 self.world.blit(lighting.shadow(im),rect.move(2*scale,2*scale))
+            if not original and kind=='player' and state in ('exit','dying'):im=occlude(im,rect)
             self.world.blit(im,rect)
             if field is not None and kind=='lever':lever_layers.append((im,rect.copy()))
             if field is not None and kind=='spider':spider_layers.append((im,rect.copy()))
@@ -294,7 +361,9 @@ class Painter:
                     pygame.draw.line(gleam,rgba,(cx-length,cy),(cx+length,cy),1)
                     pygame.draw.line(gleam,rgba,(cx,cy-length),(cx,cy+length),1)
                 qx,qy=session.motion.pickup_pos
-                self.world.blit(pygame.transform.scale(gleam,(80*scale,80*scale)),((round(qx)-40)*scale,(round(qy)-40)*scale))
+                gleam=pygame.transform.scale(gleam,(80*scale,80*scale))
+                rect=gleam.get_rect(topleft=((round(qx)-40)*scale,(round(qy)-40)*scale))
+                self.world.blit(occlude(gleam,rect),rect)
         if scene['fade'] and not preview and not (resolved and theme.id=='refresh'):
             overlay=pygame.Surface(self.world.get_size());overlay.set_alpha(scene['fade']);self.world.blit(overlay,(0,0))
         return self.world
