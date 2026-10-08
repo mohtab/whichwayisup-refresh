@@ -226,11 +226,13 @@ class Painter:
                 if kind=='player':
                     state,age=session.motion.pose(o,session.tick,session.driver.inputs)
                     if state in ('hurt','landing','takeoff'):phase=min(15,int(age))
+                    if state=='exit' and not original:phase=min(15,round((o.animations[state].i+alpha)*2))
                 if kind=='spider':
                     delay=getattr(o,'fire_delay',0)
                     if delay>=25:state='firing';phase=30-delay
                     elif 0<delay<4 and o.current_animation!='walking':state='charged'
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
+                if enhanced and kind=='lever':im=objects.lever_body(im)
             if theme.style=='refresh' and not use_original:
                 im=lighting.refresh_relief(im,0,kind=='wall',scale)
             if depth and theme.style!='refresh' and not use_original and kind not in ('projectile','key'):
@@ -239,8 +241,8 @@ class Painter:
                 high_contrast=settings.get('high_contrast',False)
                 edge=theme.readable(theme['panel']) if high_contrast else (24,10,30) if theme.style=='refresh' and kind=='spider' else mix(theme['background'],(0,0,0),.55)
                 im=lighting.silhouette(im,edge,scale,high_contrast)
-            if kind=='player' and not use_original and state in ('exit','dying'):
-                # Terminal poses stay inside the original body; raised hands cannot punch through a low ceiling.
+            if original and kind=='player' and not use_original and state in ('exit','dying'):
+                # Preserve the existing Original-world path even with an alternate character.
                 bounds=im.get_bounding_rect();body=im.subsurface(bounds)
                 factor=min(o.rect.w*scale/max(1,body.get_width()),o.rect.h*scale/max(1,body.get_height()))
                 im=pygame.transform.smoothscale(body,(max(1,round(body.get_width()*factor)),max(1,round(body.get_height()*factor))))
@@ -300,16 +302,11 @@ class Painter:
                     pygame.draw.circle(im,(*theme['foreground'],max(0,220-age*70)),(16*scale,16*scale),max(1,3*scale-age*scale))
                 qx,qy=getattr(o,'impact_point',(o.x,o.y));rect=im.get_rect(center=(round(qx*scale),round(qy*scale)))
             if enhanced and kind=='lever':
-                from .enhanced import closest
-                base=(x/scale,y/scale+o.rect.h/2-2)
-                contacts=[closest(base,geometry(t)) for t in level.tiles if t.tileclass in ('wall','bars')]
-                if contacts:
-                    contact=min(contacts,key=lambda p:math.dist(base,p))
-                    if math.dist(base,contact)<=30:
-                        a=(round(base[0]*scale),round(base[1]*scale));b=(round(contact[0]*scale),round(contact[1]*scale))
-                        pygame.draw.line(self.world,(39,38,29),a,b,5*scale)
-                        pygame.draw.line(self.world,(163,135,76),a,b,2*scale)
-                        pygame.draw.circle(self.world,(202,168,93),b,3*scale)
+                pivot=(x/scale,y/scale+o.rect.h*.20)
+                mount=objects.lever_mount((x/scale,y/scale),o.rect.h,[enhanced.base[id(t)] for t in level.tiles if t.tileclass in ('wall','bars')],enhanced.material_matrix(alpha))
+                if mount is not None:
+                    objects.draw_lever_mount(self.world,pivot,mount,scale)
+                im=occlude(im,rect)
             if kind=='projectile' and not original and settings['effects'] and o.current_animation=='default':
                 dx,dy=getattr(o,'dx',0),getattr(o,'dy',0)
                 if dx or dy:

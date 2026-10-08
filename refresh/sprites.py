@@ -45,6 +45,34 @@ def source_frame(name,columns,rows,index):
     bounds=frame.get_bounding_rect(min_alpha=96)
     return frame.subsurface(bounds).copy(),bounds
 
+@lru_cache(maxsize=16)
+def exit_frame(phase):
+    """Raise the standing explorer's forearms, keeping head/body/boots untouched.
+
+    Bent elbows keep the celebration below the standing head's ceiling envelope.
+    These are pieces of the existing authored idle frame, at its original scale.
+    """
+    source,bounds=source_frame('explorer-v1.png',6,4,17)
+    result=source.copy()
+    amount=min(1.,max(0.,phase/4))
+    if not amount:return result,bounds
+    arms=(
+        ((69,138),-145,((61,136),(78,140),(80,146),(84,151),(84,165),(79,174),(63,175),(56,168),(56,155))),
+        ((130,144),145,((125,143),(136,144),(140,153),(141,165),(136,173),(127,172),(123,164))),
+    )
+    for pivot,angle,outline in arms:
+        mask=pygame.Surface(source.get_size(),pygame.SRCALPHA)
+        pygame.draw.polygon(mask,(255,255,255,255),outline)
+        part=source.copy();part.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
+        result.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_SUB)
+        # Place the joint at the center before rotation; no scale or body fitting.
+        joint=pygame.Surface((100,100),pygame.SRCALPHA)
+        joint.blit(part,(50-pivot[0],50-pivot[1]))
+        turned=pygame.transform.rotate(joint,angle*amount)
+        result.blit(turned,turned.get_rect(center=pivot))
+    return result,bounds
+
+
 @lru_cache(maxsize=768)
 def player(w,h,state,phase,scale=1,character=None,style=None):
     phase=int(phase)%16
@@ -60,7 +88,7 @@ def player(w,h,state,phase,scale=1,character=None,style=None):
     elif state=='exit':index=7
     else:index=18 if phase==15 else 17
     atlas='dhh-v2.png' if character=='dhh' else 'cyber-courier-v1.png' if style=='cyberpunk' else 'explorer-run-v1.png' if state=='walking' else 'explorer-v1.png'
-    frame,bounds=source_frame(atlas,6,4,index)
+    frame,bounds=exit_frame(phase) if state=='exit' and atlas=='explorer-v1.png' and style!='original' else source_frame(atlas,6,4,index)
     # A standing body is ~225 source pixels. Crouches keep this scale instead of
     # being stretched back to standing height. The scarf can extend past the body.
     factor=(h+7)*scale/(260 if style=='cyberpunk' and character!='dhh' else 240 if character=='dhh' else 235 if state=='walking' else 225)

@@ -121,3 +121,46 @@ def stone_response(size):
 @lru_cache(maxsize=8)
 def solid_rectangle(size):
     return pygame.mask.Mask(size,fill=True)
+
+
+@lru_cache(maxsize=64)
+def lever_body(image):
+    """Retain the authored handle/gear; the enhanced mount replaces its wide slab."""
+    body=image.copy();w,h=body.get_size()
+    # The bottom rail and triangular outriggers belong to the old horizontal base.
+    body.fill((0,0,0,0),(0,round(h*.88),w,h))
+    body.fill((0,0,0,0),(0,round(h*.64),round(w*.25),h))
+    body.fill((0,0,0,0),(round(w*.75),round(h*.64),w,h))
+    return body
+
+
+def lever_mount(center,height,polygons,matrix):
+    """Keep a compact socket bolted to one material-space support point.
+
+    The gear stays upright while its short link articulates. Unlike choosing a
+    nearest world-space face each frame, the bolt cannot jump across a recess
+    when faces exchange proximity. Side-only supports use the same construction.
+    """
+    from .enhanced import closest,transform
+    c,s=matrix;den=c*c+s*s
+    local=transform(center,(c/den,-s/den))
+    base=(round(local[0],6),round(local[1]+height/2,6))
+    contacts=[closest(base,p) for p in polygons]
+    contact=min(contacts,key=lambda p:(round(math.dist(base,p),6),p)) if contacts else None
+    return transform(contact,matrix) if contact is not None and math.dist(base,contact)<=40 else None
+
+
+def draw_lever_mount(world,pivot,contact,scale):
+    a=tuple(round(v*scale) for v in pivot);b=tuple(round(v*scale) for v in contact)
+    pygame.draw.line(world,(30,35,31),a,b,6*scale)
+    pygame.draw.line(world,(109,100,62),a,b,4*scale)
+    pygame.draw.line(world,(191,159,94),(a[0]-scale,a[1]),(b[0]-scale,b[1]),scale)
+    length=math.dist(a,b)
+    if length:
+        dx=(b[0]-a[0])/length;dy=(b[1]-a[1])/length
+        for distance in range(4*scale,max(4*scale,round(length)-2*scale),4*scale):
+            x=a[0]+dx*distance;y=a[1]+dy*distance
+            pygame.draw.line(world,(55,61,46),(x-dy*2*scale,y+dx*2*scale),(x+dy*scale,y-dx*scale),scale)
+    pygame.draw.circle(world,(34,38,32),b,4*scale)
+    pygame.draw.circle(world,(137,119,71),b,3*scale)
+    pygame.draw.circle(world,(216,180,103),(b[0]-scale,b[1]-scale),scale)

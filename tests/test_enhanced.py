@@ -101,3 +101,73 @@ class EnhancedTests(unittest.TestCase):
       self.assertTrue(a.ui.surface.get_rect().contains(b.rect),(theme,route,b.label,b.rect))
       for other in buttons[i+1:]:self.assertFalse(b.rect.colliderect(other.rect),(theme,route,b.label,other.label))
      a.ui.focus=0;a.ui.move(1);self.assertEqual(a.ui.focus,1%len(buttons))
+ def test_exit_keeps_head_torso_and_boots_at_standing_scale(self):
+  from refresh import sprites
+  source,_=sprites.source_frame('explorer-v1.png',6,4,17)
+  regions=((45,0,112,98),(88,110,30,40),(45,190,112,45))
+  source_bytes=pygame.image.tobytes(source,'RGBA')
+  for phase in range(16):
+   pose,_=sprites.exit_frame(phase)
+   for region in regions:
+    for x in range(region[0],region[0]+region[2]):
+     for y in range(region[1],region[1]+region[3]):
+      if source.get_at((x,y)).a>=96:self.assertEqual(source.get_at((x,y)),pose.get_at((x,y)),(phase,x,y))
+   for scale in (1,2,3):
+    stand=sprites.player(28,33,'default',0,scale)
+    raised=sprites.player(28,33,'exit',phase,scale)
+    self.assertEqual(stand.get_size(),raised.get_size())
+    a=stand.get_bounding_rect(min_alpha=96);b=raised.get_bounding_rect(min_alpha=96)
+    self.assertEqual((a.top,a.bottom),(b.top,b.bottom))
+    self.assertGreater(b.left,0);self.assertLess(b.right,raised.get_width())
+  self.assertEqual(source_bytes,pygame.image.tobytes(source,'RGBA'))
+ def test_terminal_actor_cannot_overpaint_real_solids(self):
+  from refresh import lighting
+  a=self.app();a.start_stage(a.catalog.stages[0]);s=a.session
+  frames=json.loads((ROOT/'docs/campaign-acceptance/replays/w0-l0.json').read_text())['inputs']
+  for f in frames[:1030]:s.step(f)
+  self.assertEqual(s.scene['player'].current_animation,'exit')
+  real_sprite=a.painter.sprite
+  def without_player(kind,*args,**kwargs):
+   im=real_sprite(kind,*args,**kwargs)
+   return pygame.Surface(im.get_size(),pygame.SRCALPHA) if kind=='player' else im
+  # Isolate the body from the deliberately separate contact shadow.
+  with patch.object(lighting,'shadow',side_effect=lambda im:pygame.Surface(im.get_size(),pygame.SRCALPHA)):
+   for alpha in (0,.25,.5,.75,1):
+    actual=a.painter.draw(s,a.theme,a.s,alpha).copy()
+    with patch.object(a.painter,'sprite',side_effect=without_player):empty=a.painter.draw(s,a.theme,a.s,alpha).copy()
+    from PIL import Image,ImageChops
+    difference=ImageChops.difference(Image.frombytes('RGB',actual.get_size(),pygame.image.tobytes(actual,'RGB')),Image.frombytes('RGB',empty.get_size(),pygame.image.tobytes(empty,'RGB')))
+    mask=pygame.Surface(actual.get_size());mask.fill((0,0,0))
+    for tile in s.scene['level'].tiles:
+     if tile.tileclass in ('wall','bars'):pygame.draw.polygon(mask,(255,255,255),[(x*2,y*2) for x,y in s.rules.geometry(tile,alpha)])
+    solid=Image.frombytes('RGB',mask.get_size(),pygame.image.tobytes(mask,'RGB'))
+    self.assertIsNone(ImageChops.multiply(difference,solid).getbbox())
+ def test_mount_contacts_rotating_union_continuously(self):
+  from refresh import objects
+  from refresh.enhanced import closest
+  s=self.session(ENHANCED)
+  for _ in range(40):s.step({})
+  for direction in (1,-1,-1):
+   level=s.scene['level'];level.flip(direction)
+   for o in s.scene['objects']:o.flip(direction)
+   previous={}
+   for tick in range(33):
+    s.step({})
+    for alpha in (0,.25,.5,.75,1):
+     polygons=[s.rules.geometry(t,alpha) for t in level.tiles if t.tileclass in ('wall','bars')]
+     for lever in (o for o in s.scene['objects'] if o.itemclass=='lever'):
+      x,y=s.position(lever,alpha)
+      if x < -60 or y < -80 or x>580 or y>580:continue
+      pivot=(x,y+lever.rect.h*.20)
+      mount=objects.lever_mount((x,y),lever.rect.h,[s.rules.base[id(t)] for t in level.tiles if t.tileclass in ('wall','bars')],s.rules.material_matrix(alpha))
+      self.assertIsNotNone(mount,(direction,tick,alpha,pivot))
+      self.assertLess(min(math.dist(mount,closest(mount,p)) for p in polygons),1e-6)
+      if id(lever) in previous:self.assertLess(math.dist(mount,previous[id(lever)]),9,(direction,tick,alpha,pivot,mount,previous[id(lever)]))
+      previous[id(lever)]=mount
+ def test_enhanced_lever_removes_slab_without_mutating_source(self):
+  from refresh import objects,sprites
+  source=sprites.prop('lever',40,40,'default',0,2);raw=pygame.image.tobytes(source,'RGBA')
+  body=objects.lever_body(source)
+  self.assertEqual(raw,pygame.image.tobytes(source,'RGBA'))
+  self.assertEqual(pygame.mask.from_surface(body).overlap_area(pygame.mask.Mask((80,9),fill=True),(0,71)),0)
+  self.assertGreater(pygame.mask.from_surface(body).count(),100)
