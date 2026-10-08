@@ -22,3 +22,15 @@ def sprite(kind,w,h,state,phase,scale):
     image=pygame.transform.smoothscale(source,size)
     canvas.blit(image,image.get_rect(midbottom=(w*scale//2,h*scale)))
     return canvas
+
+@lru_cache(maxsize=6)
+def wall_frame(index):
+    source=pygame.image.load(str(Path(__file__).resolve().parents[1]/'assets/refresh/terrain-v1.png')).convert_alpha()
+    w,h=source.get_size();col=index%3;row=index//3
+    x=round(col*w/3);y=round(row*h/2);right=round((col+1)*w/3);bottom=round((row+1)*h/2)
+    cell=source.subsurface((x,y,right-x,bottom-y))
+    return cell.subsurface(cell.get_bounding_rect(min_alpha=64)).copy()
+
+@lru_cache(maxsize=48)
+def wall(w,h,phase,scale):
+    return pygame.transform.smoothscale(wall_frame(int(phase)%6),(w*scale,h*scale))

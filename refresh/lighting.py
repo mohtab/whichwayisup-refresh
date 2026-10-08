@@ -69,13 +69,6 @@ def refresh_relief(image,glow=0,wall=False,scale=1):
     # Neutral material response preserves texels; spatial exposure is applied later.
     result.fill((73,76,54,0) if wall else (20,22,15,0),special_flags=pygame.BLEND_RGB_ADD)
     if glow:result.fill((glow*8,glow*4,0,0),special_flags=pygame.BLEND_RGB_ADD)
-    if wall:
-        # Lit upper return and dark lower return reinforce the existing bevel.
-        w,h=image.get_size()
-        edge=pygame.Surface((w,h),pygame.SRCALPHA)
-        pygame.draw.line(edge,(212,188,126,105),(2,1),(w-3,1),max(1,scale))
-        pygame.draw.line(edge,(2,10,15,155),(2,h-2),(w-2,h-2),max(1,scale*2))
-        result.blit(edge,(0,0))
     return result
 
 
@@ -148,20 +141,31 @@ def room_key_radiance():
 
 @lru_cache(maxsize=256)
 def connected_wall(image,neighbors,variant,scale):
-    """Connected stone facing; no repeated corner cap at interior tile joins."""
-    w,h=image.get_size();inset=5*scale
-    face=pygame.transform.smoothscale(image.subsurface((inset,inset,w-2*inset,h-2*inset)),(w,h))
+    """Keep sculpted exposed ends; remove only hidden joins on connected runs."""
+    face=image.copy();w,h=image.get_size();i=5*scale
+    core=pygame.transform.smoothscale(image.subsurface((i,i,w-2*i,h-2*i)),(w,h))
     north,east,south,west=neighbors
-    if not north:
-        pygame.draw.line(face,(146,149,111),(0,0),(w-1,0),scale)
-        pygame.draw.line(face,(99,117,103),(0,scale),(w-1,scale),scale)
-    if not south:pygame.draw.line(face,(17,36,41),(0,h-scale),(w,h-scale),2*scale)
-    if not west:pygame.draw.line(face,(100,120,107),(0,0),(0,h-1),scale)
-    if not east:pygame.draw.line(face,(20,41,46),(w-scale,0),(w-scale,h),2*scale)
-    # Chips are incised within the solid support line; outer collision stays clear.
-    if not north and variant%3:
-        x=(9+variant*5)%max(10,w//scale-6)*scale
-        pygame.draw.lines(face,(49,66,62),False,[(x,scale),(x+2*scale,3*scale),(x+4*scale,2*scale)],scale)
-    if not (west and north) and variant%2==0:
-        pygame.draw.line(face,(74,91,80),(2*scale,4*scale),(6*scale,2*scale),scale)
+    patches=[]
+    if north:patches.append((0,0,w,i))
+    if east:patches.append((w-i,0,i,h))
+    if south:patches.append((0,h-i,w,i))
+    if west:patches.append((0,0,i,h))
+    for patch in patches:face.blit(core,patch[:2],patch)
     return face
+
+@lru_cache(maxsize=128)
+def hazard_chitin(image):
+    """Retain the full painted pose and alpha while giving hazards their own hue."""
+    result=image.copy()
+    low=(27,14,35);mid=(150,56,109);high=(249,215,207)
+    for y in range(image.get_height()):
+        for x in range(image.get_width()):
+            r,g,b,a=image.get_at((x,y))
+            if not a:continue
+            value=(.2126*r+.7152*g+.0722*b)/255
+            if value<.42:
+                t=value/.42;c=tuple(round(v+(z-v)*t) for v,z in zip(low,mid))
+            else:
+                t=(value-.42)/.58;c=tuple(round(v+(z-v)*t) for v,z in zip(mid,high))
+            result.set_at((x,y),(*c,a))
+    return result

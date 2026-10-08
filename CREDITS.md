@@ -76,3 +76,6 @@ It uses GPL-2.0-only to the extent copyright applies. Existing attribution is un
 The Refresh trousers, crystal, cake and blob in `assets/refresh/objects-v1.png`
 are original built-in generated artwork; prompt/provenance in the same folder.
 These assets use GPL-2.0-only to the extent copyright applies.
+
+`assets/refresh/terrain-v1.png` provides original generated carved masonry faces;
+full provenance is in `assets/refresh/PROVENANCE.md`, under the same terms above.

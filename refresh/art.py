@@ -42,11 +42,14 @@ class Painter:
         if style=='refresh' and kind in ('blob','other_pants','power_crystal','cake'):
             return objects.sprite(kind,w,h,state,phase,scale)
         if kind=='player':return sprites.player(w,h,state,phase,scale,character,style)
-        if kind=='spider':return sprites.spider(w,h,state,phase,scale,style)
+        if kind=='spider':
+            image=sprites.spider(w,h,state,phase,scale,style)
+            return lighting.hazard_chitin(image) if style=='refresh' else image
         if kind=='key' and style=='omarchy':return branding.collectible(w,h,phase,scale,self.settings['effects'])
         if style=='cyberpunk' and kind in ('key','bars','blob','other_pants','cake'):
             return sprites.prop(kind,w,h,state,phase,scale,style)
         if kind=='key':return sprites.key(w,h,phase,scale)
+        if kind=='wall' and style=='refresh':return objects.wall(w,h,phase,scale)
         if kind in ('wall','spikes','lever','projectile'):
             image=sprites.prop(kind,w,h,state,phase,scale,style)
             return lighting.quiet_wall(image,self.theme['panel'],scale) if kind=='wall' and style not in ('original','refresh') else image
@@ -190,7 +193,7 @@ class Painter:
                 im=lighting.shade(im,lighting.proximity(x/scale,y/scale,emitters) if kind in ('player','spider') else 0)
             if not original and not use_original and kind in ('player','spider'):
                 high_contrast=settings.get('high_contrast',False)
-                edge=theme.readable(theme['panel']) if high_contrast else (160,77,48) if theme.style=='refresh' and kind=='spider' else mix(theme['background'],(0,0,0),.55)
+                edge=theme.readable(theme['panel']) if high_contrast else (24,10,30) if theme.style=='refresh' and kind=='spider' else mix(theme['background'],(0,0,0),.55)
                 im=lighting.silhouette(im,edge,scale,high_contrast)
             orientation=o.get_orientation()
             if kind=='spider' and not use_original:
