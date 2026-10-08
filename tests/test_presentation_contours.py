@@ -32,6 +32,12 @@ class PresentationTests(unittest.TestCase):
    for poly in polygons:pygame.draw.polygon(occupancy,(255,255,255),poly)
    self.assertEqual(pygame.mask.from_surface(terrain).count(),pygame.mask.from_surface(occupancy).count())
    self.assertEqual(pygame.mask.from_surface(terrain).overlap_area(pygame.mask.from_surface(occupancy),(0,0)),pygame.mask.from_surface(occupancy).count())
+ def test_refresh_preview_and_connected_surface_use_same_finish(self):
+  rects=((100,100,80,80),(180,100,80,80))
+  polys=tuple(((x,y),(x+w,y),(x+w,y+h),(x,y+h)) for x,y,w,h in rects)
+  preview=objects.terrain_layer(rects,(520,520),2)[0]
+  connected=objects.terrain_layer((),(520,520),2,polys,(1.,0.))[0]
+  self.assertEqual(pygame.image.tobytes(preview,'RGBA'),pygame.image.tobytes(connected,'RGBA'))
  def app(self):return App(argparse.Namespace(theme='refresh',safe_window=True,play=False,stage=None,screen=None,smoke=None,screenshot=None))
  def test_long_dialogue_controls_stay_in_group_and_outside_room(self):
   a=self.app();a.start_stage(a.catalog.stages[0]);a.session.scene['dialogue']='A measured line of dialogue. '*60

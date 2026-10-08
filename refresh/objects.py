@@ -113,13 +113,12 @@ def finish_contours(result,occupancy,solids,matrix,scale):
 
 def terrain_layer(rectangles,size,scale,polygons=None,matrix=None):
     """One authored material coordinate system, clipped to actual moving solids."""
-    occupancy=pygame.Surface(size,pygame.SRCALPHA)
     if polygons is None:
-        for rect in rectangles:pygame.draw.rect(occupancy,(255,255,255,255),rect)
-    else:
-        for polygon in polygons:pygame.draw.polygon(occupancy,(255,255,255,255),polygon)
-    mask=pygame.mask.Mask(size)
-    for rect in rectangles:mask.draw(solid_rectangle((rect[2],rect[3])),rect[:2])
+        # Refresh previews use legacy sessions, but share the same surface finish.
+        polygons=tuple(((x,y),(x+w,y),(x+w,y+h),(x,y+h)) for x,y,w,h in rectangles)
+        matrix=(1.,0.)
+    occupancy=pygame.Surface(size,pygame.SRCALPHA)
+    for polygon in polygons:pygame.draw.polygon(occupancy,(255,255,255,255),polygon)
     result=pygame.Surface(size,pygame.SRCALPHA);result.blit(attached_material(size,scale,matrix) if matrix is not None else masonry(size),(0,0))
     result.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
     if polygons is not None and matrix is not None:
@@ -138,15 +137,6 @@ def terrain_layer(rectangles,size,scale,polygons=None,matrix=None):
             relief.blit(tinted,(0,0))
     result.blit(pygame.transform.smoothscale(relief,size),(0,0))
     result.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
-    # Tiny exposed corner chamfers live inside the fixed collision bounds.
-    for raw in rectangles:
-        rect=pygame.Rect(raw)
-        for x,y,dx,dy in ((rect.left,rect.top,1,1),(rect.right-1,rect.top,-1,1),(rect.left,rect.bottom-1,1,-1),(rect.right-1,rect.bottom-1,-1,-1)):
-            if not (0<=x<size[0] and 0<=y<size[1]):continue
-            def solid(xx,yy):return 0<=xx<size[0] and 0<=yy<size[1] and mask.get_at((xx,yy))
-            if not solid(x-dx,y) and not solid(x,y-dy):
-                nick=scale+(abs(x+y)//max(1,scale))%scale if scale>1 else 1
-                pygame.draw.polygon(result,(0,0,0,0),[(x,y),(x+dx*nick,y),(x,y+dy*nick)])
     shadow=pygame.Surface(size,pygame.SRCALPHA);shadow.fill((0,0,0,110));shadow.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
     return result,shadow
 
