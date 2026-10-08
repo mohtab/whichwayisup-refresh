@@ -53,7 +53,7 @@ def play(app):
     if talk:
         lines=app.dialogue_lines();pages=max(1,(len(lines)+5)//6);visible=lines[app.dialogue_page*6:(app.dialogue_page+1)*6]
         u.text('A word from Guy',48,100,32)
-        height=max(266,156+28*len(visible));u.panel((32,160,420,height))
+        height=max(184,156+28*len(visible));u.panel((32,160,420,height))
         for i,line in enumerate(visible):u.text(line,66,201+i*28,20)
         y=201+len(visible)*28+26
         u.text(('Next page' if app.dialogue_page+1<pages else 'Continue')+f'    {app.dialogue_page+1}/{pages}',66,y,19,t['accent'])

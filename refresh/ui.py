@@ -47,38 +47,69 @@ def frame_source():
     image=pygame.image.load(str(FONT.parents[1].parent/'assets/refresh/ui-frame-v1.png')).convert_alpha()
     return image.subsurface(image.get_bounding_rect(min_alpha=8)).copy()
 
-@lru_cache(maxsize=96)
-def metal_panel(size, face, edge):
-    """Original illustrated nine-slice relief; no repeated pixel work per frame."""
-    w,h=size;source=frame_source();sw,sh=source.get_size()
-    border=min(18 if h<=120 else 36,max(12,h//2-1),w//2-1);cut=min(sw,sh)//5
-    sx=(0,cut,sw-cut,sw);sy=(0,cut,sh-cut,sh)
-    dx=(0,border,w-border,w);dy=(0,border,h-border,h)
-    result=pygame.Surface(size,pygame.SRCALPHA)
-    pygame.draw.rect(result,(10,20,24,255),(border//2,border//2,w-border,h-border))
-    for y in range(3):
-        for x in range(3):
-            tile=source.subsurface((sx[x],sy[y],sx[x+1]-sx[x],sy[y+1]-sy[y]))
-            tile=pygame.transform.smoothscale(tile,(dx[x+1]-dx[x],dy[y+1]-dy[y]))
-            if x==y==1 and sum(face)>280:
-                warm=pygame.Surface(tile.get_size(),pygame.SRCALPHA);warm.fill((142,105,55,0));tile.blit(warm,(0,0),special_flags=pygame.BLEND_RGBA_ADD)
-            result.blit(tile,(dx[x],dy[y]))
-    if sum(face)>280 and h<90:
-        inner=pygame.Rect(16,10,w-32,h-20)
-        patch=reading_surface(inner.size).copy()
-        warm=pygame.Surface(inner.size);warm.fill((155,119,65));patch.blit(warm,(0,0),special_flags=pygame.BLEND_RGB_ADD)
-        mask=pygame.Surface(inner.size,pygame.SRCALPHA);iw,ih=inner.size
-        pygame.draw.polygon(mask,(255,255,255,255),[(7,0),(iw-7,0),(iw,ih//2),(iw-7,ih),(7,ih),(0,ih//2)])
-        patch.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_MULT);result.blit(patch,inner)
-    return result
+@lru_cache(maxsize=1)
+def frame_components():
+    """One isotropic source scale for every control and panel."""
+    source=frame_source();w,h=source.get_size();scale=.085
+    source=pygame.transform.smoothscale(source,(round(w*scale),round(h*scale)))
+    w,h=source.get_size();c=20
+    corners=[source.subsurface(r).copy() for r in ((0,0,c,c),(w-c,0,c,c),(0,h-c,c,c),(w-c,h-c,c,c))]
+    strips={
+        'top':source.subsurface((c,0,w-2*c,c)).copy(),
+        'bottom':source.subsurface((c,h-c,w-2*c,c)).copy(),
+        'left':source.subsurface((0,c,c,h-2*c)).copy(),
+        'right':source.subsurface((w-c,c,c,h-2*c)).copy()}
+    patch=source.subsurface((c+7,c+7,w-2*c-14,h-2*c-14)).copy()
+    # Mirrored pair meets its own boundary continuously; quiet slate, fixed grain.
+    pw,ph=patch.get_size();face=pygame.Surface((pw*2,ph*2),pygame.SRCALPHA);face.fill((10,20,24,255))
+    for x in range(2):
+        for y in range(2):face.blit(pygame.transform.flip(patch,bool(x),bool(y)),(x*pw,y*ph))
+    tint=pygame.Surface(face.get_size());tint.fill((160,174,182));face.blit(tint,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+    return corners,strips,face
+
+def tile_into(target,tile,rect):
+    rect=pygame.Rect(rect);old=target.get_clip();target.set_clip(rect)
+    for y in range(rect.y,rect.bottom,tile.get_height()):
+        for x in range(rect.x,rect.right,tile.get_width()):target.blit(tile,(x,y))
+    target.set_clip(old)
+
+def repeat_edge(target,strip,rect,horizontal):
+    rect=pygame.Rect(rect);length=strip.get_width() if horizontal else strip.get_height()
+    cuts=(0,length//3,2*length//3,length);sequence=(0,2,1,2,0,1,1,0,2,2,1)
+    old=target.get_clip();target.set_clip(rect);offset=0;i=0;previous=None
+    while offset<(rect.w if horizontal else rect.h):
+        index=sequence[i%len(sequence)];start,end=cuts[index:index+2]
+        piece=strip.subsurface((start,0,end-start,strip.get_height()) if horizontal else (0,start,strip.get_width(),end-start)).copy()
+        # Only the one-texel join is softened; the material itself is never blurred.
+        if previous is not None:
+            for j in range(piece.get_height() if horizontal else piece.get_width()):
+                pos=(0,j) if horizontal else (j,0);a=piece.get_at(pos);b=previous[j]
+                piece.set_at(pos,tuple((a[k]+b[k])//2 for k in range(4)))
+        previous=[piece.get_at((piece.get_width()-1,j) if horizontal else (j,piece.get_height()-1)) for j in range(piece.get_height() if horizontal else piece.get_width())]
+        target.blit(piece,(rect.x+offset,rect.y) if horizontal else (rect.x,rect.y+offset));offset+=end-start;i+=1
+    target.set_clip(old)
 
 @lru_cache(maxsize=24)
 def reading_surface(size):
-    source=frame_source();w,h=source.get_size()
-    tile=source.subsurface((w//4,h//4,w//2,h//2))
-    image=pygame.transform.smoothscale(tile,size)
-    result=pygame.Surface(size,pygame.SRCALPHA);result.fill((10,20,24,255));result.blit(image,(0,0))
-    tint=pygame.Surface(size);tint.fill((170,180,185));result.blit(tint,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+    result=pygame.Surface(size,pygame.SRCALPHA);result.fill((10,20,24,255))
+    tile_into(result,frame_components()[2],result.get_rect());return result
+
+@lru_cache(maxsize=96)
+def metal_panel(size, face, edge):
+    """Fixed-scale corners/lips; varying lengths reveal cropped repeated material."""
+    w,h=size;c=20;corners,strips,_=frame_components();result=pygame.Surface(size,pygame.SRCALPHA)
+    tile_into(result,frame_components()[2],(7,7,w-14,h-14))
+    for name,rect in (('top',(c,0,w-2*c,c)),('bottom',(c,h-c,w-2*c,c)),('left',(0,c,c,h-2*c)),('right',(w-c,c,c,h-2*c))):
+        if rect[2]>0 and rect[3]>0:repeat_edge(result,strips[name],rect,name in ('top','bottom'))
+    for image,pos in zip(corners,((0,0),(w-c,0),(0,h-c),(w-c,h-c))):result.blit(image,pos)
+    if sum(face)>280 and h<90:
+        inner=pygame.Rect(16,10,w-32,h-20);patch=reading_surface(inner.size).copy()
+        warm=pygame.Surface(inner.size);warm.fill((155,119,65));patch.blit(warm,(0,0),special_flags=pygame.BLEND_RGB_ADD)
+        mask=pygame.Surface(inner.size,pygame.SRCALPHA);iw,ih=inner.size
+        points=[(7,0),(iw-7,0),(iw,ih//2),(iw-7,ih),(7,ih),(0,ih//2)]
+        pygame.draw.polygon(mask,(255,255,255,255),points)
+        pygame.draw.line(patch,(218,185,120),(8,1),(iw-8,1));pygame.draw.line(patch,(97,71,38),(8,ih-2),(iw-8,ih-2),2)
+        patch.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_MULT);result.blit(patch,inner)
     return result
 
 class UI:
@@ -113,8 +144,8 @@ class UI:
         if self.refresh:
             rect=pygame.Rect(rect);self.surface.blit(metal_panel(rect.size,self.theme['panel'],self.theme['accent']),rect)
         else:pygame.draw.rect(self.surface,self.theme['panel'],rect,border_radius=16)
-    def button(self,label,rect,action,primary=False,selected=False,align='center'):
-        if self.refresh:return self.material_button(label,rect,action,primary,selected,align)
+    def button(self,label,rect,action,primary=False,selected=False,align='center',quiet=False):
+        if self.refresh:return self.material_button(label,rect,action,primary,selected,align,quiet)
         rect=pygame.Rect(rect);index=len(self.buttons)
         hovered=rect.collidepoint(self.mouse) or self.focus==index
         t=self.theme
@@ -132,12 +163,12 @@ class UI:
         image=glyphs(shown,size,tuple(fg))
         self.surface.blit(image,image.get_rect(center=rect.center))
         self.buttons.append(Button(rect,label,action))
-    def material_button(self,label,rect,action,primary=False,selected=False,align='center'):
+    def material_button(self,label,rect,action,primary=False,selected=False,align='center',quiet=False):
         rect=pygame.Rect(rect);rect.h=max(44,rect.h);index=len(self.buttons);t=self.theme
         focused=self.focus==index;hovered=rect.collidepoint(self.mouse)
         bg=mix(t['accent'],t['panel'],.16) if primary else t['panel']
         if hovered:bg=mix(bg,t['foreground'],.07)
-        self.surface.blit(metal_panel(rect.size,bg,t['accent']),rect)
+        self.surface.blit(reading_surface(rect.size) if quiet else metal_panel(rect.size,bg,t['accent']),rect)
         if selected:
             pygame.draw.line(self.surface,t['accent'],(rect.x+18,rect.bottom-5),(rect.right-18,rect.bottom-5),3)
             pygame.draw.rect(self.surface,t['accent'],(rect.x+7,rect.y+rect.h//2-3,5,6))

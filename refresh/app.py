@@ -14,7 +14,7 @@ from .storage import Store, user_path, atomic_json, DEFAULTS
 from .themes import Themes, color
 from .runtime import Session, Stepper
 from .art import Painter
-from .ui import UI, font, wrapped_lines
+from .ui import UI, font, wrapped_lines, reading_surface
 from .audio import Audio
 from . import runs, __version__
 from .display import Display
@@ -486,22 +486,27 @@ class App:
         u=self.ui;t=self.theme;u.header('CAMPAIGNS / YOUR STAGES')
         u.text('Every world starts with a stage.',40,101,34)
         groups=[(world,[v for v in self.catalog.stages if v.original and v.world==world]) for world in stages.WORLD_NAMES]
-        for i,(world,group) in enumerate(groups):
-            count=sum(self.completed(v) for v in group)
-            u.fit(f'{world}  {count}/{len(group)}',40+i*378,153,355,15,t['accent'])
+        if t.id=='refresh':
+            summary='CAMPAIGN PROGRESS  /  '+'  ·  '.join(f'{world}: {sum(self.completed(v) for v in group)}/{len(group)}' for world,group in groups)
+            u.fit(summary,40,148,1116,16,t['muted'])
+        else:
+            for i,(world,group) in enumerate(groups):
+                count=sum(self.completed(v) for v in group)
+                u.fit(f'{world}  {count}/{len(group)}',40+i*378,153,355,15,t['accent'])
         subset=self.catalog.stages[self.page*12:self.page*12+12]
         for i,stage in enumerate(subset):
             x=40+(i%3)*378;y=(176+(i//3)*120) if t.id=='refresh' else 192+(i//3)*111
-            u.panel((x,y,362,112 if t.id=='refresh' else 99))
+            if t.id=='refresh':u.surface.blit(reading_surface((362,112)),(x,y))
+            else:u.panel((x,y,362,99))
             u.fit(stage.world.upper(),x+26 if t.id=='refresh' else x+14,y+10 if t.id=='refresh' else y+9,310 if t.id=='refresh' else 330,11,t['muted'])
-            u.button(self.short_name(stage),(x+12,y+31 if t.id=='refresh' else y+28,236,37),lambda v=stage:self.start_stage(v))
-            u.button('Remix',(x+258,y+31 if t.id=='refresh' else y+28,92,37),lambda v=stage:self.new_editor(v.document))
+            u.button(self.short_name(stage),(x+12,y+31 if t.id=='refresh' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.id=='refresh' and u.focus==len(u.buttons))
+            u.button('Remix',(x+258,y+31 if t.id=='refresh' else y+28,92,37),lambda v=stage:self.new_editor(v.document),quiet=t.id=='refresh')
             best=self.stage_best(stage)
             status='Complete' if self.completed(stage) else 'Not yet completed'
             if best is not None:status+='  /  PB '+runs.clock_text(best)
             u.fit(status,x+26 if t.id=='refresh' else x+14,y+80 if t.id=='refresh' else y+75,310 if t.id=='refresh' else 333,12,t['accent'] if self.completed(stage) else t['muted'])
         u.button('Back',(40,676,130,44),lambda:self.route('home'))
-        u.button('New stage',(184,676,170,44),lambda:self.new_editor(),primary=True)
+        u.button('New stage',(184,676,170,44),lambda:self.new_editor(),primary=t.id!='refresh')
         u.button('Import file',(368,676,170,44),self.import_prompt)
         u.button('Resume draft',(552,676,166,44),self.resume_draft)
         if self.page>0:u.button('Previous',(760,676,170,44),lambda:setattr(self,'page',self.page-1))
@@ -682,11 +687,12 @@ class App:
             ('[ / ] · Delete','Previous / next tool · erase cell'),('Ctrl+Z / Ctrl+Y','Undo / redo'),
             ('F5 / Ctrl+R','Playtest / rotate board'),('Ctrl+Shift+S','Export stage JSON')])]
         for col,(title,rows) in enumerate(columns):
-            x=40+col*584;u.panel((x,178,550,478));u.text(title,x+22,200,13,t['accent'])
+            x=40+col*584;u.panel((x,176,550,488) if t.id=='refresh' else (x,178,550,478));u.text(title,x+36 if t.id=='refresh' else x+22,199 if t.id=='refresh' else 200,13,t['accent'])
             for i,(key,action) in enumerate(rows):
-                y=243+i*44
-                u.fit(key,x+22,y,506,17)
-                u.fit(action,x+22,y+23,506,13,t['muted'])
+                y=(239+i*43) if t.id=='refresh' else 243+i*44
+                inset=36 if t.id=='refresh' else 22
+                u.fit(key,x+inset,y,478 if t.id=='refresh' else 506,17)
+                u.fit(action,x+inset,y+23,478 if t.id=='refresh' else 506,13,t['muted'])
         u.text('Runs save on completion. A practice replay records inputs; it is not a resume checkpoint.',44,676,15,t['muted'])
         u.button('Back',(40,707,170,38),lambda:self.route(self.help_return),primary=True)
 
@@ -729,17 +735,17 @@ class App:
             if self.theme.id=='refresh':ui_refresh.compact_frame(surface,self.theme)
             player=self.session.scene['player']
             clock=runs.clock_text(self.session.score.time/24/self.run_tempo)
-            surface.blit(font(28).render(clock,True,self.theme['foreground']),(22,14))
-            surface.blit(font(17).render('ATTEMPT '+str(self.attempts),True,self.theme['muted']),(24,48))
+            surface.blit(font(26 if self.theme.id=='refresh' else 28).render(clock,True,self.theme['foreground']),(22,14))
+            surface.blit(font(22 if self.theme.id=='refresh' else 17).render('ATTEMPT '+str(self.attempts),True,self.theme['foreground'] if self.theme.id=='refresh' else self.theme['muted']),(24,48))
             pygame.draw.rect(surface,self.theme['panel'],(278,23,170,12),border_radius=5)
             pygame.draw.rect(surface,self.theme['accent'] if player.life>10 else self.theme['hazard'],(278,23,max(0,round(170*player.life/36)),12),border_radius=5)
             if self.theme.id=='refresh':ui_refresh.health(surface,(274,17,180,24),player.life,self.theme)
-            surface.blit(font(17).render('HEALTH '+str(max(0,player.life)),True,self.theme['foreground']),(278,46))
+            surface.blit(font(22 if self.theme.id=='refresh' else 17).render('HEALTH '+str(max(0,player.life)),True,self.theme['foreground']),(278,46))
             goals={'key':'Find the key','other_pants':'Find the trousers','cake':'Find the cake','power_crystal':'Find the crystal'}
             objective=next((goals[e['trigger']] for e in self.active_stage.document['events'] if e['trigger'] in goals and 'change_level' in e['actions']),'Explore and turn the room')
-            surface.blit(font(22).render(objective,True,self.theme['foreground']),(490,16))
+            surface.blit(font(24 if self.theme.id=='refresh' else 22).render(objective,True,self.theme['foreground']),(490,16))
             hint='Button 7 / 8: pause' if self.input_device=='controller' else 'Esc: pause  /  R: retry'
-            surface.blit(font(17).render(hint,True,self.theme['muted']),(490,47))
+            surface.blit(font(22 if self.theme.id=='refresh' else 17).render(hint,True,self.theme['foreground'] if self.theme.id=='refresh' else self.theme['muted']),(490,47))
         else:surface=world.copy()
         layers=[]
         if self.s['compact_hud']:
@@ -786,8 +792,9 @@ class App:
             u=self.ui;u.panel((30,761,1140,36));u.fit(self.message,43,772,1110,13,self.theme['accent'])
         self.display.present(self.ui.surface,smooth=True,layers=self.world_layers)
     def run(self):
-        clock=pygame.time.Clock();start=time.monotonic()
+        # Initial asset loading is presentation setup, not elapsed play time.
         self.draw()
+        clock=pygame.time.Clock();start=time.monotonic()
         while self.running:
             dt=clock.tick(self.s['fps'])/1000
             cost=time.perf_counter()

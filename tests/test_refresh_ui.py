@@ -54,3 +54,37 @@ class RefreshUITests(unittest.TestCase):
         primary=metal_panel((430,50),(198,152,105),(230,180,120))
         self.assertGreater(contrast(primary.get_at((215,25))[:3],(10,13,18)),4.5)
         self.assertTrue(pygame.image.tobytes(source,'RGBA')==before)
+
+    def test_surround_is_opaque_and_repeated_present_does_not_accumulate_alpha(self):
+        from refresh.chamber import surround
+        image=surround((640,480));self.assertIsNone(image.get_alpha())
+        target=pygame.Surface((640,480));target.fill((180,25,75));target.blit(image,(0,0))
+        first=pygame.image.tobytes(target,'RGB');target.blit(image,(0,0))
+        self.assertTrue(first==pygame.image.tobytes(target,'RGB'))
+
+    def test_initial_loading_does_not_count_as_play_but_long_frame_guard_remains(self):
+        a=self.app;a.s['dialogue']=False;a.start_stage(a.catalog.stages[0]);a.args.smoke=.06
+        class FakeTime:
+            now=0.
+        fake=FakeTime()
+        class Clock:
+            def __init__(self):self.last=fake.now
+            def tick(self,fps):
+                fake.now+=.016;elapsed=fake.now-self.last;self.last=fake.now;return round(elapsed*1000)
+        draws=[]
+        def draw():
+            if not draws:fake.now+=.4
+            draws.append(fake.now)
+        with patch('refresh.app.pygame.time.Clock',Clock),patch('refresh.app.time.monotonic',lambda:fake.now),patch.object(a,'draw',draw),patch('refresh.app.pygame.quit'):
+            # This shared test process reuses cached Font objects in later cases;
+            # the real one-shot application still shuts pygame down normally.
+            a.run()
+        self.assertEqual(a.screen,'play');self.assertGreater(a.session.tick,0)
+        a.update(.3);self.assertEqual(a.screen,'pause');self.assertIn('long frame',a.message)
+
+    def test_frame_grain_and_corners_do_not_stretch_with_control_width(self):
+        from refresh.ui import metal_panel
+        small=metal_panel((208,48),(25,43,53),(180,150,90))
+        wide=metal_panel((606,48),(25,43,53),(180,150,90))
+        for rect in ((0,0,20,20),(20,0,160,12)):
+            self.assertTrue(pygame.image.tobytes(small.subsurface(rect),'RGBA')==pygame.image.tobytes(wide.subsurface(rect),'RGBA'))

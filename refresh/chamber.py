@@ -29,9 +29,26 @@ def relief(size):
 @lru_cache(maxsize=8)
 def surround(size):
     """Stationary room housing fills display margins while room stays square."""
-    from .ui import metal_panel
-    # Same worn stone/brass family as the interface, with no unrelated rings.
-    return metal_panel(size,(12,22,28),(150,122,72)).copy()
+    from .objects import masonry
+    w,h=size;result=pygame.Surface(size);result.fill((7,13,18))
+    material=masonry((1040,1040)).copy()
+    def field(rect,tint):
+        layer=material.copy();color=pygame.Surface(layer.get_size());color.fill(tint)
+        layer.blit(color,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+        old=result.get_clip();result.set_clip(rect)
+        for y in range(0,h,1040):
+            for x in range(0,w,1040):result.blit(layer,(x,y))
+        result.set_clip(old)
+    field(result.get_rect(),(36,44,50))
+    wing=max(0,(w-round(h*1040/1120))//2)
+    # Broad recessed masonry piers meet the room; no illuminated output bezel.
+    for left in (True,False):
+        x=wing-72 if left else w-wing
+        if wing>100:
+            field(pygame.Rect(x,0,72,h),(61,64,61))
+            pygame.draw.rect(result,(7,13,18),(x+64 if left else x,0,8,h))
+            field(pygame.Rect(0 if left else w-wing//2,0,wing//2,h),(24,32,39))
+    return result
 
 
 
