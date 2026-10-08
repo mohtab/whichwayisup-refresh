@@ -57,7 +57,41 @@ class Painter:
         ink=mix(t['background'],(0,0,0),.35)
         pale=t['foreground']
         cx=w//2
-        if kind=='bars':
+        if kind=='bars' and style=='refresh':
+            # Aged brass faces, cool shaded return, worn rim and recessed joints.
+            for x in range(3,w,10):
+                pygame.draw.rect(s,(15,25,28),(x,0,6,h))
+                pygame.draw.rect(s,(96,98,68),(x+1,1,3,h-2))
+                pygame.draw.line(s,(185,160,98),(x+1,2),(x+1,h-3))
+                pygame.draw.line(s,(43,57,54),(x+4,2),(x+4,h-3))
+                for yy in range(8,h-5,13):pygame.draw.line(s,(64,73,58),(x+2,yy),(x+3,yy+2))
+            for yy in (1,h-5):
+                pygame.draw.rect(s,(21,31,32),(0,yy,w,5))
+                pygame.draw.line(s,(177,151,89),(0,yy),(w,yy))
+                pygame.draw.line(s,(103,103,68),(0,yy+1),(w,yy+1))
+                pygame.draw.line(s,(51,64,55),(0,yy+3),(w,yy+3))
+                for x in range(5,w,10):
+                    pygame.draw.circle(s,(15,25,26),(x,yy+2),2)
+                    s.set_at((min(w-1,x),min(h-1,yy+1)),(203,169,93))
+        elif kind=='blob' and style=='refresh':
+            squash=round(math.sin(phase*math.tau/16)*2)
+            body=pygame.Rect(1,h//4+squash,w-2,max(4,h*3//4-squash))
+            pygame.draw.ellipse(s,(17,40,44),body)
+            # Layered translucent skin: broad matte body, cool lower shade.
+            for inset in range(1,max(2,min(body.w,body.h)//2)):
+                inner=body.inflate(-inset*2,-inset*2);inner.y-=inset//3
+                c=mix((36,83,82),(101,155,125),inset/max(1,min(body.w,body.h)/2))
+                if inner.w>0 and inner.h>0:pygame.draw.ellipse(s,c,inner)
+            pygame.draw.arc(s,(166,190,144),body.inflate(-5,-4),.65,2.5,1)
+            for x,yy in ((w//4,h*3//4),(w*3//4,h*4//5),(w//2,h*7//8)):
+                pygame.draw.circle(s,(36,72,69),(x,min(h-2,yy)),1)
+            for x in (w//3,w*2//3):
+                pygame.draw.circle(s,(23,45,42),(x,h//2+1),4)
+                pygame.draw.circle(s,(190,185,135),(x,h//2),3)
+                pygame.draw.circle(s,(71,99,76),(x+1,h//2+1),2)
+                pygame.draw.circle(s,(13,25,27),(x+1,h//2),1)
+                s.set_at((x-1,h//2-1),(234,221,168))
+        elif kind=='bars':
             for x in range(3,w,10):
                 pygame.draw.rect(s,ink,(x,0,6,h))
                 pygame.draw.rect(s,second,(x+1,1,2,h-2))
