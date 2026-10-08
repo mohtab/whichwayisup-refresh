@@ -133,5 +133,21 @@ class ReleaseRenderTests(unittest.TestCase):
         luma=lambda c:.2126*c[0]+.7152*c[1]+.0722*c[2]
         self.assertGreater(luma(foreground),luma(recess)+15)
 
+    def test_room_light_varies_with_position_and_preserves_alpha(self):
+        source=pygame.Surface((40,40),pygame.SRCALPHA);source.fill((130,130,130,0))
+        pygame.draw.circle(source,(130,130,130,255),(20,20),16)
+        before=self.pixels(source);field=lighting.room_field([], (1040,1040))
+        near=lighting.spatial_response(source,pygame.Rect(50,50,40,40),field)
+        far=lighting.spatial_response(source,pygame.Rect(900,900,40,40),field)
+        self.assertGreater(sum(near.get_at((20,20))[:3]),sum(far.get_at((20,20))[:3]))
+        warm=lighting.room_field([(460,460)],(1040,1040))
+        pool=lighting.spatial_response(source,pygame.Rect(900,900,40,40),warm)
+        self.assertGreater(pool.get_at((20,20)).r,far.get_at((20,20)).r)
+        self.assertEqual(self.pixels(source),before)
+        for image in (near,far,pool):
+            self.assertEqual(pygame.mask.from_surface(image).count(),pygame.mask.from_surface(source).count())
+        # Static directional hierarchy exists independently of optional effects.
+        self.assertNotEqual(field.get_at((80,80)),field.get_at((960,960)))
+
 
 if __name__=='__main__':unittest.main()

@@ -66,15 +66,9 @@ def refresh_relief(image,glow=0,wall=False,scale=1):
     Bounded cached surfaces use only quantized emitter proximity.
     """
     result=image.copy()
-    ramp=pygame.Surface((2,2))
-    if wall:
-        ramp.set_at((0,0),(44,47,34));ramp.set_at((1,0),(28,34,27))
-        ramp.set_at((0,1),(18,23,20));ramp.set_at((1,1),(3,8,12))
-    else:
-        ramp.set_at((0,0),(23,24,17));ramp.set_at((1,0),(13,17,16))
-        ramp.set_at((0,1),(8,12,13));ramp.set_at((1,1),(0,4,8))
-    result.blit(pygame.transform.smoothscale(ramp,image.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
-    if glow:result.fill((glow*16,glow*9,glow*2,0),special_flags=pygame.BLEND_RGB_ADD)
+    # Neutral material response preserves texels; spatial exposure is applied later.
+    result.fill((32,37,29,0) if wall else (12,16,13,0),special_flags=pygame.BLEND_RGB_ADD)
+    if glow:result.fill((glow*8,glow*4,0,0),special_flags=pygame.BLEND_RGB_ADD)
     if wall:
         # Lit upper return and dark lower return reinforce the existing bevel.
         w,h=image.get_size()
@@ -82,4 +76,42 @@ def refresh_relief(image,glow=0,wall=False,scale=1):
         pygame.draw.line(edge,(212,188,126,105),(2,1),(w-3,1),max(1,scale))
         pygame.draw.line(edge,(2,10,15,155),(2,h-2),(w-2,h-2),max(1,scale*2))
         result.blit(edge,(0,0))
+    return result
+
+
+@lru_cache(maxsize=1)
+def room_ambient():
+    import math
+    field=pygame.Surface((130,130))
+    for y in range(130):
+        for x in range(130):
+            key=math.exp(-(((x-16)/77)**2+((y-9)/92)**2))
+            fill=math.exp(-(((x-123)/64)**2+((y-109)/72)**2))
+            field.set_at((x,y),(round(102+139*key+8*fill),round(126+118*key+15*fill),round(145+84*key+19*fill)))
+    return field
+
+@lru_cache(maxsize=1)
+def receiving_pool():
+    import math
+    pool=pygame.Surface((60,60));pool.fill((0,0,0))
+    for y in range(60):
+        for x in range(60):
+            distance=math.hypot(x-29.5,y-29.5)/30
+            energy=max(0,1-distance)**1.5
+            pool.set_at((x,y),(round(170*energy),round(76*energy),round(8*energy)))
+    return pool
+
+def room_field(emitters,size):
+    field=room_ambient().copy()
+    pool=receiving_pool()
+    for x,y in emitters:field.blit(pool,(round(x/4-30),round(y/4-30)),special_flags=pygame.BLEND_RGB_ADD)
+    return pygame.transform.smoothscale(field,size)
+
+def spatial_response(image,rect,field,actor=False):
+    """Sample room light after sprite orientation; preserve every source alpha."""
+    result=image.copy();light=pygame.Surface(image.get_size());light.fill((102,126,145))
+    area=rect.clip(field.get_rect())
+    if area.width and area.height:light.blit(field, (area.x-rect.x,area.y-rect.y),area)
+    if actor:light.fill((165,175,180),special_flags=pygame.BLEND_RGB_MAX)
+    result.blit(light,(0,0),special_flags=pygame.BLEND_RGB_MULT)
     return result

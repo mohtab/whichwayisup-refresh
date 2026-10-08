@@ -94,6 +94,8 @@ class Painter:
         else:self.world.blit(self.background,(0,0))
         depth=settings.get('depth',True) and not original
         emitters=[session.position(o,alpha) for o in scene['objects'] if o.itemclass in ('key','projectile') or (o.itemclass=='lever' and o.current_animation!='broken')]
+        field=lighting.room_field(emitters,self.world.get_size()) if theme.style=='refresh' else None
+        if field is not None:self.world.blit(field,(0,0),special_flags=pygame.BLEND_RGB_MULT)
         if depth:
             # Cast platform shadows before any foreground geometry or hazards.
             for tile in level.tiles:
@@ -139,8 +141,7 @@ class Painter:
                     elif 0<delay<4 and o.current_animation!='walking':state='charged'
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
             if theme.style=='refresh' and not use_original:
-                glow=lighting.proximity(x/scale,y/scale,emitters)
-                im=lighting.refresh_relief(im,glow,kind=='wall',scale)
+                im=lighting.refresh_relief(im,0,kind=='wall',scale)
             if depth and theme.style!='refresh' and not use_original and kind not in ('projectile','key'):
                 im=lighting.shade(im,lighting.proximity(x/scale,y/scale,emitters) if kind in ('player','spider') else 0)
             if not original and not use_original and kind in ('player','spider'):
@@ -182,6 +183,8 @@ class Painter:
                     end=(x-dx/norm*20*scale,y-dy/norm*20*scale)
                     pygame.draw.line(self.world,mix(theme['background'],theme['accent'],.35),(x,y),end,6*scale)
                     pygame.draw.line(self.world,theme['accent'],(x,y),end,2*scale)
+            if field is not None and not use_original:
+                im=lighting.spatial_response(im,rect,field,kind in ('player','spider'))
             if depth and not use_original and kind in ('player','spider','lever'):
                 self.world.blit(lighting.shadow(im),rect.move(2*scale,2*scale))
             self.world.blit(im,rect)

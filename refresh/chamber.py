@@ -13,7 +13,8 @@ def background():
         pygame.draw.line(s,blend((20,34,39),(9,20,28),y/520),(0,y),(520,y))
     for col,x in enumerate((-46,126,298,470)):
         pygame.draw.rect(s,(9,21,28),(x,38,144,456),border_radius=60)
-        pygame.draw.rect(s,(31,47,50),(x-5,32,154,470),3,border_radius=67)
+        pygame.draw.rect(s,(53,69,70),(x-8,28,160,478),13,border_radius=68)
+        pygame.draw.rect(s,(24,38,45),(x+4,42,135,445),5,border_radius=56)
         pygame.draw.rect(s,(16,29,35),(x,39,144,455),2,border_radius=60)
         # Back-wall courses are irregular and far below solid tile contrast.
         for row,y in enumerate(range(100,500,54)):
@@ -22,16 +23,16 @@ def background():
             pygame.draw.line(s,(22,35,40),(joint,y),(joint,y+52),1)
         for rib in (x-11,x+150):
             pygame.draw.line(s,(5,15,22),(rib+4,36),(rib+4,520),5)
-            pygame.draw.line(s,(37,50,50),(rib,36),(rib,520),3)
+            pygame.draw.line(s,(66,78,75),(rib,36),(rib,520),10)
             pygame.draw.line(s,(23,36,41),(rib+2,36),(rib+2,520),2)
     # Recessed circular drive and hanging transmission: visibly behind actors.
     center=(265,240)
-    for radius,c,width in ((125,(8,18,25),10),(120,(34,47,49),3),(111,(15,29,35),5),(82,(25,39,44),2)):
+    for radius,c,width in ((125,(5,14,21),14),(117,(64,79,78),16),(105,(25,40,47),7),(82,(43,61,65),12)):
         pygame.draw.circle(s,c,center,radius,width)
     for n in range(12):
         a=n*math.tau/12
         start=(265+87*math.cos(a),240+87*math.sin(a));end=(265+108*math.cos(a),240+108*math.sin(a))
-        pygame.draw.line(s,(27,42,46),start,end,5)
+        pygame.draw.line(s,(49,68,70),start,end,15)
     pygame.draw.circle(s,(11,24,31),center,40)
     pygame.draw.circle(s,(37,50,51),center,39,2)
     pygame.draw.circle(s,(27,42,47),center,16,3)
@@ -44,7 +45,7 @@ def background():
             light.set_at((x,y),(round(12*warm+3*cool),round(8*warm+7*cool),round(3*warm+10*cool),255))
     s.blit(pygame.transform.smoothscale(light,s.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
     # Relief falls into recess; keep rear architecture below playable faces.
-    s.fill((175,180,186),special_flags=pygame.BLEND_RGB_MULT)
+    s.fill((230,238,245),special_flags=pygame.BLEND_RGB_MULT)
     return s
 
 @lru_cache(maxsize=8)
