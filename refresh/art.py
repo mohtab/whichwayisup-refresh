@@ -8,7 +8,7 @@ def mix(a,b,t):return tuple(round(x+(y-x)*t) for x,y in zip(a,b))
 
 class Painter:
     def __init__(self):
-        self.key=None;self.cache={}
+        self.key=None;self.cache={};self.terrain_key=None;self.terrain_lit_key=None
         self.scale=2
         self.world=pygame.Surface((520*self.scale,520*self.scale))
         self.tile_shadow=pygame.Surface((40*self.scale,40*self.scale),pygame.SRCALPHA)
@@ -16,7 +16,7 @@ class Painter:
     def configure(self,theme,settings):
         key=(theme.id,tuple(theme.palette.items()),settings['character'],settings['effects'])
         if key!=self.key:
-            self.key=key;self.cache.clear()
+            self.key=key;self.cache.clear();self.terrain_key=None;self.terrain_lit_key=None
             self.theme=theme;self.settings=settings.copy()
             self.background=pygame.transform.scale(self.make_background(),self.world.get_size())
     def make_background(self):
@@ -141,7 +141,7 @@ class Painter:
         if depth:
             # Cast platform shadows before any foreground geometry or hazards.
             for tile in level.tiles:
-                if tile.tileclass!='wall':continue
+                if tile.tileclass!='wall' or theme.style=='refresh':continue
                 tx,ty=session.position(tile,alpha)
                 if not (-60<tx<580 and -60<ty<580):continue
                 offset=(15,12) if theme.style=='refresh' else (17,15)
@@ -149,13 +149,32 @@ class Painter:
             for ex,ey in emitters:
                 glow=lighting.halo(35*scale,theme['accent'])
                 self.world.blit(glow,((ex-35)*scale,(ey-35)*scale))
-        wall_cells={(o.tilex,o.tiley) for o in level.tiles if o.tileclass=='wall'} if theme.style=='refresh' else set()
-        objects=(*level.tiles,*scene['objects'])
-        for o in objects:
+        if field is not None:
+            rectangles=[]
+            for tile in level.tiles:
+                if tile.tileclass!='wall':continue
+                tx,ty=session.position(tile,alpha)
+                rectangles.append((round((tx-tile.rect.width/2)*scale),round((ty-tile.rect.height/2)*scale),tile.rect.width*scale,tile.rect.height*scale))
+            signature=tuple(rectangles)
+            if signature!=self.terrain_key:
+                terrain,shadow=objects.terrain_layer(signature,self.world.get_size(),scale)
+                terrain.blit(objects.stone_response(terrain.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
+                self.terrain=terrain
+                self.terrain_shadow=shadow;self.terrain_key=signature;self.terrain_lit_key=None
+            if depth:self.world.blit(self.terrain_shadow,(5*scale,8*scale))
+            light_key=(signature,tuple((round(x,2),round(y,2)) for x,y in emitters))
+            if light_key!=self.terrain_lit_key:
+                self.terrain_lit=lighting.spatial_response(self.terrain,self.terrain.get_rect(),field,warm=warm)
+                self.terrain_lit_key=light_key
+            self.world.blit(self.terrain_lit,(0,0))
+        lever_layers=[];spider_layers=[]
+        render_objects=(*level.tiles,*scene['objects'])
+        for o in render_objects:
             x,y=session.position(o,alpha)
             if x < -60 or y < -80 or x>580 or y>580:continue
             x*=scale;y*=scale
             kind=getattr(o,'tileclass',o.itemclass)
+            if field is not None and kind=='wall':continue
             character=settings['character'] if settings['character']!='theme' else theme.character
             use_original=original or (kind=='player' and character=='original')
             # A chosen non-original character can be used inside the Original world.
@@ -183,10 +202,6 @@ class Painter:
                     if delay>=25:state='firing';phase=30-delay
                     elif 0<delay<4 and o.current_animation!='walking':state='charged'
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
-            if theme.style=='refresh' and kind=='wall' and not use_original:
-                tx,ty=o.tilex,o.tiley
-                neighbors=tuple(pos in wall_cells for pos in ((tx,ty-1),(tx+1,ty),(tx,ty+1),(tx-1,ty)))
-                im=lighting.connected_wall(im,neighbors,(tx*7+ty*11)%6,scale)
             if theme.style=='refresh' and not use_original:
                 im=lighting.refresh_relief(im,0,kind=='wall',scale)
             if depth and theme.style!='refresh' and not use_original and kind not in ('projectile','key'):
@@ -235,8 +250,12 @@ class Painter:
             if depth and not use_original and kind in ('player','spider','lever'):
                 self.world.blit(lighting.shadow(im),rect.move(2*scale,2*scale))
             self.world.blit(im,rect)
+            if field is not None and kind=='lever':lever_layers.append((im,rect.copy()))
+            if field is not None and kind=='spider':spider_layers.append((im,rect.copy()))
             if kind=='player' and y<0:
                 pygame.draw.polygon(self.world,theme['accent'],[(x,3*scale),(x-5*scale,12*scale),(x+5*scale,12*scale)])
+        for lever,lr in lever_layers:
+            for spider,sr in spider_layers:objects.reveal_lever(self.world,lever,lr,spider,sr,scale)
         if settings['effects']:
             for p in scene['particles']:
                 x,y=session.position(p,alpha)

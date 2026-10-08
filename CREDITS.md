@@ -79,3 +79,7 @@ These assets use GPL-2.0-only to the extent copyright applies.
 
 `assets/refresh/terrain-v1.png` provides original generated carved masonry faces;
 full provenance is in `assets/refresh/PROVENANCE.md`, under the same terms above.
+
+The continuous Refresh material `assets/refresh/masonry-v1.png` is original
+built-in generated artwork with full prompt/provenance beside it, under the same
+terms above. Its runtime union mask follows existing gameplay walls.

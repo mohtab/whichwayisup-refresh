@@ -52,6 +52,7 @@ class PackagingTests(unittest.TestCase):
                 self.assertTrue(any(name.endswith('/assets/refresh/chamber-relief-v1.png') for name in names))
                 self.assertTrue(any(name.endswith('/assets/refresh/objects-v1.png') for name in names))
                 self.assertTrue(any(name.endswith('/assets/refresh/terrain-v1.png') for name in names))
+                self.assertTrue(any(name.endswith('/assets/refresh/masonry-v1.png') for name in names))
                 self.assertTrue(any(name.endswith('/assets/refresh/PROVENANCE.md') for name in names))
                 self.assertFalse(any('/dist/' in name or '__pycache__' in name or '/.git/' in name for name in names))
                 self.assertFalse(any(name.endswith(('.pyc', '.env')) for name in names))
