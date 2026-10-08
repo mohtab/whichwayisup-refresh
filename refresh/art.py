@@ -18,6 +18,7 @@ class Painter:
         if key!=self.key:
             self.key=key;self.cache.clear();self.terrain_key=None;self.terrain_lit_key=None
             self.theme=theme;self.settings=settings.copy()
+            if theme.style=="refresh":objects.terrain_sampler.kernel()
             self.background=pygame.transform.scale(self.make_background(),self.world.get_size())
     def make_background(self):
         t=self.theme
@@ -128,6 +129,11 @@ class Painter:
         level=scene['level']
         original=theme.style=='original'
         enhanced=session.rules if not original else None
+        geometry_cache={}
+        def geometry(tile):
+            key=id(tile)
+            if key not in geometry_cache:geometry_cache[key]=enhanced.geometry(tile,alpha)
+            return geometry_cache[key]
         if original:
             bg=level.bg_animations[level.current_animation].image
             self.world.blit(pygame.transform.scale(bg,self.world.get_size()),(0,0))
@@ -158,7 +164,7 @@ class Painter:
                 rectangles.append((round((tx-tile.rect.width/2)*scale),round((ty-tile.rect.height/2)*scale),tile.rect.width*scale,tile.rect.height*scale))
             polygons=None;material=None
             if enhanced:
-                polygons=tuple(tuple((x*scale,y*scale) for x,y in enhanced.geometry(tile,alpha)) for tile in level.tiles if tile.tileclass=='wall')
+                polygons=tuple(tuple((x*scale,y*scale) for x,y in geometry(tile)) for tile in level.tiles if tile.tileclass=='wall')
                 material=enhanced.material_matrix(alpha)
             signature=(polygons,material) if enhanced else tuple(rectangles)
             if signature!=self.terrain_key:
@@ -177,7 +183,7 @@ class Painter:
         if not original:
             for tile in level.tiles:
                 if tile.tileclass not in ('wall','bars'):continue
-                if enhanced:pygame.draw.polygon(occlusion,(255,255,255,255),[(x*scale,y*scale) for x,y in enhanced.geometry(tile,alpha)])
+                if enhanced:pygame.draw.polygon(occlusion,(255,255,255,255),[(x*scale,y*scale) for x,y in geometry(tile)])
                 else:
                     tx,ty=session.position(tile,alpha)
                     pygame.draw.rect(occlusion,(255,255,255,255),((tx-tile.rect.w/2)*scale,(ty-tile.rect.h/2)*scale,tile.rect.w*scale,tile.rect.h*scale))
@@ -248,7 +254,7 @@ class Painter:
                     angle=math.radians({0:90,1:0,2:-90,3:180}[orientation])-relative
                     im=pygame.transform.rotate(im,math.degrees(angle))
                     normal=(math.sin(angle),math.cos(angle));half=o.rect.h/2
-                    distance=ray_contact((x/scale,y/scale),normal,[enhanced.geometry(t,alpha) for t in level.tiles if t.tileclass in ('wall','bars')],half-4,half+12)
+                    distance=ray_contact((x/scale,y/scale),normal,[geometry(t) for t in level.tiles if t.tileclass in ('wall','bars')],half-4,half+12)
                     gap=distance-half+1 if distance is not None else 0
                 else:
                     im=sprites.orient_spider(im,orientation,o.flipcounter,o.flipping,o.flip_direction,alpha)
@@ -296,7 +302,7 @@ class Painter:
             if enhanced and kind=='lever':
                 from .enhanced import closest
                 base=(x/scale,y/scale+o.rect.h/2-2)
-                contacts=[closest(base,enhanced.geometry(t,alpha)) for t in level.tiles if t.tileclass in ('wall','bars')]
+                contacts=[closest(base,geometry(t)) for t in level.tiles if t.tileclass in ('wall','bars')]
                 if contacts:
                     contact=min(contacts,key=lambda p:math.dist(base,p))
                     if math.dist(base,contact)<=30:

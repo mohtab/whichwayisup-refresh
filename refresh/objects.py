@@ -3,6 +3,7 @@ from functools import lru_cache
 from pathlib import Path
 import math
 import pygame
+from . import terrain_sampler
 
 @lru_cache(maxsize=4)
 def frame(kind):
@@ -49,6 +50,8 @@ def material_source(scale):
     return result
 
 def attached_material(size,scale,matrix):
+    accelerated=terrain_sampler.material(material_source(scale),size,scale,matrix)
+    if accelerated is not None:return accelerated
     c,s=matrix;image=pygame.transform.rotozoom(material_source(scale),-math.degrees(math.atan2(s,c)),math.hypot(c,s))
     result=pygame.Surface(size);result.blit(image,image.get_rect(center=(120*scale,120*scale)))
     return result

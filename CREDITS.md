@@ -85,3 +85,5 @@ built-in generated artwork with full prompt/provenance beside it, under the same
 terms above. Its runtime union mask follows existing gameplay walls.
 
 Refresh interface body typography retains bundled Bitstream Vera. Headings use unmodified Liberation Serif Bold (Google2010 / Red Hat2012), redistributed under SIL OFL1.1; full notice in licenses/liberation-OFL.txt. The original generated illustrated UI frame assets/refresh/ui-frame-v1.png and runtime carved control treatments follow assets/refresh/PROVENANCE.md; no reference imagery was supplied to generation.
+
+The optional visible-region terrain sampler derives its bilinear sampling and edge rules from pygame 2.6.1 `src_c/rotozoom.c` (A. Schiffler, LGPL). Modified to iterate only the displayed region and evaluate color lanes together. Upstream: https://github.com/pygame/pygame/blob/2.6.1/src_c/rotozoom.c . License: `licenses/rotozoom-LGPL.txt`. The source is included; no external binary is bundled.

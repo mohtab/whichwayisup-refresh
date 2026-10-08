@@ -101,3 +101,5 @@ keep their starting gameplay profile; changing design during play takes effect
 on the next stage. Current/next gameplay is shown in the interface. Existing
 recordings and personal bests remain Original gameplay; enhanced records and
 replays are stored separately.
+
+Refresh terrain rendering can use an optional visible-region sampler with pygame 2.6. An existing `cc` compiler builds the bundled source once at startup into a private temporary directory; nothing is installed. Without a compatible compiler the unchanged portable renderer remains available. The accelerator retains native resolution, exact interpolation and fixed-point filtering. Original rendering does not use it.

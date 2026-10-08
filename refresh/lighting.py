@@ -113,6 +113,14 @@ def cached_warm_field(emitters,size):
 
 def spatial_response(image,rect,field,actor=False,warm=None):
     """Sample room light after sprite orientation; preserve every source alpha."""
+    # Full-board receivers already match the light fields exactly. Borrow those
+    # read-only surfaces instead of filling and copying two board-sized buffers.
+    if not actor and rect==field.get_rect() and image.get_size()==field.get_size():
+        result=image.copy();result.blit(field,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+        if warm is not None:
+            radiance=image.copy();radiance.blit(warm,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+            result.blit(radiance,(0,0),special_flags=pygame.BLEND_RGB_ADD)
+        return result
     result=image.copy();light=pygame.Surface(image.get_size());light.fill((102,126,145))
     area=rect.clip(field.get_rect())
     if area.width and area.height:light.blit(field, (area.x-rect.x,area.y-rect.y),area)
