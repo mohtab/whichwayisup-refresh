@@ -100,7 +100,8 @@ class Painter:
                 if tile.tileclass!='wall':continue
                 tx,ty=session.position(tile,alpha)
                 if not (-60<tx<580 and -60<ty<580):continue
-                self.world.blit(self.tile_shadow,((tx-15)*scale,(ty-12)*scale))
+                offset=(15,12) if theme.style=='refresh' else (17,15)
+                self.world.blit(self.tile_shadow,((tx-offset[0])*scale,(ty-offset[1])*scale))
             for ex,ey in emitters:
                 glow=lighting.halo(35*scale,theme['accent'])
                 self.world.blit(glow,((ex-35)*scale,(ey-35)*scale))
