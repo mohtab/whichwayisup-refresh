@@ -257,7 +257,7 @@ class App:
                 "I jump with the up arrow or Z. Hold it longer, and I'll jump higher.":f"Jump with {self.s['key_jump'].upper()}, Space or Up. Hold jump to slow your fall.",
                 'Collect stuff and pull levers with the down arrow. Got it now?':f"Use {self.s['key_interact'].upper()}, S or E to collect items and pull levers."}
             text=replacements.get(text,text)
-        return wrapped_lines(text,ui_refresh.DIALOGUE_WIDTH if self.theme.style!='original' else 392,20 if self.theme.style!='original' else 18)
+        return wrapped_lines(text,ui_refresh.DIALOGUE_WIDTH if self.theme.style!='original' else 392,ui_refresh.DIALOGUE_SIZE if self.theme.style!='original' else 18)
     def advance_dialogue(self):
         if not self.session or not self.session.scene['dialogue']:return False
         lines=self.dialogue_lines()
@@ -499,7 +499,7 @@ class App:
 
     def draw_stages(self):
         u=self.ui;t=self.theme;u.header('CAMPAIGNS / YOUR STAGES')
-        secondary=ui_refresh.card_secondary(t) if t.id=='system' else t['muted']
+        secondary=ui_refresh.card_secondary(t) if t.style!='original' else t['muted']
         u.text('Every world starts with a stage.',40,101,34)
         groups=[(world,[v for v in self.catalog.stages if v.original and v.world==world]) for world in stages.WORLD_NAMES]
         if t.style!='original':
@@ -515,24 +515,24 @@ class App:
             if t.id=='refresh':u.surface.blit(reading_surface((362,112)),(x,y))
             elif t.style!='original':u.panel((x,y,362,112))
             else:u.panel((x,y,362,99))
-            u.fit(stage.world.upper(),x+26 if t.style!='original' else x+14,y+10 if t.style!='original' else y+9,310 if t.style!='original' else 330,16 if t.id=='system' else 11,secondary if t.id=='system' else t['muted'])
+            u.fit(stage.world.upper(),x+26 if t.style!='original' else x+14,y+10 if t.style!='original' else y+9,310 if t.style!='original' else 330,18 if t.style!='original' else 11,secondary)
             title=self.short_name(stage)
             if t.style!='original':
                 while title and font(18).size(title)[0]>204:
                     title=title[:-2].rstrip()+'…' if not title.endswith('…') else title[:-2]+'…'
-            u.button(title,(x+12,y+31 if t.style!='original' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.style!='original' and u.focus==len(u.buttons))
-            u.button('Remix',(x+258,y+31 if t.style!='original' else y+28,92,37),lambda v=stage:self.new_editor(v.document),quiet=t.style!='original')
+            u.button(title,(x+12,y+36 if t.style!='original' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.style!='original' and u.focus==len(u.buttons))
+            u.button('Remix',(x+258,y+36 if t.style!='original' else y+28,92,37),lambda v=stage:self.new_editor(v.document),quiet=t.style!='original')
             best=self.stage_best(stage)
             status='Complete' if self.completed(stage) else 'Not yet completed'
             if best is not None:status+='  /  PB '+runs.clock_text(best)
-            u.fit(status,x+26 if t.style!='original' else x+14,y+80 if t.style!='original' else y+75,310 if t.style!='original' else 333,16 if t.id=='system' else 12,secondary if t.id=='system' else t['accent'] if self.completed(stage) else t['muted'])
+            u.fit(status,x+26 if t.style!='original' else x+14,y+82 if t.style!='original' else y+75,310 if t.style!='original' else 333,18 if t.style!='original' else 12,secondary if t.style!='original' else t['accent'] if self.completed(stage) else t['muted'])
         u.button('Back',(40,676,130,44),lambda:self.route('home'))
         u.button('New stage',(184,676,170,44),lambda:self.new_editor(),primary=t.style=='original')
         u.button('Import file',(368,676,170,44),self.import_prompt)
         u.button('Resume draft',(552,676,166,44),self.resume_draft)
         if self.page>0:u.button('Previous',(760,676,170,44),lambda:setattr(self,'page',self.page-1))
         if (self.page+1)*12<len(self.catalog.stages):u.button('Next',(944,676,170,44),lambda:setattr(self,'page',self.page+1))
-        u.fit(self.rules_notice()+' / PBs: '+runs.category(self.s['tempo'],self.s['dialogue'])+'  /  Drop a stage JSON or TXT here to import.',40,737,1100,17 if t.id=='system' else 14,secondary if t.id=='system' else t['muted'])
+        u.fit(self.rules_notice()+' / PBs: '+runs.category(self.s['tempo'],self.s['dialogue'])+'  /  Drop a stage JSON or TXT here to import.',40,737,1100,18 if t.style!='original' else 14,secondary)
     def resume_draft(self):
         paths=sorted((user_path('data')/'drafts').glob('*.json'),key=lambda p:p.stat().st_mtime,reverse=True)
         if not paths:self.notify('No saved draft yet. Create a stage in the studio.');return

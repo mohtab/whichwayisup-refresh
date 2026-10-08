@@ -45,3 +45,18 @@ Display type: unmodified `data/misc/LiberationSerif-Bold.ttf`, copied from this 
 The unchanged masonry sheet repeats at a 260-world-unit pitch on enhanced terrain. `refresh/objects.py` derives exposed contours from canonical connected solids, cancels shared edges, merges straight runs and constructs narrow inset dressed stone faces and mortar terminations. Their coordinates and variation follow the existing terrain interpolation; current polygon occupancy clips all finishing. The existing screen-space relief, illumination, shadows and accelerated texture sampler remain in use. No new bitmap, external source or reference pixels were added.
 
 Content-measured play and records layouts reuse the existing licensed fonts, frame components and chamber surround. System card metadata uses the actual graded card face to select readable secondary text. Original paths remain separate.
+
+
+## Constructed stone and speech presentation
+
+The presentation pass assembles complete stones inside canonical solid courses in
+`refresh/stonework.py`. Six specified interior patches of the existing
+`masonry-v1.png` supply mineral grain only; authored bevels, terminal faces,
+recessed joints and course bonds supply the construction. No external images or
+reference pixels were introduced. The cached color field is transformed through
+the existing exact sampler and lit with the existing screen-space response.
+
+`refresh/portrait.py` derives a shoulder portrait from the original full-resolution
+`assets/sprites/explorer-v1.png` frame17 illustration, with an output-resolution
+shoulder matte and silhouette finish. It does not sample a gameplay framebuffer.
+No new bitmap source was generated; inherited artwork licensing is unchanged.

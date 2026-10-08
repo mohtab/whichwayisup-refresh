@@ -5,7 +5,8 @@ from .ui import metal_panel, palette_panel, wrapped_lines
 
 BOARD=(416,68,704,704)
 RESULT_BOARD=(484,76,680,680)
-DIALOGUE_WIDTH=296
+DIALOGUE_WIDTH=304
+DIALOGUE_SIZE=24
 DIALOGUE_LINES=6
 
 def home(app):
@@ -54,24 +55,16 @@ def play(app):
     u.panel((408,60,720,720));app.blit_world(s,BOARD)
     goals={'key':'Find the key','other_pants':'Find the trousers','cake':'Find the cake','power_crystal':'Find the crystal'}
     objective=next((goals[e['trigger']] for e in app.active_stage.document['events'] if e['trigger'] in goals and 'change_level' in e['actions']),'Explore and turn the room')
-    lines=app.dialogue_lines() if talk else []
-    pages=max(1,(len(lines)+5)//6);visible=lines[app.dialogue_page*6:(app.dialogue_page+1)*6]
-    height=(358+28*len(visible)) if talk else 310+36*(min(2,len(wrapped_lines(objective,296,28)))-1)
+    if talk:
+        speech(app)
+        return
+    height=310+36*(min(2,len(wrapped_lines(objective,296,28)))-1)
     top=max(100,418-height//2)
     u.panel((32,top,360,height))
     x=62;y=top+24
-    u.fit(app.rules_notice(),x,y,296,16,t['muted']);y+=34
-    if talk:
-        u.text('A word from Guy',x,y,28);y+=44
-        for line in visible:u.text(line,x,y,20);y+=28
-        y+=12
-        u.text(('Next page' if app.dialogue_page+1<pages else 'Continue')+f'   {app.dialogue_page+1}/{pages}',x,y,19,t['accent']);y+=30
-        hint='Button 1 / Button 2' if app.input_device=='controller' else f"{app.s['key_jump'].upper()} / Space / {app.s['key_interact'].upper()}"
-        u.fit(hint,x,y,296,17,t['foreground']);y+=38
-        u.text(objective,x,y,20);y+=32
-    else:
-        u.fit(app.short_name(app.active_stage),x,y,296,18,t['muted']);y+=32
-        y=u.wrap(objective,x,y,296,28,limit=2)+10
+    u.fit(app.rules_notice(),x,y,296,18,t['muted']);y+=34
+    u.fit(app.short_name(app.active_stage),x,y,296,18,t['muted']);y+=32
+    y=u.wrap(objective,x,y,296,28,limit=2)+10
     u.text(runs.clock_text(s.score.time/24/app.run_tempo),x,y,28);y+=38
     if not talk:
         u.fit('Best '+(runs.clock_text(app.previous_best) if app.previous_best is not None else '—')+f'  /  Attempt {app.attempts:02d}',x,y,296,17,t['muted']);y+=30
@@ -79,6 +72,26 @@ def play(app):
     health(u.surface,(x+108,y-3,188,24),scene['player'].life,t);y+=38
     u.button('Pause / Esc',(x,y,142,44),app.pause)
     u.button('Retry / R',(x+154,y,142,44),app.restart)
+
+
+def speech(app):
+    from .portrait import speaker
+    u=app.ui;t=app.theme
+    # One stable portrait and speech anchor. No run-status machinery in this state.
+    u.surface.blit(speaker(),(48,100))
+    u.text('GUY',68,398,18,t['accent'])
+    lines=app.dialogue_lines();pages=max(1,(len(lines)+5)//6)
+    visible=lines[app.dialogue_page*6:(app.dialogue_page+1)*6]
+    cue_y=450+32*len(visible)+22
+    reading=pygame.Surface((344,cue_y-432+72),pygame.SRCALPHA);reading.fill((*t['background'],224))
+    u.surface.blit(reading,(48,432))
+    pygame.draw.line(u.surface,t['accent'],(68,434),(126,434),2)
+    for i,line in enumerate(visible):u.text(line,68,450+i*32,DIALOGUE_SIZE,t['foreground'])
+    label='Next page' if app.dialogue_page+1<pages else 'Continue'
+    if pages>1:label+=f'  {app.dialogue_page+1}/{pages}'
+    u.text(label,68,cue_y,20,t['accent'])
+    hint='Button 1 / Button 2' if app.input_device=='controller' else f"{app.s['key_jump'].upper()} / Space / {app.s['key_interact'].upper()}"
+    u.fit(hint,68,cue_y+32,304,18,t['foreground'])
 
 
 def compact_frame(surface,theme):

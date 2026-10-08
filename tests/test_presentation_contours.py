@@ -39,15 +39,41 @@ class PresentationTests(unittest.TestCase):
   connected=objects.terrain_layer((),(520,520),2,polys,(1.,0.))[0]
   self.assertEqual(pygame.image.tobytes(preview,'RGBA'),pygame.image.tobytes(connected,'RGBA'))
  def app(self):return App(argparse.Namespace(theme='refresh',safe_window=True,play=False,stage=None,screen=None,smoke=None,screenshot=None))
- def test_long_dialogue_controls_stay_in_group_and_outside_room(self):
-  a=self.app();a.start_stage(a.catalog.stages[0]);a.session.scene['dialogue']='A measured line of dialogue. '*60
-  a.dialogue_token=None
-  with patch.object(a.ui,'panel',wraps=a.ui.panel) as panels:
-   a.draw();group=pygame.Rect(panels.call_args_list[-1].args[0])
-  self.assertEqual(tuple(a.world_layers[0][1]),BOARD)
-  for b in a.ui.buttons:
-   self.assertTrue(group.contains(b.rect));self.assertFalse(pygame.Rect(BOARD).colliderect(b.rect))
-  self.assertLess(group.bottom,770)
+ def test_dialogue_pages_are_speech_first_and_do_not_mask_room(self):
+  a=self.app();a.start_stage(a.catalog.stages[0])
+  from refresh.ui_refresh import DIALOGUE_WIDTH,DIALOGUE_SIZE
+  from refresh.ui import font
+  for count in (1,6,9):
+   a.session.scene['dialogue']='\n'.join('The chamber turns.' for _ in range(count));a.dialogue_token=None
+   with patch.object(a.ui,'text',wraps=a.ui.text) as texts:
+    a.draw()
+   self.assertEqual(tuple(a.world_layers[0][1]),BOARD)
+   self.assertEqual(a.ui.buttons,[])
+   values=[str(c.args[0]) for c in texts.call_args_list]
+   self.assertNotIn('Find the key',values);self.assertFalse(any('Health' in v for v in values))
+   for c in texts.call_args_list:
+    if c.args[0]=='The chamber turns.':
+     self.assertEqual(c.args[3],DIALOGUE_SIZE)
+     self.assertLessEqual(c.args[1]+font(DIALOGUE_SIZE).size(c.args[0])[0],BOARD[0]-20)
+   lines=a.dialogue_lines();self.assertEqual(len(lines),count)
+   for line in lines:self.assertLessEqual(font(DIALOGUE_SIZE).size(line)[0],DIALOGUE_WIDTH)
+   if count>6:
+    self.assertTrue(a.advance_dialogue());self.assertEqual(a.dialogue_page,1)
+   self.assertFalse(a.advance_dialogue())
+
+ def test_whole_courses_cover_stepped_solids_without_crossing_voids(self):
+  from refresh.stonework import courses,constructed_material
+  solids=(corners(20,20,40,40),corners(60,20,40,40),corners(20,60,40,40))
+  stones=courses(solids)
+  self.assertEqual(sum(w*h for x,y,w,h in stones),4800)
+  for x,y,w,h in stones:
+   self.assertGreaterEqual(w,16);self.assertEqual(h,20)
+   self.assertTrue(x+w<=40 or y+h<=40)
+  first=constructed_material(solids,1)
+  self.assertIs(first,constructed_material(solids,1))
+  self.assertIsNot(first,constructed_material(solids[:-1],1))
+  self.assertEqual(constructed_material.cache_info().maxsize,8)
+
  def test_records_zero_one_six_and_pagination_have_bounded_content(self):
   a=self.app();a.route('records')
   for count in (0,1,6,7):

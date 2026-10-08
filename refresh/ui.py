@@ -141,19 +141,19 @@ class UI:
         if self.refresh:
             self.surface.blit(reading_surface((1200,800)),(0,0))
     def text(self,value,x,y,size=18,color=None):
-        if self.refresh:
-            size=max(16,size)
-            if color==self.theme['muted']:color=mix(color,self.theme['foreground'],.35)
+        if self.authored:
+            size=max(18,size)
+            if color==self.theme['muted']:color=mix(color,self.theme['foreground'],.72)
         image=((technical_font(size) if self.theme.style=='cyberpunk' else heading_font(size)).render(display_text(value),True,color or self.theme['foreground']) if self.authored and size>=28 else glyphs(display_text(value),size,tuple(color or self.theme['foreground'])))
         self.surface.blit(image,(x,y));return image.get_rect(topleft=(x,y))
     def fit(self,value,x,y,width,size=18,color=None):
-        if self.refresh:size=max(16,size)
+        if self.authored:size=max(18,size)
         value=display_text(value)
         while value and font(size).size(value)[0]>width:
             value=value[:-2].rstrip()+'…' if not value.endswith('…') else value[:-2]+'…'
         return self.text(value,x,y,size,color)
     def wrap(self,value,x,y,width,size=18,color=None,limit=20):
-        if self.refresh:size=max(16,size)
+        if self.authored:size=max(18,size)
         lines=wrapped_lines(value,width,size)
         for i,line in enumerate(lines[:limit]):
             if i==limit-1 and len(lines)>limit:line=line.rstrip()+'…'
@@ -224,7 +224,12 @@ class UI:
         self.fit(section,690,34,345,13,t['muted'])
         pygame.draw.line(self.surface,t['panel'],(36,76),(1164,76),1)
     def footer(self):
-        self.text('F1  Controls     F2  Window size     F6  Theme     F10  Settings     F11  Fullscreen',36,775 if self.refresh else 771,14 if self.refresh else 12,self.theme['muted'])
+        if self.authored:
+            # A reserved single reading line shared by every non-Original palette.
+            pygame.draw.rect(self.surface,self.theme['background'],(32,766,1136,34))
+            self.text('F1 Controls   F2 Window size   F6 Theme   F10 Settings   F11 Fullscreen',36,773,18,self.theme['foreground'])
+        else:
+            self.text('F1  Controls     F2  Window size     F6  Theme     F10  Settings     F11  Fullscreen',36,771,12,self.theme['muted'])
     def activate(self,index=None):
         if not self.buttons:return
         b=self.buttons[(self.focus if index is None else index)%len(self.buttons)]

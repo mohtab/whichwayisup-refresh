@@ -50,10 +50,11 @@ def material_source(scale):
         for y in range(-240*scale,size,pitch):result.blit(texture,(x,y))
     return result
 
-def attached_material(size,scale,matrix):
-    accelerated=terrain_sampler.material(material_source(scale),size,scale,matrix)
+def attached_material(size,scale,matrix,source=None):
+    source=material_source(scale) if source is None else source
+    accelerated=terrain_sampler.material(source,size,scale,matrix)
     if accelerated is not None:return accelerated
-    c,s=matrix;image=pygame.transform.rotozoom(material_source(scale),-math.degrees(math.atan2(s,c)),math.hypot(c,s))
+    c,s=matrix;image=pygame.transform.rotozoom(source,-math.degrees(math.atan2(s,c)),math.hypot(c,s))
     result=pygame.Surface(size);result.blit(image,image.get_rect(center=(120*scale,120*scale)))
     return result
 
@@ -85,33 +86,7 @@ def exposed_edges(solids):
                 edges.remove((a,b));edges.remove((b,c));edges.add((a,c));changed=True;break
     return tuple(sorted(edges))
 
-def finish_contours(result,occupancy,solids,matrix,scale):
-    from .enhanced import transform
-    layer=pygame.Surface(result.get_size(),pygame.SRCALPHA)
-    def points(values):return [tuple(round(v*scale) for v in transform(p,matrix)) for p in values]
-    for a,b in exposed_edges(solids):
-        dx,dy=b[0]-a[0],b[1]-a[1];length=math.hypot(dx,dy)
-        nx,ny=-dy/length,dx/length
-        # Each boundary stone has an inset dressed end face. Its inner arris is
-        # chipped, while the outer support line remains the true solid envelope.
-        count=max(1,round(length/20))
-        for i in range(count):
-            t0=i/count;t1=(i+1)/count
-            p=(a[0]+dx*t0,a[1]+dy*t0);q=(a[0]+dx*t1,a[1]+dy*t1)
-            seed=round(p[0]*13+p[1]*7);depth=2.4+(seed%5)*.42
-            innerp=(p[0]+nx*depth,p[1]+ny*depth)
-            innerq=(q[0]+nx*depth,q[1]+ny*depth)
-            middle=((p[0]+q[0])/2+nx*(depth+.7),(p[1]+q[1])/2+ny*(depth+.7))
-            pygame.draw.polygon(layer,(38,49,43,85+(seed%4)*8),points((p,q,innerq,middle,innerp)))
-            # Mortar ends on the dressed face instead of being sliced by a mask.
-            if i or (seed%3==0):pygame.draw.line(layer,(23,34,31,160),*points((p,innerp)),max(1,scale))
-            pygame.draw.lines(layer,(26,37,33,90),False,points((innerp,middle,innerq)),max(1,scale))
-        # Convex corner return: two short faces meet inside the exact support.
-        pygame.draw.polygon(layer,(30,43,37,95),points((a,(a[0]+dx/length*3,a[1]+dy/length*3),(a[0]+dx/length*3+nx*3,a[1]+dy/length*3+ny*3),(a[0]+nx*3,a[1]+ny*3))))
-    layer.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
-    result.blit(layer,(0,0))
-
-def terrain_layer(rectangles,size,scale,polygons=None,matrix=None):
+def terrain_layer(rectangles,size,scale,polygons=None,matrix=None,solids=None):
     """One authored material coordinate system, clipped to actual moving solids."""
     if polygons is None:
         # Refresh previews use legacy sessions, but share the same surface finish.
@@ -119,10 +94,11 @@ def terrain_layer(rectangles,size,scale,polygons=None,matrix=None):
         matrix=(1.,0.)
     occupancy=pygame.Surface(size,pygame.SRCALPHA)
     for polygon in polygons:pygame.draw.polygon(occupancy,(255,255,255,255),polygon)
-    result=pygame.Surface(size,pygame.SRCALPHA);result.blit(attached_material(size,scale,matrix) if matrix is not None else masonry(size),(0,0))
+    from .stonework import constructed_material
+    if solids is None:solids=canonical_solids(polygons,scale,matrix)
+    source=constructed_material(solids,scale)
+    result=pygame.Surface(size,pygame.SRCALPHA);result.blit(attached_material(size,scale,matrix,source),(0,0))
     result.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
-    if polygons is not None and matrix is not None:
-        finish_contours(result,occupancy,canonical_solids(polygons,scale,matrix),matrix,scale)
     # Shade a low-resolution relief field; the exact full-resolution union retains alpha.
     relief_size=(max(1,size[0]//4),max(1,size[1]//4))
     relief_mask=pygame.transform.scale(occupancy,relief_size)

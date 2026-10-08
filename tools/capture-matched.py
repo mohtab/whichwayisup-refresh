@@ -13,6 +13,6 @@ with tempfile.TemporaryDirectory(prefix='wwiup-matched-') as profile:
   app.s['dialogue']=dialogue;app.start_stage(next(s for s in app.catalog.stages if s.id==stage_id))
   for _ in range(ticks):app.update(1/24)
   app.draw();name=f'still-{n:02d}.png';pygame.image.save(app.display.screen,OUT/name)
-  entries.append(dict(file=name,stage=stage_id,tick=app.session.tick,screen=app.screen,dialogue=bool(app.session.scene['dialogue']),slot=slot,camera='Full square board compact HUD; Non-Original dialogue uses right704 square board with296px content-measured adjacent dialogue group',matched_ref=f'ref-{n:02d}'))
+  entries.append(dict(file=name,stage=stage_id,tick=app.session.tick,screen=app.screen,dialogue=bool(app.session.scene['dialogue']),slot=slot,camera='Full square board compact HUD; Non-Original dialogue uses right704 square board with authored portrait and304px speech region; no run status in speech',matched_ref=f'ref-{n:02d}'))
  (OUT/'MANIFEST.md').write_text('# Live steady-state stills\n\n'+json.dumps({'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'timestamp':datetime.datetime.now(datetime.timezone.utc).isoformat(),'resolution':[1920,1080],'provenance':'Unmodified App.update and App.draw with SDL dummy at requested display resolution. Normal internal-canvas scaling by Display.present. No image postprocessing. Isolated temporary profile.','stills':entries},indent=2)+'\n')
  print(json.dumps(entries));pygame.quit()

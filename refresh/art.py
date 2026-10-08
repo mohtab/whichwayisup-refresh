@@ -162,13 +162,14 @@ class Painter:
                 if tile.tileclass!='wall':continue
                 tx,ty=session.position(tile,alpha)
                 rectangles.append((round((tx-tile.rect.width/2)*scale),round((ty-tile.rect.height/2)*scale),tile.rect.width*scale,tile.rect.height*scale))
-            polygons=None;material=None
+            polygons=None;material=None;solids=None
             if enhanced:
                 polygons=tuple(tuple((x*scale,y*scale) for x,y in geometry(tile)) for tile in level.tiles if tile.tileclass=='wall')
                 material=enhanced.material_matrix(alpha)
+                solids=tuple(enhanced.base[id(tile)] for tile in level.tiles if tile.tileclass=='wall')
             signature=(polygons,material) if enhanced else tuple(rectangles)
             if signature!=self.terrain_key:
-                terrain,shadow=objects.terrain_layer(() if enhanced else rectangles,self.world.get_size(),scale,polygons,material)
+                terrain,shadow=objects.terrain_layer(() if enhanced else rectangles,self.world.get_size(),scale,polygons,material,solids)
                 terrain.blit(objects.stone_response(terrain.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
                 self.terrain=terrain
                 self.terrain_shadow=shadow;self.terrain_key=signature;self.terrain_lit_key=None
