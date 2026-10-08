@@ -1,7 +1,7 @@
-"""Refresh-only room-led layouts. Actions and state remain owned by App."""
+"""Authored room-led layouts. Actions and state remain owned by App."""
 import pygame
 from . import runs, stages, __version__
-from .ui import metal_panel
+from .ui import metal_panel, palette_panel
 
 BOARD=(484,76,680,680)
 DIALOGUE_WIDTH=352
@@ -35,7 +35,7 @@ def home(app):
     u.button('Quit',(1064,18,92,44),lambda:setattr(app,'running',False))
 
 def health(surface,rect,value,theme):
-    rect=pygame.Rect(rect);surface.blit(metal_panel(rect.size,theme['panel'],theme['accent']),rect)
+    rect=pygame.Rect(rect);surface.blit((metal_panel if theme.id=='refresh' else palette_panel)(rect.size,theme['panel'],theme['accent']),rect)
     color=theme['accent'] if value>10 else theme['hazard']
     for i in range(12):
         x=rect.x+7+i*(rect.w-14)/12;width=max(2,int((rect.w-14)/12)-3)
@@ -82,7 +82,7 @@ def play(app):
     u.button('Retry / R',(252,690,196,48),app.restart)
 
 def compact_frame(surface,theme):
-    surface.blit(metal_panel((1040,80),theme['background'],theme['accent']),(0,0))
+    surface.blit((metal_panel if theme.id=='refresh' else palette_panel)((1040,80),theme['background'],theme['accent']),(0,0))
     pygame.draw.line(surface,theme['accent'],(0,78),(1040,78))
 
 

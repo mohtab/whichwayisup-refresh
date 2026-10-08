@@ -107,3 +107,24 @@ class RefreshUITests(unittest.TestCase):
         a.set_theme('original');a.start_stage(a.catalog.stages[0]);a.session.scene['fade']=255;a.painter.configure(a.theme,a.s)
         image=a.painter.draw(a.session,a.theme,a.s,resolved=True)
         self.assertEqual(pygame.transform.average_color(image)[:3],(0,0,0))
+
+    def test_authored_themes_keep_room_routes_and_terminal_context(self):
+        a=self.app
+        for theme in ('omarchy','system','cyberpunk'):
+            with self.subTest(theme=theme):
+                a.route('home');a.set_theme(theme);a.draw();self.assert_buttons()
+                a.settings_screen('home')
+                for tab in ('Display','Audio','Controls','Gameplay','Advanced'):
+                    a.settings_tab=tab;a.draw();self.assert_buttons()
+                a.new_editor();a.draw();self.assert_buttons()
+                a.s.update(dialogue=False,board_only=False);a.start_stage(a.catalog.stages[0]);a.draw()
+                self.assertEqual(tuple(a.world_layers[0][1]),BOARD)
+                a.screen='complete';a.session.scene['fade']=255
+                tick=a.session.tick
+                with patch.object(a.ui,'text',wraps=a.ui.text) as text:
+                    a.draw()
+                    copy=' '.join(str(c.args[0]) for c in text.call_args_list)
+                    self.assertNotIn('RUN TIME',copy);self.assertNotIn('Find the key',copy)
+                self.assertGreater(sum(pygame.transform.average_color(a.ui.surface.subsurface(BOARD))[:3]),20)
+                self.assertEqual(a.session.scene['fade'],255);self.assertEqual(a.session.tick,tick)
+                self.assert_buttons()

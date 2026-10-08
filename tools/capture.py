@@ -2,7 +2,7 @@
 """Capture uncomposited live Pygame frames with an isolated player profile."""
 import argparse, datetime, json, os, pathlib, subprocess, sys, tempfile
 p=argparse.ArgumentParser();p.add_argument('--out',default='artifacts/baseline');p.add_argument('--stills-only',action='store_true');a=p.parse_args()
-BASE=pathlib.Path(__file__).resolve().parents[2];ROOT=BASE/'game';OUT=BASE/a.out
+BASE=pathlib.Path(__file__).resolve().parents[2];ROOT=pathlib.Path(__file__).resolve().parents[1];OUT=BASE/a.out
 for name in ('stills','walkthrough-frames'): (OUT/name).mkdir(parents=True,exist_ok=True)
 os.environ.update(SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy',PYGAME_HIDE_SUPPORT_PROMPT='1')
 sys.path.insert(0,str(ROOT))

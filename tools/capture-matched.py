@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse,datetime,json,os,pathlib,subprocess,sys,tempfile
-BASE=pathlib.Path(__file__).resolve().parents[2];ROOT=BASE/'game';parser=argparse.ArgumentParser();parser.add_argument('--out',default='artifacts/baseline/matched-stills');args=parser.parse_args();OUT=BASE/args.out;OUT.mkdir(parents=True,exist_ok=True)
+BASE=pathlib.Path(__file__).resolve().parents[2];ROOT=pathlib.Path(__file__).resolve().parents[1];parser=argparse.ArgumentParser();parser.add_argument('--out',default='artifacts/baseline/matched-stills');args=parser.parse_args();OUT=BASE/args.out;OUT.mkdir(parents=True,exist_ok=True)
 os.environ.update(SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy',PYGAME_HIDE_SUPPORT_PROMPT='1');sys.path.insert(0,str(ROOT))
 import pygame
 from refresh.app import App

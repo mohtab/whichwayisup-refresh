@@ -112,6 +112,24 @@ def metal_panel(size, face, edge):
         patch.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_MULT);result.blit(patch,inner)
     return result
 
+@lru_cache(maxsize=96)
+def palette_panel(size, panel, accent, primary=False):
+    """Reuse authored relief at fixed scale, graded into the selected palette."""
+    source=metal_panel(size,(20,24,28),(180,180,180))
+    result=pygame.transform.grayscale(source)
+    tint=pygame.Surface(size);tint.fill(mix(accent,(255,255,255),.32))
+    result.blit(tint,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+    tint.fill(tuple(round(c*.35) for c in panel))
+    result.blit(tint,(0,0),special_flags=pygame.BLEND_RGB_ADD)
+    if primary:
+        inner=pygame.Rect(17,11,size[0]-34,size[1]-22)
+        pygame.draw.polygon(result,accent,[(inner.x+5,inner.y),(inner.right-5,inner.y),inner.midright,(inner.right-5,inner.bottom),(inner.x+5,inner.bottom),inner.midleft])
+    return result
+
+@lru_cache(maxsize=24)
+def technical_font(size):
+    result=pygame.font.Font(str(FONT),size);result.set_bold(True);return result
+
 class UI:
     def __init__(self):
         self.surface=pygame.Surface((1200,800))
@@ -119,13 +137,14 @@ class UI:
     def begin(self,theme):
         self.theme=theme;self.buttons=[];self.surface.fill(theme['background'])
         self.refresh=theme.id=='refresh'
+        self.authored=theme.style!='original'
         if self.refresh:
             self.surface.blit(reading_surface((1200,800)),(0,0))
     def text(self,value,x,y,size=18,color=None):
         if self.refresh:
             size=max(16,size)
             if color==self.theme['muted']:color=mix(color,self.theme['foreground'],.35)
-        image=(heading_font(size).render(display_text(value),True,color or self.theme['foreground']) if self.refresh and size>=28 else glyphs(display_text(value),size,tuple(color or self.theme['foreground'])))
+        image=((technical_font(size) if self.theme.style=='cyberpunk' else heading_font(size)).render(display_text(value),True,color or self.theme['foreground']) if self.authored and size>=28 else glyphs(display_text(value),size,tuple(color or self.theme['foreground'])))
         self.surface.blit(image,(x,y));return image.get_rect(topleft=(x,y))
     def fit(self,value,x,y,width,size=18,color=None):
         if self.refresh:size=max(16,size)
@@ -143,9 +162,11 @@ class UI:
     def panel(self,rect):
         if self.refresh:
             rect=pygame.Rect(rect);self.surface.blit(metal_panel(rect.size,self.theme['panel'],self.theme['accent']),rect)
+        elif self.authored:
+            rect=pygame.Rect(rect);self.surface.blit(palette_panel(rect.size,self.theme['panel'],self.theme['accent']),rect)
         else:pygame.draw.rect(self.surface,self.theme['panel'],rect,border_radius=16)
     def button(self,label,rect,action,primary=False,selected=False,align='center',quiet=False):
-        if self.refresh:return self.material_button(label,rect,action,primary,selected,align,quiet)
+        if self.authored:return self.material_button(label,rect,action,primary,selected,align,quiet)
         rect=pygame.Rect(rect);index=len(self.buttons)
         hovered=rect.collidepoint(self.mouse) or self.focus==index
         t=self.theme
@@ -172,7 +193,7 @@ class UI:
         focused=self.focus==index;hovered=rect.collidepoint(self.mouse)
         bg=mix(t['accent'],t['panel'],.16) if primary else t['panel']
         if hovered:bg=mix(bg,t['foreground'],.07)
-        self.surface.blit(reading_surface(rect.size) if quiet else metal_panel(rect.size,bg,t['accent']),rect)
+        self.surface.blit((reading_surface(rect.size) if quiet else metal_panel(rect.size,bg,t['accent'])) if self.refresh else palette_panel(rect.size,t['panel'],t['accent'],primary),rect)
         if selected:
             pygame.draw.line(self.surface,t['accent'],(rect.x+18,rect.bottom-5),(rect.right-18,rect.bottom-5),3)
             pygame.draw.rect(self.surface,t['accent'],(rect.x+7,rect.y+rect.h//2-3,5,6))
@@ -186,7 +207,7 @@ class UI:
         if len(lines)>2:lines=wrapped_lines(label,rect.w-24,16);size=16
         total=len(lines)*(size+2)
         for i,line in enumerate(lines):
-            image=glyphs(line,size,tuple(t.readable(bg)))
+            image=glyphs(line,size,tuple(t.readable(bg if self.refresh or primary else t['panel'])))
             y=rect.centery-total/2+(i+.5)*(size+2)
             self.surface.blit(image,image.get_rect(midleft=(rect.x+28,y)) if align=='left' else image.get_rect(center=(rect.centerx,y)))
         if align=='left':self.text('>',rect.right-26,rect.centery-10,18,t['accent'])
@@ -194,7 +215,7 @@ class UI:
 
     def header(self,section):
         t=self.theme
-        if self.refresh:
+        if self.authored:
             self.text(section,50,30,18,t['accent'])
             pygame.draw.line(self.surface,mix(t['panel'],t['accent'],.25),(36,65),(1164,65))
             return

@@ -257,7 +257,7 @@ class App:
                 "I jump with the up arrow or Z. Hold it longer, and I'll jump higher.":f"Jump with {self.s['key_jump'].upper()}, Space or Up. Hold jump to slow your fall.",
                 'Collect stuff and pull levers with the down arrow. Got it now?':f"Use {self.s['key_interact'].upper()}, S or E to collect items and pull levers."}
             text=replacements.get(text,text)
-        return wrapped_lines(text,ui_refresh.DIALOGUE_WIDTH if self.theme.id=='refresh' else 392,20 if self.theme.id=='refresh' else 18)
+        return wrapped_lines(text,ui_refresh.DIALOGUE_WIDTH if self.theme.style!='original' else 392,20 if self.theme.style!='original' else 18)
     def advance_dialogue(self):
         if not self.session or not self.session.scene['dialogue']:return False
         lines=self.dialogue_lines()
@@ -458,7 +458,9 @@ class App:
                 if self.preview.result is not None or self.preview.tick>1400:self.preview=self.make_preview()
     def blit_world(self,session,rect,preview=False,*,resolved=False):
         alpha=self.preview_clock.alpha if preview else self.stepper.alpha
-        image=self.painter.draw(session,self.theme,self.s,alpha if self.screen=='play' or preview else 1,preview,**({'resolved':True} if resolved else {}))
+        # Terminal menus reuse the preview fade bypass at the settled pose.
+        presentation_preview=preview or (resolved and self.theme.style!='original' and self.theme.id!='refresh')
+        image=self.painter.draw(session,self.theme,self.s,alpha if self.screen=='play' or preview else 1,presentation_preview,**({'resolved':True} if resolved else {}))
         if self.screen in ('home','play') and not self.modal and not self.display.deadline:
             self.world_layers.append((image.copy(),rect,self.s['smooth'] and self.theme.style!='original',
                                       self.s['integer_scale'] and self.theme.style=='original',self.painter.scale))
@@ -598,10 +600,11 @@ class App:
 
     def draw_play(self):
         u=self.ui;t=self.theme;session=self.session;scene=session.scene
-        u.fit(self.rules_notice(),42,72,420,14,t['muted'])
-        if self.theme.id=='refresh' and self.screen=='complete':
+        if self.screen!='complete' or t.style=='original' or t.id=='refresh':
+            u.fit(self.rules_notice(),42,72 if t.style=='original' or t.id=='refresh' else 652,420,14,t['muted'])
+        if self.theme.style!='original' and self.screen=='complete':
             ui_refresh.complete(self);return
-        if self.theme.id=='refresh':ui_refresh.play(self)
+        if self.theme.style!='original':ui_refresh.play(self)
         else:
             u.header('STUDIO PLAYTEST' if self.playtest else self.active_stage.world.upper())
             u.fit(stages.display_name(self.active_stage),40,94,620,17,t['muted'])
@@ -725,10 +728,11 @@ class App:
             u.panel((40,246,1116,210));u.text('Your first finish belongs here.',68,280,27)
             u.wrap('Choose a stage and reach its goal. We will save your time and replay automatically. Try the Speedrun preset to skip dialogue.',68,333,1010,19,t['muted'])
         for i,row in enumerate(entries[self.records_page*6:(self.records_page+1)*6]):
-            y=231+i*68;u.panel((40,y,1116,58))
+            modern=t.style!='original'
+            y=(208+i*74) if modern else 231+i*68;u.panel((40,y,1116,72 if modern else 58))
             u.fit(row.get('stage','Stage'),59,y+17,536,19)
-            u.fit(rules.label(row.get('rules',rules.LEGACY)),624,y+10,295,14,t['muted'])
-            u.fit(row.get('category','Category unknown'),624,y+33,295,13,t['muted'])
+            u.fit(rules.label(row.get('rules',rules.LEGACY)),624,y+(15 if modern else 10),295,14,t['muted'])
+            u.fit(row.get('category','Category unknown'),624,y+(36 if modern else 33),295,13,t['muted'])
             u.text(runs.clock_text(row['best_seconds']),940,y+15,24,t['accent'])
         u.wrap('Global rankings and community uploads are planned. This board contains local records only.',44,666,1090,16,t['muted'])
         u.button('Back',(40,710,150,36),lambda:self.route('home'),primary=True)
@@ -750,20 +754,20 @@ class App:
         world=self.painter.draw(self.session,self.theme,self.s,self.stepper.alpha)
         if self.s['compact_hud']:
             surface=pygame.Surface((1040,1120));surface.fill(self.theme['background']);surface.blit(world,(0,80))
-            if self.theme.id=='refresh':ui_refresh.compact_frame(surface,self.theme)
+            if self.theme.style!='original':ui_refresh.compact_frame(surface,self.theme)
             player=self.session.scene['player']
             clock=runs.clock_text(self.session.score.time/24/self.run_tempo)
-            surface.blit(font(26 if self.theme.id=='refresh' else 28).render(clock,True,self.theme['foreground']),(22,14))
-            surface.blit(font(22 if self.theme.id=='refresh' else 17).render(('ORIGINAL' if self.session.rules_id==rules.LEGACY else 'ENHANCED')+' · '+str(self.attempts),True,self.theme['foreground'] if self.theme.id=='refresh' else self.theme['muted']),(24,48))
+            surface.blit(font(26 if self.theme.style!='original' else 28).render(clock,True,self.theme['foreground']),(22,14))
+            surface.blit(font(22 if self.theme.style!='original' else 17).render(('ORIGINAL' if self.session.rules_id==rules.LEGACY else 'ENHANCED')+' · '+str(self.attempts),True,self.theme['foreground'] if self.theme.style!='original' else self.theme['muted']),(24,48))
             pygame.draw.rect(surface,self.theme['panel'],(278,23,170,12),border_radius=5)
             pygame.draw.rect(surface,self.theme['accent'] if player.life>10 else self.theme['hazard'],(278,23,max(0,round(170*player.life/36)),12),border_radius=5)
-            if self.theme.id=='refresh':ui_refresh.health(surface,(274,17,180,24),player.life,self.theme)
-            surface.blit(font(22 if self.theme.id=='refresh' else 17).render('HEALTH '+str(max(0,player.life)),True,self.theme['foreground']),(278,46))
+            if self.theme.style!='original':ui_refresh.health(surface,(274,17,180,24),player.life,self.theme)
+            surface.blit(font(22 if self.theme.style!='original' else 17).render('HEALTH '+str(max(0,player.life)),True,self.theme['foreground']),(278,46))
             goals={'key':'Find the key','other_pants':'Find the trousers','cake':'Find the cake','power_crystal':'Find the crystal'}
             objective=next((goals[e['trigger']] for e in self.active_stage.document['events'] if e['trigger'] in goals and 'change_level' in e['actions']),'Explore and turn the room')
-            surface.blit(font(24 if self.theme.id=='refresh' else 22).render(objective,True,self.theme['foreground']),(490,16))
+            surface.blit(font(24 if self.theme.style!='original' else 22).render(objective,True,self.theme['foreground']),(490,16))
             hint='Button 7 / 8: pause' if self.input_device=='controller' else 'Esc: pause  /  R: retry'
-            surface.blit(font(22 if self.theme.id=='refresh' else 17).render(hint,True,self.theme['foreground'] if self.theme.id=='refresh' else self.theme['muted']),(490,47))
+            surface.blit(font(22 if self.theme.style!='original' else 17).render(hint,True,self.theme['foreground'] if self.theme.style!='original' else self.theme['muted']),(490,47))
         else:surface=world.copy()
         layers=[]
         if self.s['compact_hud']:
