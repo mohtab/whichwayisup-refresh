@@ -3,8 +3,8 @@ import pygame
 from . import runs, stages, __version__
 from .ui import metal_panel
 
-BOARD=(260,76,680,680)
-DIALOGUE_WIDTH=180
+BOARD=(484,76,680,680)
+DIALOGUE_WIDTH=352
 DIALOGUE_LINES=6
 
 def home(app):
@@ -33,40 +33,52 @@ def home(app):
     u.text(f'{sum(app.completed(s) for s in originals)} / {len(originals)} STAGES COMPLETE',548,735,16,t['muted'])
     u.button('Quit',(1064,18,92,44),lambda:setattr(app,'running',False))
 
+def health(surface,rect,value,theme):
+    rect=pygame.Rect(rect);surface.blit(metal_panel(rect.size,theme['panel'],theme['accent']),rect)
+    color=theme['accent'] if value>10 else theme['hazard']
+    for i in range(12):
+        x=rect.x+7+i*(rect.w-14)/12;width=max(2,int((rect.w-14)/12)-3)
+        if i<max(0,value)/3:
+            cell=pygame.Rect(x,rect.y+5,width,max(2,rect.h-10))
+            pygame.draw.rect(surface,color,cell)
+            pygame.draw.line(surface,(246,220,158),cell.topleft,cell.topright)
+            pygame.draw.line(surface,(71,49,28),cell.bottomleft,cell.bottomright,2)
+
 def play(app):
-    u=app.ui;t=app.theme;s=app.session;scene=s.scene
+    u=app.ui;t=app.theme;s=app.session;scene=s.scene;talk=bool(scene['dialogue'])
     u.header('WHICH WAY IS UP?  /  '+('STUDIO PLAYTEST' if app.playtest else app.active_stage.world.upper()))
-    u.panel((254,70,692,692));app.blit_world(s,BOARD)
-    u.wrap(stages.display_name(app.active_stage),32,96,204,20,limit=3)
-    u.text('RUN TIME',32,180,14,t['muted'])
-    u.text(runs.clock_text(s.score.time/24/app.run_tempo),30,205,28)
-    u.text(f'ATTEMPT {app.attempts:02d}',32,253,15,t['muted'])
-    pygame.draw.line(u.surface,t['panel'],(32,284),(232,284),2)
-    u.text('PERSONAL BEST',32,310,14,t['accent'])
-    u.text(runs.clock_text(app.previous_best) if app.previous_best is not None else 'No finish yet',32,338,19)
-    u.wrap(f"{app.run_tempo:g}× tempo\n{'Story' if app.run_dialogue else 'Dialogue skipped'}\nLocal in-game time",32,395,200,17,t['muted'])
-    u.text('HEALTH  '+str(max(0,scene['player'].life)),32,516,16)
-    pygame.draw.rect(u.surface,t['panel'],(32,550,196,12))
-    pygame.draw.rect(u.surface,t['accent'] if scene['player'].life>10 else t['hazard'],(32,550,max(0,min(196,196*scene['player'].life/36)),12))
+    u.panel((476,68,696,696));app.blit_world(s,BOARD)
     goals={'key':'Find the key','other_pants':'Find the trousers','cake':'Find the cake','power_crystal':'Find the crystal'}
     objective=next((goals[e['trigger']] for e in app.active_stage.document['events'] if e['trigger'] in goals and 'change_level' in e['actions']),'Explore and turn the room')
-    u.text('OBJECTIVE',968,98,14,t['accent']);u.wrap(objective,968,125,194,20,limit=3)
-    if scene['dialogue']:
+    if talk:
         lines=app.dialogue_lines();pages=max(1,(len(lines)+5)//6);visible=lines[app.dialogue_page*6:(app.dialogue_page+1)*6]
-        height=max(180,100+26*len(visible));u.panel((958,210,216,height))
-        u.text('GUY',976,225,14,t['accent'])
-        for i,line in enumerate(visible):u.text(line,976,254+i*26,18)
-        y=254+len(visible)*26+12
-        u.text(('NEXT PAGE' if app.dialogue_page+1<pages else 'CONTINUE')+f'  {app.dialogue_page+1}/{pages}',976,y,14,t['accent'])
-        hint='Button 1 / 2' if app.input_device=='controller' else f"{app.s['key_jump'].upper()} / Space / {app.s['key_interact'].upper()}"
-        u.wrap(hint,976,y+23,180,14,t['muted'],limit=2)
+        u.text('A word from Guy',48,100,32)
+        height=max(266,156+28*len(visible));u.panel((32,160,420,height))
+        for i,line in enumerate(visible):u.text(line,66,201+i*28,20)
+        y=201+len(visible)*28+26
+        u.text(('Next page' if app.dialogue_page+1<pages else 'Continue')+f'    {app.dialogue_page+1}/{pages}',66,y,19,t['accent'])
+        hint='Button 1 / Button 2' if app.input_device=='controller' else f"{app.s['key_jump'].upper()} / Space / {app.s['key_interact'].upper()}"
+        u.wrap(hint,66,y+31,352,17,t['muted'],limit=2)
+        u.text(objective,48,548,18,t['muted'])
+        u.text('Time '+runs.clock_text(s.score.time/24/app.run_tempo),48,592,18,t['muted'])
+        u.text('Health '+str(max(0,scene['player'].life)),288,592,18,t['muted'])
     else:
-        rows=[('MOVE',f"{app.s['key_left'].upper()} / {app.s['key_right'].upper()}\nA / D"),('JUMP',f"{app.s['key_jump'].upper()} / Space / Up"),('INTERACT',f"{app.s['key_interact'].upper()} / S / E")]
+        u.wrap(stages.display_name(app.active_stage),48,96,396,23,limit=2)
+        u.text(objective,48,173,30)
+        u.panel((32,234,420,180))
+        u.text('RUN TIME',58,262,16,t['muted']);u.text(runs.clock_text(s.score.time/24/app.run_tempo),56,291,30)
+        u.text(f'Attempt {app.attempts:02d}',58,346,18,t['muted'])
+        u.text('PERSONAL BEST',268,262,16,t['muted'])
+        u.text(runs.clock_text(app.previous_best) if app.previous_best is not None else 'No finish yet',268,300,18)
+        u.text(f"{app.run_tempo:g}× · {'Story' if app.run_dialogue else 'Speedrun'}",268,346,17,t['muted'])
+        u.text('HEALTH  '+str(max(0,scene['player'].life)),48,439,18)
+        health(u.surface,(184,433,250,28),scene['player'].life,t)
+        rows=[('Move',f"{app.s['key_left'].upper()} / {app.s['key_right'].upper()} · A / D"),('Jump',f"{app.s['key_jump'].upper()} / Space / Up"),('Interact',f"{app.s['key_interact'].upper()} / S / E")]
         for i,(label,value) in enumerate(rows):
-            y=220+i*90;u.text(label,968,y,14,t['accent']);u.wrap(value,968,y+25,194,17,t['muted'])
-        u.wrap('Button 1 jumps. Button 2 interacts.' if app.input_device=='controller' else 'Hold jump to slow your fall.',968,511,194,17,t['muted'])
-    u.button('Pause / Esc',(968,636,196,48),app.pause)
-    u.button('Retry / R',(968,696,196,48),app.restart)
+            y=490+i*37;u.text(label,48,y,18,t['accent']);u.text(value,161,y,18,t['muted'])
+        u.text('Hold jump to slow your fall.',48,616,18,t['muted'])
+    u.button('Pause / Esc',(42,690,196,48),app.pause)
+    u.button('Retry / R',(252,690,196,48),app.restart)
 
 def compact_frame(surface,theme):
     surface.blit(metal_panel((1040,80),theme['background'],theme['accent']),(0,0))

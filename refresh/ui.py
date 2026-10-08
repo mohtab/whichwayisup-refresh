@@ -40,23 +40,46 @@ class Button:
 
 @lru_cache(maxsize=24)
 def heading_font(size):
-    face=pygame.font.Font(str(FONT),size);face.set_bold(True);return face
+    return pygame.font.Font(str(FONT.with_name('LiberationSerif-Bold.ttf')),size)
+
+@lru_cache(maxsize=1)
+def frame_source():
+    image=pygame.image.load(str(FONT.parents[1].parent/'assets/refresh/ui-frame-v1.png')).convert_alpha()
+    return image.subsurface(image.get_bounding_rect(min_alpha=8)).copy()
 
 @lru_cache(maxsize=96)
 def metal_panel(size, face, edge):
-    """Authored recessed/chamfered metal; fixed treatments cached by dimensions."""
-    w,h=size;image=pygame.Surface(size,pygame.SRCALPHA);c=min(8,h//5)
-    points=[(c,0),(w-c-1,0),(w-1,c),(w-1,h-c-1),(w-c-1,h-1),(c,h-1),(0,h-c-1),(0,c)]
-    pygame.draw.polygon(image,face,points)
-    pygame.draw.lines(image,mix(face,(0,0,0),.65),False,points[2:]+points[:1],3)
-    pygame.draw.lines(image,mix(face,edge,.5),False,points[:3],1)
-    pygame.draw.line(image,mix(face,edge,.18),(8,3),(w-9,3))
-    if h>75:
-        for x in (9,w-10):
-            for y in (10,h-11):
-                pygame.draw.circle(image,mix(face,edge,.45),(x,y),2)
-                pygame.draw.line(image,face,(x-1,y),(x+1,y))
-    return image
+    """Original illustrated nine-slice relief; no repeated pixel work per frame."""
+    w,h=size;source=frame_source();sw,sh=source.get_size()
+    border=min(18 if h<=120 else 36,max(12,h//2-1),w//2-1);cut=min(sw,sh)//5
+    sx=(0,cut,sw-cut,sw);sy=(0,cut,sh-cut,sh)
+    dx=(0,border,w-border,w);dy=(0,border,h-border,h)
+    result=pygame.Surface(size,pygame.SRCALPHA)
+    pygame.draw.rect(result,(10,20,24,255),(border//2,border//2,w-border,h-border))
+    for y in range(3):
+        for x in range(3):
+            tile=source.subsurface((sx[x],sy[y],sx[x+1]-sx[x],sy[y+1]-sy[y]))
+            tile=pygame.transform.smoothscale(tile,(dx[x+1]-dx[x],dy[y+1]-dy[y]))
+            if x==y==1 and sum(face)>280:
+                warm=pygame.Surface(tile.get_size(),pygame.SRCALPHA);warm.fill((142,105,55,0));tile.blit(warm,(0,0),special_flags=pygame.BLEND_RGBA_ADD)
+            result.blit(tile,(dx[x],dy[y]))
+    if sum(face)>280 and h<90:
+        inner=pygame.Rect(16,10,w-32,h-20)
+        patch=reading_surface(inner.size).copy()
+        warm=pygame.Surface(inner.size);warm.fill((155,119,65));patch.blit(warm,(0,0),special_flags=pygame.BLEND_RGB_ADD)
+        mask=pygame.Surface(inner.size,pygame.SRCALPHA);iw,ih=inner.size
+        pygame.draw.polygon(mask,(255,255,255,255),[(7,0),(iw-7,0),(iw,ih//2),(iw-7,ih),(7,ih),(0,ih//2)])
+        patch.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_MULT);result.blit(patch,inner)
+    return result
+
+@lru_cache(maxsize=24)
+def reading_surface(size):
+    source=frame_source();w,h=source.get_size()
+    tile=source.subsurface((w//4,h//4,w//2,h//2))
+    image=pygame.transform.smoothscale(tile,size)
+    result=pygame.Surface(size,pygame.SRCALPHA);result.fill((10,20,24,255));result.blit(image,(0,0))
+    tint=pygame.Surface(size);tint.fill((170,180,185));result.blit(tint,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+    return result
 
 class UI:
     def __init__(self):
@@ -66,16 +89,21 @@ class UI:
         self.theme=theme;self.buttons=[];self.surface.fill(theme['background'])
         self.refresh=theme.id=='refresh'
         if self.refresh:
-            self.surface.blit(metal_panel((1180,780),theme['background'],theme['accent']),(10,10))
+            self.surface.blit(reading_surface((1200,800)),(0,0))
     def text(self,value,x,y,size=18,color=None):
+        if self.refresh:
+            size=max(16,size)
+            if color==self.theme['muted']:color=mix(color,self.theme['foreground'],.35)
         image=(heading_font(size).render(display_text(value),True,color or self.theme['foreground']) if self.refresh and size>=28 else glyphs(display_text(value),size,tuple(color or self.theme['foreground'])))
         self.surface.blit(image,(x,y));return image.get_rect(topleft=(x,y))
     def fit(self,value,x,y,width,size=18,color=None):
+        if self.refresh:size=max(16,size)
         value=display_text(value)
         while value and font(size).size(value)[0]>width:
             value=value[:-2].rstrip()+'…' if not value.endswith('…') else value[:-2]+'…'
         return self.text(value,x,y,size,color)
     def wrap(self,value,x,y,width,size=18,color=None,limit=20):
+        if self.refresh:size=max(16,size)
         lines=wrapped_lines(value,width,size)
         for i,line in enumerate(lines[:limit]):
             if i==limit-1 and len(lines)>limit:line=line.rstrip()+'…'
@@ -125,14 +153,14 @@ class UI:
         for i,line in enumerate(lines):
             image=glyphs(line,size,tuple(t.readable(bg)))
             y=rect.centery-total/2+(i+.5)*(size+2)
-            self.surface.blit(image,image.get_rect(midleft=(rect.x+18,y)) if align=='left' else image.get_rect(center=(rect.centerx,y)))
+            self.surface.blit(image,image.get_rect(midleft=(rect.x+28,y)) if align=='left' else image.get_rect(center=(rect.centerx,y)))
         if align=='left':self.text('>',rect.right-26,rect.centery-10,18,t['accent'])
         self.buttons.append(Button(rect,label,action))
 
     def header(self,section):
         t=self.theme
         if self.refresh:
-            self.text(section,36,30,18,t['accent'])
+            self.text(section,50,30,18,t['accent'])
             pygame.draw.line(self.surface,mix(t['panel'],t['accent'],.25),(36,65),(1164,65))
             return
         pygame.draw.rect(self.surface,t['accent'],(36,30,8,24),border_radius=3)

@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 FILES = (
     'run_game.py', 'pyproject.toml', 'README.md', 'README.txt', 'CONTRIBUTING.md',
     'CREDITS.md', 'CHANGELOG.md', 'LICENSE', 'changelog.txt',
-    'licenses/omarchy-MIT.txt', 'licenses/original-copyright',
+    'licenses/omarchy-MIT.txt', 'licenses/liberation-OFL.txt', 'licenses/original-copyright',
     'packaging/PKGBUILD.in', 'packaging/build_release.py',
     'packaging/install_local.py', 'packaging/smoke_release.py', 'packaging/verify_upgrade.py',
     'packaging/icon.svg', 'packaging/whichwayisup-refresh.desktop',

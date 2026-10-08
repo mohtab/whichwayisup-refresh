@@ -245,7 +245,7 @@ class App:
                 "I jump with the up arrow or Z. Hold it longer, and I'll jump higher.":f"Jump with {self.s['key_jump'].upper()}, Space or Up. Hold jump to slow your fall.",
                 'Collect stuff and pull levers with the down arrow. Got it now?':f"Use {self.s['key_interact'].upper()}, S or E to collect items and pull levers."}
             text=replacements.get(text,text)
-        return wrapped_lines(text,ui_refresh.DIALOGUE_WIDTH if self.theme.id=='refresh' else 392,18)
+        return wrapped_lines(text,ui_refresh.DIALOGUE_WIDTH if self.theme.id=='refresh' else 392,20 if self.theme.id=='refresh' else 18)
     def advance_dialogue(self):
         if not self.session or not self.session.scene['dialogue']:return False
         lines=self.dialogue_lines()
@@ -491,15 +491,15 @@ class App:
             u.fit(f'{world}  {count}/{len(group)}',40+i*378,153,355,15,t['accent'])
         subset=self.catalog.stages[self.page*12:self.page*12+12]
         for i,stage in enumerate(subset):
-            x=40+(i%3)*378;y=192+(i//3)*111
-            u.panel((x,y,362,99))
-            u.fit(stage.world.upper(),x+14,y+9,330,11,t['muted'])
-            u.button(self.short_name(stage),(x+12,y+28,236,37),lambda v=stage:self.start_stage(v))
-            u.button('Remix',(x+258,y+28,92,37),lambda v=stage:self.new_editor(v.document))
+            x=40+(i%3)*378;y=(176+(i//3)*120) if t.id=='refresh' else 192+(i//3)*111
+            u.panel((x,y,362,112 if t.id=='refresh' else 99))
+            u.fit(stage.world.upper(),x+26 if t.id=='refresh' else x+14,y+10 if t.id=='refresh' else y+9,310 if t.id=='refresh' else 330,11,t['muted'])
+            u.button(self.short_name(stage),(x+12,y+31 if t.id=='refresh' else y+28,236,37),lambda v=stage:self.start_stage(v))
+            u.button('Remix',(x+258,y+31 if t.id=='refresh' else y+28,92,37),lambda v=stage:self.new_editor(v.document))
             best=self.stage_best(stage)
             status='Complete' if self.completed(stage) else 'Not yet completed'
             if best is not None:status+='  /  PB '+runs.clock_text(best)
-            u.fit(status,x+14,y+75,333,12,t['accent'] if self.completed(stage) else t['muted'])
+            u.fit(status,x+26 if t.id=='refresh' else x+14,y+80 if t.id=='refresh' else y+75,310 if t.id=='refresh' else 333,12,t['accent'] if self.completed(stage) else t['muted'])
         u.button('Back',(40,676,130,44),lambda:self.route('home'))
         u.button('New stage',(184,676,170,44),lambda:self.new_editor(),primary=True)
         u.button('Import file',(368,676,170,44),self.import_prompt)
@@ -733,6 +733,7 @@ class App:
             surface.blit(font(17).render('ATTEMPT '+str(self.attempts),True,self.theme['muted']),(24,48))
             pygame.draw.rect(surface,self.theme['panel'],(278,23,170,12),border_radius=5)
             pygame.draw.rect(surface,self.theme['accent'] if player.life>10 else self.theme['hazard'],(278,23,max(0,round(170*player.life/36)),12),border_radius=5)
+            if self.theme.id=='refresh':ui_refresh.health(surface,(274,17,180,24),player.life,self.theme)
             surface.blit(font(17).render('HEALTH '+str(max(0,player.life)),True,self.theme['foreground']),(278,46))
             goals={'key':'Find the key','other_pants':'Find the trousers','cake':'Find the cake','power_crystal':'Find the crystal'}
             objective=next((goals[e['trigger']] for e in self.active_stage.document['events'] if e['trigger'] in goals and 'change_level' in e['actions']),'Explore and turn the room')
