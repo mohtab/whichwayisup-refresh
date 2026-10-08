@@ -101,17 +101,34 @@ def receiving_pool():
             pool.set_at((x,y),(round(170*energy),round(76*energy),round(8*energy)))
     return pool
 
+@lru_cache(maxsize=4)
+def static_room_field(size):
+    return pygame.transform.smoothscale(room_ambient(),size)
+
 def room_field(emitters,size):
-    field=room_ambient().copy()
+    return static_room_field(size)
+
+def warm_field(emitters,size):
+    return cached_warm_field(tuple((round(x,2),round(y,2)) for x,y in emitters),size)
+
+@lru_cache(maxsize=2)
+def cached_warm_field(emitters,size):
+    field=pygame.Surface((130,130));field.fill((0,0,0))
     pool=receiving_pool()
     for x,y in emitters:field.blit(pool,(round(x/4-30),round(y/4-30)),special_flags=pygame.BLEND_RGB_ADD)
     return pygame.transform.smoothscale(field,size)
 
-def spatial_response(image,rect,field,actor=False):
+def spatial_response(image,rect,field,actor=False,warm=None):
     """Sample room light after sprite orientation; preserve every source alpha."""
     result=image.copy();light=pygame.Surface(image.get_size());light.fill((102,126,145))
     area=rect.clip(field.get_rect())
     if area.width and area.height:light.blit(field, (area.x-rect.x,area.y-rect.y),area)
     if actor:light.fill((165,175,180),special_flags=pygame.BLEND_RGB_MAX)
     result.blit(light,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+    if warm is not None and area.width and area.height:
+        received=pygame.Surface(image.get_size());received.fill((0,0,0))
+        received.blit(warm,(area.x-rect.x,area.y-rect.y),area)
+        # Source albedo weights received radiance: dark cracks retain occlusion.
+        radiance=image.copy();radiance.blit(received,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+        result.blit(radiance,(0,0),special_flags=pygame.BLEND_RGB_ADD)
     return result

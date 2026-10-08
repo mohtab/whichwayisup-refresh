@@ -140,8 +140,8 @@ class ReleaseRenderTests(unittest.TestCase):
         near=lighting.spatial_response(source,pygame.Rect(50,50,40,40),field)
         far=lighting.spatial_response(source,pygame.Rect(900,900,40,40),field)
         self.assertGreater(sum(near.get_at((20,20))[:3]),sum(far.get_at((20,20))[:3]))
-        warm=lighting.room_field([(460,460)],(1040,1040))
-        pool=lighting.spatial_response(source,pygame.Rect(900,900,40,40),warm)
+        warm=lighting.warm_field([(460,460)],(1040,1040))
+        pool=lighting.spatial_response(source,pygame.Rect(900,900,40,40),field,warm=warm)
         self.assertGreater(pool.get_at((20,20)).r,far.get_at((20,20)).r)
         self.assertEqual(self.pixels(source),before)
         for image in (near,far,pool):

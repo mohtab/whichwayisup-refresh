@@ -67,3 +67,8 @@ The Omarchy collectible uses the unmodified Omarchy v4.0.3 `icon.png`, copyright
 David Heinemeier Hansson, under its upstream MIT notice in `licenses/omarchy-MIT.txt`.
 Source and provenance: `assets/branding/README.md`. Runtime pulse and glow are new
 presentation code; Omarchy does not sponsor or endorse this game.
+
+The October 8 Refresh rear chamber relief is original built-in generated artwork.
+The original transparent output and complete prompt/provenance are retained in
+`assets/refresh/chamber-relief-v1.png` and `assets/refresh/PROVENANCE.md`.
+It uses GPL-2.0-only to the extent copyright applies. Existing attribution is unchanged.

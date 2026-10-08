@@ -49,6 +49,8 @@ class PackagingTests(unittest.TestCase):
             with tarfile.open(first) as archive:
                 names = archive.getnames()
                 self.assertTrue(any(name.endswith('/licenses/original-copyright') for name in names))
+                self.assertTrue(any(name.endswith('/assets/refresh/chamber-relief-v1.png') for name in names))
+                self.assertTrue(any(name.endswith('/assets/refresh/PROVENANCE.md') for name in names))
                 self.assertFalse(any('/dist/' in name or '__pycache__' in name or '/.git/' in name for name in names))
                 self.assertFalse(any(name.endswith(('.pyc', '.env')) for name in names))
                 videos = [name.split('/', 1)[1] for name in names if name.endswith('.mp4')]

@@ -95,7 +95,10 @@ class Painter:
         depth=settings.get('depth',True) and not original
         emitters=[session.position(o,alpha) for o in scene['objects'] if o.itemclass in ('key','projectile') or (o.itemclass=='lever' and o.current_animation!='broken')]
         field=lighting.room_field(emitters,self.world.get_size()) if theme.style=='refresh' else None
-        if field is not None:self.world.blit(field,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+        warm=lighting.warm_field(emitters,self.world.get_size()) if field is not None else None
+        if field is not None:
+            self.world.blit(field,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+            self.world.blit(chamber.lit_relief(self.world.get_size(),emitters),(0,0))
         if depth:
             # Cast platform shadows before any foreground geometry or hazards.
             for tile in level.tiles:
@@ -184,7 +187,7 @@ class Painter:
                     pygame.draw.line(self.world,mix(theme['background'],theme['accent'],.35),(x,y),end,6*scale)
                     pygame.draw.line(self.world,theme['accent'],(x,y),end,2*scale)
             if field is not None and not use_original:
-                im=lighting.spatial_response(im,rect,field,kind in ('player','spider'))
+                im=lighting.spatial_response(im,rect,field,kind in ('player','spider'),warm)
             if depth and not use_original and kind in ('player','spider','lever'):
                 self.world.blit(lighting.shadow(im),rect.move(2*scale,2*scale))
             self.world.blit(im,rect)

@@ -26,6 +26,7 @@ PATTERNS = (
     'data/levels/*.txt', 'data/misc/*.ttf', 'data/pictures/*.png',
     'data/pictures/*.txt', 'data/sounds/*.ogg', 'data/sounds/*.txt',
     'assets/sprites/*.png', 'assets/sprites/*.md',
+    'assets/refresh/*.png', 'assets/refresh/*.md',
     'assets/branding/*.png', 'assets/branding/*.md', 'docs/*.md',
     'docs/campaign-acceptance/*.md', 'docs/campaign-acceptance/*.json',
     'docs/campaign-acceptance/replays/*.json',

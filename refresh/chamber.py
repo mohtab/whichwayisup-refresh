@@ -5,48 +5,26 @@ import pygame
 
 def blend(a,b,t):return tuple(round(x+(y-x)*t) for x,y in zip(a,b))
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=1)
 def background():
-    s=pygame.Surface((520,520))
-    # A recessed chamber with cool lower fill and a warm, upper-left light well.
-    for y in range(520):
-        pygame.draw.line(s,blend((20,34,39),(9,20,28),y/520),(0,y),(520,y))
-    for col,x in enumerate((-46,126,298,470)):
-        pygame.draw.rect(s,(9,21,28),(x,38,144,456),border_radius=60)
-        pygame.draw.rect(s,(53,69,70),(x-8,28,160,478),13,border_radius=68)
-        pygame.draw.rect(s,(24,38,45),(x+4,42,135,445),5,border_radius=56)
-        pygame.draw.rect(s,(16,29,35),(x,39,144,455),2,border_radius=60)
-        # Back-wall courses are irregular and far below solid tile contrast.
-        for row,y in enumerate(range(100,500,54)):
-            pygame.draw.line(s,(24,37,42),(x+9,y),(x+135,y),1)
-            joint=x+45+(row%2)*48
-            pygame.draw.line(s,(22,35,40),(joint,y),(joint,y+52),1)
-        for rib in (x-11,x+150):
-            pygame.draw.line(s,(5,15,22),(rib+4,36),(rib+4,520),5)
-            pygame.draw.line(s,(66,78,75),(rib,36),(rib,520),10)
-            pygame.draw.line(s,(23,36,41),(rib+2,36),(rib+2,520),2)
-    # Recessed circular drive and hanging transmission: visibly behind actors.
-    center=(265,240)
-    for radius,c,width in ((125,(5,14,21),14),(117,(64,79,78),16),(105,(25,40,47),7),(82,(43,61,65),12)):
-        pygame.draw.circle(s,c,center,radius,width)
-    for n in range(12):
-        a=n*math.tau/12
-        start=(265+87*math.cos(a),240+87*math.sin(a));end=(265+108*math.cos(a),240+108*math.sin(a))
-        pygame.draw.line(s,(49,68,70),start,end,15)
-    pygame.draw.circle(s,(11,24,31),center,40)
-    pygame.draw.circle(s,(37,50,51),center,39,2)
-    pygame.draw.circle(s,(27,42,47),center,16,3)
-    # Broad soft exposure masses, not small repeated decorative light sprites.
-    light=pygame.Surface((130,130),pygame.SRCALPHA)
-    for y in range(130):
-        for x in range(130):
-            warm=max(0,1-math.hypot((x-16)/100,(y-4)/96))
-            cool=max(0,1-math.hypot((x-120)/82,(y-110)/90))
-            light.set_at((x,y),(round(12*warm+3*cool),round(8*warm+7*cool),round(3*warm+10*cool),255))
-    s.blit(pygame.transform.smoothscale(light,s.get_size()),(0,0),special_flags=pygame.BLEND_RGB_ADD)
-    # Relief falls into recess; keep rear architecture below playable faces.
-    s.fill((230,238,245),special_flags=pygame.BLEND_RGB_MULT)
+    """Far cavity/masonry layer, independent of the alpha-masked receivers."""
+    s=pygame.Surface((520,520));s.fill((12,21,28))
+    for y in range(520):pygame.draw.line(s,blend((17,27,33),(7,15,22),y/520),(0,y),(520,y))
+    for row,y in enumerate(range(24,520,68)):
+        for x in range(-50+(row%2)*63,520,126):
+            pygame.draw.rect(s,(8,17,24),(x,y,123,65))
+            pygame.draw.line(s,(24,34,39),(x+2,y+1),(x+121,y+1),2)
+            pygame.draw.line(s,(17,28,35),(x+2,y+3),(x+2,y+62),2)
     return s
+
+@lru_cache(maxsize=4)
+def relief(size):
+    from pathlib import Path
+    source=pygame.image.load(str(Path(__file__).resolve().parents[1]/'assets/refresh/chamber-relief-v1.png')).convert_alpha()
+    surface=pygame.transform.smoothscale(source,size)
+    # A recessed material plane: textured relief sits below traversable stone.
+    surface.fill((157,169,180,255),special_flags=pygame.BLEND_RGBA_MULT)
+    return surface
 
 @lru_cache(maxsize=8)
 def surround(size):
@@ -70,3 +48,13 @@ def surround(size):
         pygame.draw.line(s,(57,61,50),(edge,0),(edge,h),2)
         pygame.draw.line(s,(11,19,23),(edge+3,0),(edge+3,h),4)
     return s
+
+
+def lit_relief(size,emitters):
+    return cached_lit_relief(size,tuple((round(x,2),round(y,2)) for x,y in emitters))
+
+@lru_cache(maxsize=2)
+def cached_lit_relief(size,emitters):
+    from . import lighting
+    receiver=relief(size)
+    return lighting.spatial_response(receiver,receiver.get_rect(),lighting.room_field(emitters,size),warm=lighting.warm_field(emitters,size))
