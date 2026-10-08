@@ -499,6 +499,7 @@ class App:
 
     def draw_stages(self):
         u=self.ui;t=self.theme;u.header('CAMPAIGNS / YOUR STAGES')
+        secondary=ui_refresh.card_secondary(t) if t.id=='system' else t['muted']
         u.text('Every world starts with a stage.',40,101,34)
         groups=[(world,[v for v in self.catalog.stages if v.original and v.world==world]) for world in stages.WORLD_NAMES]
         if t.style!='original':
@@ -514,20 +515,20 @@ class App:
             if t.id=='refresh':u.surface.blit(reading_surface((362,112)),(x,y))
             elif t.style!='original':u.panel((x,y,362,112))
             else:u.panel((x,y,362,99))
-            u.fit(stage.world.upper(),x+26 if t.style!='original' else x+14,y+10 if t.style!='original' else y+9,310 if t.style!='original' else 330,11,t['muted'])
+            u.fit(stage.world.upper(),x+26 if t.style!='original' else x+14,y+10 if t.style!='original' else y+9,310 if t.style!='original' else 330,16 if t.id=='system' else 11,secondary if t.id=='system' else t['muted'])
             u.button(self.short_name(stage),(x+12,y+31 if t.style!='original' else y+28,236,37),lambda v=stage:self.start_stage(v),primary=t.style!='original' and u.focus==len(u.buttons))
             u.button('Remix',(x+258,y+31 if t.style!='original' else y+28,92,37),lambda v=stage:self.new_editor(v.document),quiet=t.style!='original')
             best=self.stage_best(stage)
             status='Complete' if self.completed(stage) else 'Not yet completed'
             if best is not None:status+='  /  PB '+runs.clock_text(best)
-            u.fit(status,x+26 if t.style!='original' else x+14,y+80 if t.style!='original' else y+75,310 if t.style!='original' else 333,12,t['accent'] if self.completed(stage) else t['muted'])
+            u.fit(status,x+26 if t.style!='original' else x+14,y+80 if t.style!='original' else y+75,310 if t.style!='original' else 333,16 if t.id=='system' else 12,secondary if t.id=='system' else t['accent'] if self.completed(stage) else t['muted'])
         u.button('Back',(40,676,130,44),lambda:self.route('home'))
         u.button('New stage',(184,676,170,44),lambda:self.new_editor(),primary=t.style=='original')
         u.button('Import file',(368,676,170,44),self.import_prompt)
         u.button('Resume draft',(552,676,166,44),self.resume_draft)
         if self.page>0:u.button('Previous',(760,676,170,44),lambda:setattr(self,'page',self.page-1))
         if (self.page+1)*12<len(self.catalog.stages):u.button('Next',(944,676,170,44),lambda:setattr(self,'page',self.page+1))
-        u.fit(self.rules_notice()+' / PBs: '+runs.category(self.s['tempo'],self.s['dialogue'])+'  /  Drop a stage JSON or TXT here to import.',40,737,1100,14,t['muted'])
+        u.fit(self.rules_notice()+' / PBs: '+runs.category(self.s['tempo'],self.s['dialogue'])+'  /  Drop a stage JSON or TXT here to import.',40,737,1100,17 if t.id=='system' else 14,secondary if t.id=='system' else t['muted'])
     def resume_draft(self):
         paths=sorted((user_path('data')/'drafts').glob('*.json'),key=lambda p:p.stat().st_mtime,reverse=True)
         if not paths:self.notify('No saved draft yet. Create a stage in the studio.');return
@@ -600,7 +601,7 @@ class App:
 
     def draw_play(self):
         u=self.ui;t=self.theme;session=self.session;scene=session.scene
-        if self.screen!='complete' or t.style=='original' or t.id=='refresh':
+        if t.style=='original':
             u.fit(self.rules_notice(),42,72 if t.style=='original' or t.id=='refresh' else 652,420,14,t['muted'])
         if self.theme.style!='original' and self.screen=='complete':
             ui_refresh.complete(self);return
@@ -718,6 +719,7 @@ class App:
 
 
     def draw_records(self):
+        if self.theme.style!='original':return ui_refresh.records(self)
         u=self.ui;t=self.theme;u.header('PERSONAL BESTS / THIS DEVICE')
         u.text('Every second has a story.',40,107,36)
         u.wrap('Your fastest completed runs, separated by stage and rules. Times use the original in-game clock; pauses are excluded.',44,160,1080,17,t['muted'])

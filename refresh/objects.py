@@ -44,9 +44,10 @@ def masonry(size):
 @lru_cache(maxsize=2)
 def material_source(scale):
     # Full 20x20 level is centered on the actual120,120 pivot, including offscreen tiles.
-    size=800*scale;result=pygame.Surface((size,size));texture=masonry((520*scale,520*scale))
-    for x in (-240*scale,280*scale):
-        for y in (-240*scale,280*scale):result.blit(texture,(x,y))
+    size=800*scale;result=pygame.Surface((size,size));pitch=260*scale
+    texture=masonry((pitch,pitch))
+    for x in range(-240*scale,size,pitch):
+        for y in range(-240*scale,size,pitch):result.blit(texture,(x,y))
     return result
 
 def attached_material(size,scale,matrix):
@@ -55,6 +56,60 @@ def attached_material(size,scale,matrix):
     c,s=matrix;image=pygame.transform.rotozoom(material_source(scale),-math.degrees(math.atan2(s,c)),math.hypot(c,s))
     result=pygame.Surface(size);result.blit(image,image.get_rect(center=(120*scale,120*scale)))
     return result
+
+
+def canonical_solids(polygons,scale,matrix):
+    """Recover stable material-space vertices, never screen-space decoration."""
+    from .enhanced import transform
+    c,s=matrix;den=c*c+s*s
+    return tuple(tuple(tuple(round(v,5) for v in transform((x/scale,y/scale),(c/den,-s/den))) for x,y in poly) for poly in polygons)
+
+@lru_cache(maxsize=8)
+def exposed_edges(solids):
+    """Cancel shared edges before authoring the connected stone end faces."""
+    edges=set()
+    for poly in solids:
+        for a,b in zip(poly,poly[1:]+poly[:1]):
+            if (b,a) in edges:edges.remove((b,a))
+            else:edges.add((a,b))
+    # Merge straight neighbors: corners belong to the union, not each tile.
+    changed=True
+    while changed:
+        changed=False
+        starts={a:b for a,b in edges}
+        for a,b in sorted(edges):
+            c=starts.get(b)
+            if c is None:continue
+            ab=(b[0]-a[0],b[1]-a[1]);bc=(c[0]-b[0],c[1]-b[1])
+            if abs(ab[0]*bc[1]-ab[1]*bc[0])<1e-8 and ab[0]*bc[0]+ab[1]*bc[1]>0:
+                edges.remove((a,b));edges.remove((b,c));edges.add((a,c));changed=True;break
+    return tuple(sorted(edges))
+
+def finish_contours(result,occupancy,solids,matrix,scale):
+    from .enhanced import transform
+    layer=pygame.Surface(result.get_size(),pygame.SRCALPHA)
+    def points(values):return [tuple(round(v*scale) for v in transform(p,matrix)) for p in values]
+    for a,b in exposed_edges(solids):
+        dx,dy=b[0]-a[0],b[1]-a[1];length=math.hypot(dx,dy)
+        nx,ny=-dy/length,dx/length
+        # Each boundary stone has an inset dressed end face. Its inner arris is
+        # chipped, while the outer support line remains the true solid envelope.
+        count=max(1,round(length/20))
+        for i in range(count):
+            t0=i/count;t1=(i+1)/count
+            p=(a[0]+dx*t0,a[1]+dy*t0);q=(a[0]+dx*t1,a[1]+dy*t1)
+            seed=round(p[0]*13+p[1]*7);depth=2.4+(seed%5)*.42
+            innerp=(p[0]+nx*depth,p[1]+ny*depth)
+            innerq=(q[0]+nx*depth,q[1]+ny*depth)
+            middle=((p[0]+q[0])/2+nx*(depth+.7),(p[1]+q[1])/2+ny*(depth+.7))
+            pygame.draw.polygon(layer,(38,49,43,85+(seed%4)*8),points((p,q,innerq,middle,innerp)))
+            # Mortar ends on the dressed face instead of being sliced by a mask.
+            if i or (seed%3==0):pygame.draw.line(layer,(23,34,31,160),*points((p,innerp)),max(1,scale))
+            pygame.draw.lines(layer,(26,37,33,90),False,points((innerp,middle,innerq)),max(1,scale))
+        # Convex corner return: two short faces meet inside the exact support.
+        pygame.draw.polygon(layer,(30,43,37,95),points((a,(a[0]+dx/length*3,a[1]+dy/length*3),(a[0]+dx/length*3+nx*3,a[1]+dy/length*3+ny*3),(a[0]+nx*3,a[1]+ny*3))))
+    layer.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
+    result.blit(layer,(0,0))
 
 def terrain_layer(rectangles,size,scale,polygons=None,matrix=None):
     """One authored material coordinate system, clipped to actual moving solids."""
@@ -67,6 +122,8 @@ def terrain_layer(rectangles,size,scale,polygons=None,matrix=None):
     for rect in rectangles:mask.draw(solid_rectangle((rect[2],rect[3])),rect[:2])
     result=pygame.Surface(size,pygame.SRCALPHA);result.blit(attached_material(size,scale,matrix) if matrix is not None else masonry(size),(0,0))
     result.blit(occupancy,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
+    if polygons is not None and matrix is not None:
+        finish_contours(result,occupancy,canonical_solids(polygons,scale,matrix),matrix,scale)
     # Shade a low-resolution relief field; the exact full-resolution union retains alpha.
     relief_size=(max(1,size[0]//4),max(1,size[1]//4))
     relief_mask=pygame.transform.scale(occupancy,relief_size)

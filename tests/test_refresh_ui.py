@@ -5,7 +5,7 @@ os.environ.update(SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy')
 import pygame
 from refresh.app import App
 from refresh.ui import font
-from refresh.ui_refresh import BOARD,DIALOGUE_WIDTH
+from refresh.ui_refresh import BOARD,RESULT_BOARD,DIALOGUE_WIDTH
 
 class RefreshUITests(unittest.TestCase):
     def setUp(self):
@@ -100,7 +100,7 @@ class RefreshUITests(unittest.TestCase):
                 a.draw()
                 copy=' '.join(str(c.args[0]) for c in text.call_args_list)
                 self.assertNotIn('Find the key',copy);self.assertNotIn('RUN TIME',copy)
-            board=a.ui.surface.subsurface(BOARD)
+            board=a.ui.surface.subsurface(RESULT_BOARD)
             self.assertGreater(sum(pygame.transform.average_color(board)[:3]),45)
             self.assertEqual(a.session.scene['fade'],255);self.assertEqual(a.session.tick,tick)
             self.assertEqual(a.ui.buttons[0].label,'Next stage');self.assert_buttons()
@@ -125,6 +125,6 @@ class RefreshUITests(unittest.TestCase):
                     a.draw()
                     copy=' '.join(str(c.args[0]) for c in text.call_args_list)
                     self.assertNotIn('RUN TIME',copy);self.assertNotIn('Find the key',copy)
-                self.assertGreater(sum(pygame.transform.average_color(a.ui.surface.subsurface(BOARD))[:3]),20)
+                self.assertGreater(sum(pygame.transform.average_color(a.ui.surface.subsurface(RESULT_BOARD))[:3]),20)
                 self.assertEqual(a.session.scene['fade'],255);self.assertEqual(a.session.tick,tick)
                 self.assert_buttons()

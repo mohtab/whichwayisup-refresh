@@ -1,10 +1,11 @@
 """Authored room-led layouts. Actions and state remain owned by App."""
 import pygame
 from . import runs, stages, __version__
-from .ui import metal_panel, palette_panel
+from .ui import metal_panel, palette_panel, wrapped_lines
 
-BOARD=(484,76,680,680)
-DIALOGUE_WIDTH=352
+BOARD=(416,68,704,704)
+RESULT_BOARD=(484,76,680,680)
+DIALOGUE_WIDTH=296
 DIALOGUE_LINES=6
 
 def home(app):
@@ -46,40 +47,39 @@ def health(surface,rect,value,theme):
             pygame.draw.line(surface,(71,49,28),cell.bottomleft,cell.bottomright,2)
 
 def play(app):
+    from . import chamber
     u=app.ui;t=app.theme;s=app.session;scene=s.scene;talk=bool(scene['dialogue'])
+    if t.id=='refresh':u.surface.blit(chamber.surround((1200,800)),(0,0))
     u.header('WHICH WAY IS UP?  /  '+('STUDIO PLAYTEST' if app.playtest else app.active_stage.world.upper()))
-    u.panel((476,68,696,696));app.blit_world(s,BOARD)
+    u.panel((408,60,720,720));app.blit_world(s,BOARD)
     goals={'key':'Find the key','other_pants':'Find the trousers','cake':'Find the cake','power_crystal':'Find the crystal'}
     objective=next((goals[e['trigger']] for e in app.active_stage.document['events'] if e['trigger'] in goals and 'change_level' in e['actions']),'Explore and turn the room')
+    lines=app.dialogue_lines() if talk else []
+    pages=max(1,(len(lines)+5)//6);visible=lines[app.dialogue_page*6:(app.dialogue_page+1)*6]
+    height=(358+28*len(visible)) if talk else 310+36*(min(2,len(wrapped_lines(objective,296,28)))-1)
+    top=max(100,418-height//2)
+    u.panel((32,top,360,height))
+    x=62;y=top+24
+    u.fit(app.rules_notice(),x,y,296,16,t['muted']);y+=34
     if talk:
-        lines=app.dialogue_lines();pages=max(1,(len(lines)+5)//6);visible=lines[app.dialogue_page*6:(app.dialogue_page+1)*6]
-        u.text('A word from Guy',48,100,32)
-        height=max(184,156+28*len(visible));u.panel((32,160,420,height))
-        for i,line in enumerate(visible):u.text(line,66,201+i*28,20)
-        y=201+len(visible)*28+26
-        u.text(('Next page' if app.dialogue_page+1<pages else 'Continue')+f'    {app.dialogue_page+1}/{pages}',66,y,19,t['accent'])
+        u.text('A word from Guy',x,y,28);y+=44
+        for line in visible:u.text(line,x,y,20);y+=28
+        y+=12
+        u.text(('Next page' if app.dialogue_page+1<pages else 'Continue')+f'   {app.dialogue_page+1}/{pages}',x,y,19,t['accent']);y+=30
         hint='Button 1 / Button 2' if app.input_device=='controller' else f"{app.s['key_jump'].upper()} / Space / {app.s['key_interact'].upper()}"
-        u.wrap(hint,66,y+31,352,17,t['muted'],limit=2)
-        u.text(objective,48,548,18,t['muted'])
-        u.text('Time '+runs.clock_text(s.score.time/24/app.run_tempo),48,592,18,t['muted'])
-        u.text('Health '+str(max(0,scene['player'].life)),288,592,18,t['muted'])
+        u.fit(hint,x,y,296,17,t['foreground']);y+=38
+        u.text(objective,x,y,20);y+=32
     else:
-        u.wrap(stages.display_name(app.active_stage),48,96,396,23,limit=2)
-        u.text(objective,48,173,30)
-        u.panel((32,234,420,180))
-        u.text('RUN TIME',58,262,16,t['muted']);u.text(runs.clock_text(s.score.time/24/app.run_tempo),56,291,30)
-        u.text(f'Attempt {app.attempts:02d}',58,346,18,t['muted'])
-        u.text('PERSONAL BEST',268,262,16,t['muted'])
-        u.text(runs.clock_text(app.previous_best) if app.previous_best is not None else 'No finish yet',268,300,18)
-        u.text(f"{app.run_tempo:g}× · {'Story' if app.run_dialogue else 'Speedrun'}",268,346,17,t['muted'])
-        u.text('HEALTH  '+str(max(0,scene['player'].life)),48,439,18)
-        health(u.surface,(184,433,250,28),scene['player'].life,t)
-        rows=[('Move',f"{app.s['key_left'].upper()} / {app.s['key_right'].upper()} · A / D"),('Jump',f"{app.s['key_jump'].upper()} / Space / Up"),('Interact',f"{app.s['key_interact'].upper()} / S / E")]
-        for i,(label,value) in enumerate(rows):
-            y=490+i*37;u.text(label,48,y,18,t['accent']);u.text(value,161,y,18,t['muted'])
-        u.text('Hold jump to slow your fall.',48,616,18,t['muted'])
-    u.button('Pause / Esc',(42,690,196,48),app.pause)
-    u.button('Retry / R',(252,690,196,48),app.restart)
+        u.fit(app.short_name(app.active_stage),x,y,296,18,t['muted']);y+=32
+        y=u.wrap(objective,x,y,296,28,limit=2)+10
+    u.text(runs.clock_text(s.score.time/24/app.run_tempo),x,y,28);y+=38
+    if not talk:
+        u.fit('Best '+(runs.clock_text(app.previous_best) if app.previous_best is not None else '—')+f'  /  Attempt {app.attempts:02d}',x,y,296,17,t['muted']);y+=30
+    u.text('Health '+str(max(0,scene['player'].life)),x,y,17)
+    health(u.surface,(x+108,y-3,188,24),scene['player'].life,t);y+=38
+    u.button('Pause / Esc',(x,y,142,44),app.pause)
+    u.button('Retry / R',(x+154,y,142,44),app.restart)
+
 
 def compact_frame(surface,theme):
     surface.blit((metal_panel if theme.id=='refresh' else palette_panel)((1040,80),theme['background'],theme['accent']),(0,0))
@@ -90,7 +90,7 @@ def complete(app):
     """Resolved real room and final actions; no obsolete active-run HUD."""
     u=app.ui;t=app.theme;s=app.session
     u.header('WHICH WAY IS UP?  /  '+('STUDIO PLAYTEST' if app.playtest else app.active_stage.world.upper()))
-    u.panel((476,68,696,696));app.blit_world(s,BOARD,resolved=True)
+    u.panel((476,68,696,696));app.blit_world(s,RESULT_BOARD,resolved=True)
     u.text('Campaign clear!' if app.completed_world else 'Stage clear.',48,94,38)
     u.fit(stages.display_name(app.active_stage),48,150,396,18,t['muted'])
     u.panel((32,194,420,176))
@@ -106,3 +106,43 @@ def complete(app):
              ('Retry / R',app.restart),('Customize',lambda:app.settings_screen('complete')),
              ('Controls / F1',app.show_help),('Back to studio' if app.playtest else 'Stage library',app.return_editor if app.playtest else lambda:app.route('stages')),('Main menu',lambda:app.route('home'))]
     for i,(label,action) in enumerate(choices):u.button(label,(42,425+i*54,406,46),action,primary=i==0)
+
+
+def records(app):
+    from . import chamber,rules
+    u=app.ui;t=app.theme
+    if t.id=='refresh':u.surface.blit(chamber.surround((1200,800)),(0,0))
+    u.header('PERSONAL BESTS / THIS DEVICE')
+    entries=[v for v in app.store.records.values() if isinstance(v,dict) and isinstance(v.get('best_seconds'),(int,float))]
+    entries.sort(key=lambda v:(v.get('stage',''),v.get('category','')))
+    app.records_page=min(app.records_page,max(0,(len(entries)-1)//6))
+    rows=entries[app.records_page*6:(app.records_page+1)*6]
+    top=94 if len(rows)>3 else 202
+    u.text('Every second has a story.',64,top,36)
+    u.wrap('Your fastest completed runs, separated by stage and rules. Pauses are excluded.',64,top+54,1060,18,t['foreground'])
+    y=top+102
+    if not rows:
+        u.panel((48,y,1104,126));u.text('Your first finish belongs here.',76,y+25,27)
+        u.text('Choose a stage and reach its goal to save a time and replay.',76,y+72,19,t['foreground']);y+=140
+    for row in rows:
+        u.panel((48,y,1104,72));u.fit(row.get('stage','Stage'),76,y+22,504,19)
+        u.fit(rules.label(row.get('rules',rules.LEGACY)),608,y+15,286,16,t['foreground'])
+        u.fit(row.get('category','Category unknown'),608,y+39,286,16,t['muted'])
+        u.text(runs.clock_text(row['best_seconds']),922,y+22,24,t['accent']);y+=76
+    u.text('Local records on this device.',64,y+10,17,t['foreground']);y+=46
+    u.button('Back',(64,y,150,44),lambda:app.route('home'),primary=True)
+    if not rows:u.button('Choose a stage',(232,y,220,44),lambda:app.route('stages'))
+    if app.records_page>0:u.button('Previous',(788,y,156,44),lambda:setattr(app,'records_page',app.records_page-1))
+    if (app.records_page+1)*6<len(entries):u.button('Next',(964,y,164,44),lambda:setattr(app,'records_page',app.records_page+1))
+
+
+def card_secondary(theme):
+    """Readable System metadata against its actual palette-graded card face."""
+    from .art import mix
+    from .themes import contrast
+    card=palette_panel((362,112),theme['panel'],theme['accent'])
+    samples=[card.get_at((x,y))[:3] for x in range(26,337,31) for y in (12,20,82,92)]
+    # Preserve a trace of the selected hue, but never inherit unreadable muted text.
+    candidate=mix(theme['muted'],theme['foreground'],.8)
+    choices=(candidate,theme['foreground'],(248,248,240),(10,13,18))
+    return next((c for c in choices if min(contrast(c,bg) for bg in samples)>=4.5),max(choices,key=lambda c:min(contrast(c,bg) for bg in samples)))
