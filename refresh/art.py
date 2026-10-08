@@ -176,7 +176,7 @@ class Painter:
         occlusion=pygame.Surface(self.world.get_size(),pygame.SRCALPHA)
         if not original:
             for tile in level.tiles:
-                if tile.tileclass!='wall':continue
+                if tile.tileclass not in ('wall','bars'):continue
                 if enhanced:pygame.draw.polygon(occlusion,(255,255,255,255),[(x*scale,y*scale) for x,y in enhanced.geometry(tile,alpha)])
                 else:
                     tx,ty=session.position(tile,alpha)

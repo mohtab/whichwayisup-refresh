@@ -598,7 +598,7 @@ class App:
 
     def draw_play(self):
         u=self.ui;t=self.theme;session=self.session;scene=session.scene
-        u.fit(self.rules_notice(),42,766,1100,14,t['muted'])
+        u.fit(self.rules_notice(),42,72,420,14,t['muted'])
         if self.theme.id=='refresh' and self.screen=='complete':
             ui_refresh.complete(self);return
         if self.theme.id=='refresh':ui_refresh.play(self)
