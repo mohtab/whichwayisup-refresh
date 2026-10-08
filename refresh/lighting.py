@@ -67,7 +67,7 @@ def refresh_relief(image,glow=0,wall=False,scale=1):
     """
     result=image.copy()
     # Neutral material response preserves texels; spatial exposure is applied later.
-    result.fill((32,37,29,0) if wall else (12,16,13,0),special_flags=pygame.BLEND_RGB_ADD)
+    result.fill((73,76,54,0) if wall else (20,22,15,0),special_flags=pygame.BLEND_RGB_ADD)
     if glow:result.fill((glow*8,glow*4,0,0),special_flags=pygame.BLEND_RGB_ADD)
     if wall:
         # Lit upper return and dark lower return reinforce the existing bevel.
@@ -113,7 +113,7 @@ def warm_field(emitters,size):
 
 @lru_cache(maxsize=2)
 def cached_warm_field(emitters,size):
-    field=pygame.Surface((130,130));field.fill((0,0,0))
+    field=room_key_radiance().copy()
     pool=receiving_pool()
     for x,y in emitters:field.blit(pool,(round(x/4-30),round(y/4-30)),special_flags=pygame.BLEND_RGB_ADD)
     return pygame.transform.smoothscale(field,size)
@@ -132,3 +132,16 @@ def spatial_response(image,rect,field,actor=False,warm=None):
         radiance=image.copy();radiance.blit(received,(0,0),special_flags=pygame.BLEND_RGB_MULT)
         result.blit(radiance,(0,0),special_flags=pygame.BLEND_RGB_ADD)
     return result
+
+
+@lru_cache(maxsize=1)
+def room_key_radiance():
+    """Broad warm room key receives on surfaces even between sparse emitters."""
+    import math
+    layer=pygame.Surface((130,130))
+    for y in range(130):
+        for x in range(130):
+            upper=math.exp(-(((x-30)/53)**2+((y-24)/58)**2))
+            lower=math.exp(-(((x-24)/45)**2+((y-118)/36)**2))
+            layer.set_at((x,y),(round(88*upper+43*lower),round(42*upper+20*lower),round(6*upper+2*lower)))
+    return layer

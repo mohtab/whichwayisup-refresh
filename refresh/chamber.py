@@ -23,7 +23,7 @@ def relief(size):
     source=pygame.image.load(str(Path(__file__).resolve().parents[1]/'assets/refresh/chamber-relief-v1.png')).convert_alpha()
     surface=pygame.transform.smoothscale(source,size)
     # A recessed material plane: textured relief sits below traversable stone.
-    surface.fill((157,169,180,255),special_flags=pygame.BLEND_RGBA_MULT)
+    surface.fill((145,149,158,255),special_flags=pygame.BLEND_RGBA_MULT)
     return surface
 
 @lru_cache(maxsize=8)
