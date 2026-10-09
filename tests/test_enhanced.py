@@ -135,13 +135,18 @@ class EnhancedTests(unittest.TestCase):
    for alpha in (0,.25,.5,.75,1):
     actual=a.painter.draw(s,a.theme,a.s,alpha).copy()
     with patch.object(a.painter,'sprite',side_effect=without_player):empty=a.painter.draw(s,a.theme,a.s,alpha).copy()
-    from PIL import Image,ImageChops
-    difference=ImageChops.difference(Image.frombytes('RGB',actual.get_size(),pygame.image.tobytes(actual,'RGB')),Image.frombytes('RGB',empty.get_size(),pygame.image.tobytes(empty,'RGB')))
+    # Compare both subtraction directions using the runtime dependency alone.
+    # RGB-only surfaces keep unused native display alpha out of the comparison.
+    actual_rgb=pygame.image.frombytes(pygame.image.tobytes(actual,'RGB'),actual.get_size(),'RGB')
+    empty_rgb=pygame.image.frombytes(pygame.image.tobytes(empty,'RGB'),empty.get_size(),'RGB')
+    difference=actual_rgb.copy();difference.blit(empty_rgb,(0,0),special_flags=pygame.BLEND_RGB_SUB)
+    reverse=empty_rgb.copy();reverse.blit(actual_rgb,(0,0),special_flags=pygame.BLEND_RGB_SUB)
+    difference.blit(reverse,(0,0),special_flags=pygame.BLEND_RGB_ADD)
     mask=pygame.Surface(actual.get_size());mask.fill((0,0,0))
     for tile in s.scene['level'].tiles:
      if tile.tileclass in ('wall','bars'):pygame.draw.polygon(mask,(255,255,255),[(x*2,y*2) for x,y in s.rules.geometry(tile,alpha)])
-    solid=Image.frombytes('RGB',mask.get_size(),pygame.image.tobytes(mask,'RGB'))
-    self.assertIsNone(ImageChops.multiply(difference,solid).getbbox())
+    difference.blit(mask,(0,0),special_flags=pygame.BLEND_RGB_MULT)
+    self.assertFalse(any(pygame.image.tobytes(difference,'RGB')))
  def test_mount_contacts_rotating_union_continuously(self):
   from refresh import objects
   from refresh.enhanced import closest

@@ -39,7 +39,7 @@ See [Contributing](../CONTRIBUTING.md) and [the stage format](STAGE_FORMAT.md).
 
 ```sh
 .venv/bin/python -B packaging/build_release.py
-.venv/bin/python -B packaging/smoke_release.py --archive dist/whichwayisup-refresh-0.4.0rc4.tar.gz
+.venv/bin/python -B packaging/smoke_release.py --archive dist/whichwayisup-refresh-0.4.0rc5.tar.gz
 ```
 
 The builder creates a complete source archive, `PKGBUILD`, and `SHA256SUMS` under

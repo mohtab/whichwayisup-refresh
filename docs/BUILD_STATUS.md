@@ -1,4 +1,4 @@
-# Build status — public source update, 2026-10-09
+# Build status — 0.4.0rc5 preview, 2026-10-09
 
 The latest source includes the October enhanced gameplay and visual polish.
 Original retains its legacy rules; other themes use connected rotating collision
@@ -15,10 +15,10 @@ and four layouts; twelve additional opacity checks cover six rotation angles in
 both accelerated and portable terrain paths. Regression tests also cover switch
 activation states, source preservation and rotating attachment continuity.
 
-The public source is being updated at Mohtab's request. Existing release downloads
-remain the September 0.4.0rc4 preview. Final combined visual acceptance and physical
-controller/audio, suspend/resume and multiple-monitor checks remain open. Earlier
-measurements below apply to their recorded builds, not this source update.
+The 0.4.0rc5 downloadable preview includes this update. Release files come from
+the passing GitHub Actions run for the release revision. Final combined visual
+acceptance and physical controller/audio, suspend/resume and multiple-monitor
+checks remain open. Earlier measurements below apply to their recorded builds.
 
 ---
 

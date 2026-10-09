@@ -10,24 +10,22 @@ Olli “Hectigo” Etuaho’s 2007 game—the first game Mohtab played on Linux.
 
 ## Download and play
 
-The latest source on `main` includes the October 2026 enhanced gameplay and visual
-polish, including filled stone platforms on Wayland and clearer switch mounts.
-To run this update, follow the [checkout instructions](docs/DEVELOPING.md#run-from-a-checkout).
-The release downloads below are the earlier September preview.
+The 0.4.0rc5 preview includes the October 2026 enhanced gameplay and visual
+polish, filled stone platforms on Wayland and clearer switch mounts.
 
 **[Download the Linux preview](https://github.com/mohtab/whichwayisup-refresh/releases)**
 
-Choose the **0.4.0rc4** release and open its **Assets** list:
+Choose the **0.4.0rc5** release and open its **Assets** list:
 
 | Your system | Download | Next step |
 | --- | --- | --- |
-| Arch Linux or Omarchy | `whichwayisup-refresh-0.4.0rc4-1-any.pkg.tar.zst` | Install with the command below |
-| Other Linux distributions | `whichwayisup-refresh-0.4.0rc4.tar.gz` | Follow the [Linux install guide](docs/INSTALL.md#other-linux-desktops-run-from-the-archive) |
+| Arch Linux or Omarchy | `whichwayisup-refresh-0.4.0rc5-1-any.pkg.tar.zst` | Install with the command below |
+| Other Linux distributions | `whichwayisup-refresh-0.4.0rc5.tar.gz` | Follow the [Linux install guide](docs/INSTALL.md#other-linux-desktops-run-from-the-archive) |
 
 On Arch or Omarchy, open a terminal in the folder containing your download:
 
 ```sh
-sudo pacman -U ./whichwayisup-refresh-0.4.0rc4-1-any.pkg.tar.zst
+sudo pacman -U ./whichwayisup-refresh-0.4.0rc5-1-any.pkg.tar.zst
 ```
 
 Then open **Which Way Is Up? — Refresh** from your application menu.

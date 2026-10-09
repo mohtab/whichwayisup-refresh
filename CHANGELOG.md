@@ -1,6 +1,6 @@
 # What’s new
 
-## Latest source — October 9, 2026
+## 0.4.0rc5 — October polish preview, October 9, 2026
 
 - Refresh gains constructed stone platforms, chamber lighting and redesigned menus.
 - Other themes use enhanced rotating terrain and swept missile contacts; Original
@@ -10,9 +10,9 @@
 - Remove the leftover switch pedestal and use a small support plate, clarifying
   the single handle and gearbox.
 
-This update is available from the repository's `main` branch. The downloadable
-0.4.0rc4 release remains the September preview. Final visual approval and physical
-controller, audio, suspend/resume and multiple-monitor checks remain open.
+Source and Arch package downloads are available for this preview. Final visual
+approval and physical controller, audio, suspend/resume and multiple-monitor
+checks remain open.
 
 ## 0.4.0rc4 — Linux preview
 

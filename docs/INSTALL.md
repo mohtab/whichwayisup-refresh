@@ -1,15 +1,15 @@
 # Install Which Way Is Up? — Refresh
 
-This release is for Linux desktops. **0.4.0rc4 is a release candidate**: a preview
+This release is for Linux desktops. **0.4.0rc5 is a release candidate**: a preview
 for testing before the stable release. Windows and macOS installers are not provided.
 
 Open the [release downloads](https://github.com/mohtab/whichwayisup-refresh/releases)
-and expand **Assets** under 0.4.0rc4. Choose one of these files:
+and expand **Assets** under 0.4.0rc5. Choose one of these files:
 
 | Your system | Download | What it contains |
 | --- | --- | --- |
-| Arch Linux / Omarchy | `whichwayisup-refresh-0.4.0rc4-1-any.pkg.tar.zst` | The game and an application-menu entry; Pacman installs the dependencies. |
-| Other Linux desktops, or a local install without root | `whichwayisup-refresh-0.4.0rc4.tar.gz` | The complete game; you provide Python and install Pygame below. |
+| Arch Linux / Omarchy | `whichwayisup-refresh-0.4.0rc5-1-any.pkg.tar.zst` | The game and an application-menu entry; Pacman installs the dependencies. |
+| Other Linux desktops, or a local install without root | `whichwayisup-refresh-0.4.0rc5.tar.gz` | The complete game; you provide Python and install Pygame below. |
 
 Choose the named game archive above, rather than GitHub's automatically generated
 **Source code (zip)** or **Source code (tar.gz)** links. The instructions below assume
@@ -20,7 +20,7 @@ your browser saved the download in `~/Downloads`.
 Open a terminal and run:
 
 ```sh
-sudo pacman -U ~/Downloads/whichwayisup-refresh-0.4.0rc4-1-any.pkg.tar.zst
+sudo pacman -U ~/Downloads/whichwayisup-refresh-0.4.0rc5-1-any.pkg.tar.zst
 ```
 
 Open **Which Way Is Up? — Refresh** from your application menu, or run:
@@ -41,8 +41,8 @@ Extract the game into a folder you will keep:
 
 ```sh
 mkdir -p ~/Games
-tar -xzf ~/Downloads/whichwayisup-refresh-0.4.0rc4.tar.gz -C ~/Games
-cd ~/Games/whichwayisup-refresh-0.4.0rc4
+tar -xzf ~/Downloads/whichwayisup-refresh-0.4.0rc5.tar.gz -C ~/Games
+cd ~/Games/whichwayisup-refresh-0.4.0rc5
 python3 -m venv .venv
 .venv/bin/python -m pip install 'pygame>=2.6,<3'
 .venv/bin/python run_game.py

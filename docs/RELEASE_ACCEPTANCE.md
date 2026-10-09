@@ -1,4 +1,4 @@
-# 0.4.0rc4 release acceptance
+# 0.4.0rc5 release acceptance
 
 This is an offline Linux preview. The release is prepared as a GitHub draft;
 repository visibility and publication are separate final decisions. The current version is
@@ -36,7 +36,7 @@ python -B tools/verify_render_pixels.py --desktop
 python -B tools/campaign_acceptance.py --require-complete
 python -B tools/release_soak.py --duration 300 --warmup 150
 python -B packaging/build_release.py
-python -B packaging/smoke_release.py --archive dist/whichwayisup-refresh-0.4.0rc4.tar.gz --report dist/source-smoke.json
+python -B packaging/smoke_release.py --archive dist/whichwayisup-refresh-0.4.0rc5.tar.gz --report dist/source-smoke.json
 cd dist
 makepkg
 ```
