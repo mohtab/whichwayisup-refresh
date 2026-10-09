@@ -1,3 +1,27 @@
+# Build status — public source update, 2026-10-09
+
+The latest source includes the October enhanced gameplay and visual polish.
+Original retains its legacy rules; other themes use connected rotating collision
+surfaces and swept missile contacts, with separate records and replay profiles.
+
+Fixed a native Wayland defect that left only platform outlines visible: baked
+stone materials and both sampling paths now use explicit opaque RGB surfaces.
+Switches retain their handle and circular gearbox while removing the leftover
+pedestal; the enhanced support ends in a subdued wall plate instead of a second
+knob-like cap. These corrections are installed and checked on the workstation.
+
+111 automated tests pass locally. Native Wayland checks pass across five themes
+and four layouts; twelve additional opacity checks cover six rotation angles in
+both accelerated and portable terrain paths. Regression tests also cover switch
+activation states, source preservation and rotating attachment continuity.
+
+The public source is being updated at Mohtab's request. Existing release downloads
+remain the September 0.4.0rc4 preview. Final combined visual acceptance and physical
+controller/audio, suspend/resume and multiple-monitor checks remain open. Earlier
+measurements below apply to their recorded builds, not this source update.
+
+---
+
 # Build status — 0.4.0rc4 public preview preparation, 2026-09-13
 
 The player-facing README now leads with downloads, first-game controls, and links

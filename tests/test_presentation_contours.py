@@ -1,5 +1,6 @@
 """Connected boundary and content-sized interface contracts."""
 import argparse,math,os,tempfile,unittest
+from contextlib import nullcontext
 from unittest.mock import patch
 os.environ.update(SDL_VIDEODRIVER='dummy',SDL_AUDIODRIVER='dummy')
 import pygame
@@ -32,6 +33,35 @@ class PresentationTests(unittest.TestCase):
    for poly in polygons:pygame.draw.polygon(occupancy,(255,255,255),poly)
    self.assertEqual(pygame.mask.from_surface(terrain).count(),pygame.mask.from_surface(occupancy).count())
    self.assertEqual(pygame.mask.from_surface(terrain).overlap_area(pygame.mask.from_surface(occupancy),(0,0)),pygame.mask.from_surface(occupancy).count())
+ def test_stone_interiors_survive_wayland_default_alpha_format(self):
+  from refresh import stonework,terrain_sampler
+  surface=pygame.Surface
+  def native_default(size,*args,**kwargs):
+   if not args and not kwargs:
+    image=surface(size,0,32,(0xff0000,0xff00,0xff,0xff000000))
+    image.set_alpha(None);return image
+   return surface(size,*args,**kwargs)
+  solids=(corners(120,120,40,40),corners(160,120,40,40))
+  stonework.constructed_material.cache_clear()
+  try:
+   with patch.object(pygame,'Surface',side_effect=native_default):
+    source=stonework.constructed_material(solids,1)
+    self.assertEqual(source.get_masks()[3],0)
+    for angle in (0,.37,math.pi/2):
+     matrix=(math.cos(angle),math.sin(angle))
+     polygons=tuple(tuple(transform(p,matrix) for p in poly) for poly in solids)
+     for portable in (False,True):
+      with patch.object(terrain_sampler,'kernel',return_value=None) if portable else nullcontext():
+       material=objects.attached_material((520,520),1,matrix,source)
+       self.assertEqual(material.get_masks()[3],0)
+       terrain,_=objects.terrain_layer((),(520,520),1,polygons,matrix,solids)
+       occupancy=surface((520,520),pygame.SRCALPHA)
+       for poly in polygons:pygame.draw.polygon(occupancy,(255,255,255,255),poly)
+       self.assertEqual(pygame.image.tobytes(terrain,'RGBA')[3::4],pygame.image.tobytes(occupancy,'RGBA')[3::4])
+       x,y=transform((120,120),matrix)
+       pixel=terrain.get_at((round(x),round(y)))
+       self.assertEqual(pixel.a,255);self.assertGreater(sum(pixel[:3]),90)
+  finally:stonework.constructed_material.cache_clear()
  def test_refresh_preview_and_connected_surface_use_same_finish(self):
   rects=((100,100,80,80),(180,100,80,80))
   polys=tuple(((x,y),(x+w,y),(x+w,y+h),(x,y+h)) for x,y,w,h in rects)

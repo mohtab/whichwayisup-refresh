@@ -40,7 +40,7 @@ def material(source,size,scale,matrix):
     # Include only the destination pixels that the ordinary blit can expose.
     target=pygame.Rect(120*scale-fullw//2,120*scale-fullh//2,fullw,fullh)
     visible=target.clip(pygame.Rect((0,0),size))
-    result=pygame.Surface(size)
+    result=pygame.Surface(size,0,32,(0xff0000,0xff00,0xff,0))
     if not visible:return result
     image=pygame.Surface(visible.size,0,32,source.get_masks())
     inv=65536./(zoom*zoom)

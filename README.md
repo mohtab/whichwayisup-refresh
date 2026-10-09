@@ -10,6 +10,11 @@ Olli “Hectigo” Etuaho’s 2007 game—the first game Mohtab played on Linux.
 
 ## Download and play
 
+The latest source on `main` includes the October 2026 enhanced gameplay and visual
+polish, including filled stone platforms on Wayland and clearer switch mounts.
+To run this update, follow the [checkout instructions](docs/DEVELOPING.md#run-from-a-checkout).
+The release downloads below are the earlier September preview.
+
 **[Download the Linux preview](https://github.com/mohtab/whichwayisup-refresh/releases)**
 
 Choose the **0.4.0rc4** release and open its **Assets** list:
@@ -66,7 +71,8 @@ saves, and the stage editor.
 - **Build a room:** create, playtest, and share stages as files with the stage studio.
 
 Find these options under **Customize**. Press **F6** to try another theme.
-The original stages and movement rules remain the foundation of every theme.
+All themes retain the original stages. Original uses the legacy gameplay rules;
+the other themes use the enhanced profile described below.
 
 ## Need a hand?
 
@@ -94,7 +100,7 @@ Want to help? Read [Contributing](CONTRIBUTING.md), the
 
 ### Gameplay profiles
 
-Original starts the preserved24Hz gameplay. Other designs start Enhanced gameplay,
+Original starts the preserved 24 Hz gameplay. Other designs start Enhanced gameplay,
 with connected turning terrain and finite swept missile contacts. Story and
 Speedrun still control dialogue and tempo independently. A run and its retries
 keep their starting gameplay profile; changing design during play takes effect

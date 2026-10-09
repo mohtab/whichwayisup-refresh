@@ -48,7 +48,9 @@ def constructed_material(solids,scale,revision=REVISION):
     """Fixed800-unit canonical plane centered on the established120-unit pivot."""
     from .objects import exposed_edges
     edges=exposed_edges(solids)
-    result=pygame.Surface((800*scale,800*scale));result.fill((22,32,28))
+    # Wayland's default display format may carry unused alpha bytes. Rotating
+    # that format enables blending and hides the baked faces; use opaque RGB.
+    result=pygame.Surface((800*scale,800*scale),0,32,(0xff0000,0xff00,0xff,0));result.fill((22,32,28))
     for x,y,w,h in courses(solids):
         seed=round(x*197+y*733+w*71+h*31);rng=random.Random(seed)
         rect=pygame.Rect(round((x+280)*scale),round((y+280)*scale),round(w*scale),round(h*scale))

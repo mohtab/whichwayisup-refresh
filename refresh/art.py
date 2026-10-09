@@ -233,7 +233,7 @@ class Painter:
                     if delay>=25:state='firing';phase=30-delay
                     elif 0<delay<4 and o.current_animation!='walking':state='charged'
                 im=self.sprite(kind,o.rect.width,o.rect.height,state,phase,character,scale)
-                if enhanced and kind=='lever':im=objects.lever_body(im)
+                if enhanced and kind=='lever':im=objects.lever_body(im,theme.style)
             if theme.style=='refresh' and not use_original:
                 im=lighting.refresh_relief(im,0,kind=='wall',scale)
             if depth and theme.style!='refresh' and not use_original and kind not in ('projectile','key'):

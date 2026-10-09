@@ -44,7 +44,7 @@ def masonry(size):
 @lru_cache(maxsize=2)
 def material_source(scale):
     # Full 20x20 level is centered on the actual120,120 pivot, including offscreen tiles.
-    size=800*scale;result=pygame.Surface((size,size));pitch=260*scale
+    size=800*scale;result=pygame.Surface((size,size),0,32,(0xff0000,0xff00,0xff,0));pitch=260*scale
     texture=masonry((pitch,pitch))
     for x in range(-240*scale,size,pitch):
         for y in range(-240*scale,size,pitch):result.blit(texture,(x,y))
@@ -55,7 +55,7 @@ def attached_material(size,scale,matrix,source=None):
     accelerated=terrain_sampler.material(source,size,scale,matrix)
     if accelerated is not None:return accelerated
     c,s=matrix;image=pygame.transform.rotozoom(source,-math.degrees(math.atan2(s,c)),math.hypot(c,s))
-    result=pygame.Surface(size);result.blit(image,image.get_rect(center=(120*scale,120*scale)))
+    result=pygame.Surface(size,0,32,(0xff0000,0xff00,0xff,0));result.blit(image,image.get_rect(center=(120*scale,120*scale)))
     return result
 
 
@@ -147,13 +147,17 @@ def solid_rectangle(size):
 
 
 @lru_cache(maxsize=64)
-def lever_body(image):
+def lever_body(image,style=None):
     """Retain the authored handle/gear; the enhanced mount replaces its wide slab."""
     body=image.copy();w,h=body.get_size()
-    # The bottom rail and triangular outriggers belong to the old horizontal base.
-    body.fill((0,0,0,0),(0,round(h*.88),w,h))
-    body.fill((0,0,0,0),(0,round(h*.64),round(w*.25),h))
-    body.fill((0,0,0,0),(round(w*.75),round(h*.64),w,h))
+    # Keep the handle and circular gearbox, not the rectangular pedestal beneath
+    # it. Rectangular cuts left a second-looking base next to the moving mount.
+    mask=pygame.Surface((w,h),pygame.SRCALPHA)
+    hub_y=round(h*(.60 if style=='cyberpunk' else .67))
+    pygame.draw.rect(mask,(255,255,255,255),(0,0,w,hub_y))
+    pygame.draw.circle(mask,(255,255,255,255),(w//2,hub_y),round(min(w,h)*.25))
+    mask.fill((0,0,0,0),(0,round(h*.88),w,h))
+    body.blit(mask,(0,0),special_flags=pygame.BLEND_RGBA_MULT)
     return body
 
 
@@ -184,6 +188,7 @@ def draw_lever_mount(world,pivot,contact,scale):
         for distance in range(4*scale,max(4*scale,round(length)-2*scale),4*scale):
             x=a[0]+dx*distance;y=a[1]+dy*distance
             pygame.draw.line(world,(55,61,46),(x-dy*2*scale,y+dx*2*scale),(x+dy*scale,y-dx*scale),scale)
-    pygame.draw.circle(world,(34,38,32),b,4*scale)
-    pygame.draw.circle(world,(137,119,71),b,3*scale)
-    pygame.draw.circle(world,(216,180,103),(b[0]-scale,b[1]-scale),scale)
+    # A flush, subdued wall plate must not resemble another bright switch knob.
+    plate=pygame.Rect(0,0,5*scale,4*scale);plate.center=b
+    pygame.draw.rect(world,(34,38,32),plate)
+    pygame.draw.rect(world,(87,82,57),plate.inflate(-2*scale,-2*scale))

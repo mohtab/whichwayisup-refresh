@@ -28,8 +28,11 @@ pixel check compares finished canvases with RGB-only references. Add `--desktop`
 to check a real display, or `--high-contrast` to check bright sprite outlines.
 Desktop checks open a temporary game window and use isolated saves.
 
-The game retains the original 24 Hz simulation. Display refresh and interpolation
-are separate; changing art must preserve collision geometry and replay results.
+Original retains its legacy 24 Hz simulation and collision rules. Other themes
+use enhanced connected rotating terrain and swept missile contacts. Display
+refresh and interpolation are separate; presentation changes must preserve each
+profile's simulation and replay results. A run and its retries retain their
+starting profile, and records distinguish profiles.
 See [Contributing](../CONTRIBUTING.md) and [the stage format](STAGE_FORMAT.md).
 
 ## Build downloads

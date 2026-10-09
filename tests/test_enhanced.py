@@ -171,3 +171,16 @@ class EnhancedTests(unittest.TestCase):
   self.assertEqual(raw,pygame.image.tobytes(source,'RGBA'))
   self.assertEqual(pygame.mask.from_surface(body).overlap_area(pygame.mask.Mask((80,9),fill=True),(0,71)),0)
   self.assertGreater(pygame.mask.from_surface(body).count(),100)
+ def test_switch_gearbox_has_no_second_rectangular_pedestal(self):
+  from refresh import objects,sprites
+  for style in ('refresh','cyberpunk'):
+   for state in ('default','broken'):
+    for phase in range(5):
+     source=sprites.prop('lever',40,40,state,phase,2,style)
+     before=pygame.image.tobytes(source,'RGBA')
+     body=objects.lever_body(source,style)
+     # This lower corner formerly survived the rectangular pedestal cuts.
+     self.assertEqual(body.get_at((21,67)).a,0,(style,state,phase))
+     hub_y=round(80*(.60 if style=='cyberpunk' else .67))
+     self.assertEqual(pygame.image.tobytes(body.subsurface((0,0,80,hub_y)),'RGBA'),pygame.image.tobytes(source.subsurface((0,0,80,hub_y)),'RGBA'))
+     self.assertEqual(pygame.image.tobytes(source,'RGBA'),before)
